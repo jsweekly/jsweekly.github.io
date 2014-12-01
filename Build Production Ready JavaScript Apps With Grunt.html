@@ -1,0 +1,285 @@
+<div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;"><meta charset="UTF8"/><title>Build Production Ready JavaScript Apps With Grunt</title><h1>Build Production Ready JavaScript Apps With Grunt</h1><p><a href="http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><a href="https://plus.google.com/100824646313272709881/"></a>
+
+
+    
+
+
+    
+    <div class="social_buttons social_buttons_fixed hidden-xs">
+        <a href="https://plus.google.com/100824646313272709881" rel="publisher" class="icon32 google_plus" target="_blank"></a>
+        <a href="https://www.facebook.com/xbsoftware" class="icon32 facebook" target="_blank"></a>
+        <a href="https://twitter.com/xbsoftware" class="icon32 twitter" target="_blank"></a>
+        <a href="http://www.linkedin.com/company/xb-software-ltd-?trk=top_nav_home" class="icon32 linkedin" target="_blank"></a>
+        <a href="http://xbsoftware.com/blog/feed" class="icon32 rss rss_on_blog" target="_blank"></a>
+    </div>
+    
+    
+    
+    <header class="header">
+    
+        <div class="request-link-area ">
+            <div class="container">
+                                <a href="http://xbsoftware.com/request-a-quote/" class="request pull-right"><i class="icon arrow_small_right"></i>Request a quote</a>
+            </div>
+        </div>
+        <div class="container">
+            <div class="has_langs">
+                <ul class="list-inline nav-localization">
+                     <li class="lang-item lang-item-3 lang-item-ru "><a hreflang="ru" href="http://xbsoftware.ru/blog/">ru</a></li>  <li class="lang-item lang-item-4 lang-item-en current-lang"><a hreflang="en" href="http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/">en</a></li>                 </ul>
+            </div>
+                        <div class="logo_width header_logo">
+                <div class="logo"><a href="http://xbsoftware.com"><span>XB Software - software development company</span></a></div>
+            </div>
+            <nav class="collapse navbar-collapse navbar-ex1-collapse header-menu-part"><ul id="menu-header-menu" class="  nav-pills navbar-right nav-header-menu"><li id="menu-item-21" class="menu-item-first menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-21 dropdown"><a href="http://xbsoftware.com/about-us/">About us </a>
+<ul class=" dropdown-menu">
+	<li id="menu-item-638" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-638"><a href="http://xbsoftware.com/testimonials/">Testimonials</a></li>
+	<li id="menu-item-639" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-639"><a href="http://xbsoftware.com/technology-expertise/">Technology Expertise</a></li>
+	<li id="menu-item-930" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-930"><a href="http://xbsoftware.ru/vakansii/">Jobs</a></li>
+</ul>
+</li>
+<li id="menu-item-24" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-24 dropdown"><a href="http://xbsoftware.com/services/">Services </a>
+<ul class=" dropdown-menu">
+	<li id="menu-item-640" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-640"><a href="http://xbsoftware.com/services/#web_development">Web Development</a></li>
+	<li id="menu-item-641" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-641"><a href="http://xbsoftware.com/services/#business_analysis">Business Analysis</a></li>
+	<li id="menu-item-642" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-642"><a href="http://xbsoftware.com/services/#quality_assurance">Quality Assurance</a></li>
+</ul>
+</li>
+<li id="menu-item-505" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-505 dropdown"><a href="http://xbsoftware.com/products/">Products </a>
+<ul class=" dropdown-menu">
+	<li id="menu-item-860" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-860"><a href="http://xbsoftware.com/products/xbtrack-bug-task-tracker/">XBtrack</a></li>
+	<li id="menu-item-858" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-858"><a href="http://xbsoftware.com/products/xb-staff-manager/">XB Staff Manager</a></li>
+	<li id="menu-item-859" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-859"><a href="http://xbsoftware.com/products/webix/">Webix</a></li>
+	<li id="menu-item-1437" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1437"><a href="http://xbsoftware.com/products/enjoyhint/">EnjoyHint</a></li>
+	<li id="menu-item-1728" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1728"><a href="http://xbsoftware.com/products/enjoycss/">EnjoyCSS</a></li>
+</ul>
+</li>
+<li id="menu-item-644" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-644 dropdown"><a href="http://xbsoftware.com/projects-overview/">Portfolio </a>
+<ul class=" dropdown-menu">
+	<li id="menu-item-643" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-643"><a href="http://xbsoftware.com/projects-overview/">Projects Overview</a></li>
+	<li id="menu-item-414" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-414"><a href="http://xbsoftware.com/case-studies/">Case Studies</a></li>
+</ul>
+</li>
+<li id="menu-item-118" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-118"><a href="http://xbsoftware.com/blog/">Blog</a></li>
+<li id="menu-item-22" class="menu-item-last menu-item menu-item-type-post_type menu-item-object-page menu-item-22"><a href="http://xbsoftware.com/contact-us/">Contact us</a></li>
+</ul></nav>            
+            
+            
+        </div>
+    </header>
+    
+    
+
+<div class="container ">
+    <div class="col-sm-9 ie-col-9 v-padding30">
+        <div class="navigation">
+            <p id="breadcrumbs">
+		<span>
+			<span><a href="http://xbsoftware.com" rel="v:url">XB Software</a></span>  <span><a href="http://xbsoftware.com/blog/" rel="v:url">Blog</a></span>  <span><span class="breadcrumb_last">Video: Build Production Ready Javascript Apps With Grunt</span></span>
+		</span></p>        </div>
+        <a class="pull-right all-post-link" href="http://xbsoftware.com/blog/"><i class="icon all-posts"></i>All posts</a>
+        
+            <section class="clear category-post">
+                    
+                
+                <p>
+                    <span class="post_author">By Svetlana Gordiyenko | </span>
+                    <span class="post_date">November 21, 2014</span>
+                </p>
+                
+                <p>Video and slides from the 4Front meetup #3 for web developers “Build Production Ready Javascript Apps With Grunt” by Shai Reznik from Izrael.</p>
+<p>The presentation contains an overview of the steps you have to follow to build <a title="javascript app development" href="http://xbsoftware.com/">Javascript apps</a> and prepare them for deployment. Shai tells about Grunt and how it helps validate, minimize and package your code.</p>
+<p>Presentation:</p>
+
+<p> Video:</p>
+<p><iframe width="640" height="360" src="http://www.youtube.com/embed/BpMKxF-HUqA"></iframe></p>
+<div><strong> You are welcome to take part in our <a title="4front meetups" href="http://xbsoftware.com/blog/4front-meetup4-web-developers/">4front meetups</a> that are held by XB Software at the Imaguru business club on a regular basis.</strong></div>
+<div id="ts-fab-below" class="ts-fab-wrapper"><span class="screen-reader-text">The following two tabs change content below.</span><ul class="ts-fab-list"><li class="ts-fab-bio-link"><a href="http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/#ts-fab-bio-below">Bio</a></li><li class="ts-fab-latest-posts-link"><a href="http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/#ts-fab-latest-posts-below">Latest Posts</a></li></ul><div class="ts-fab-tabs">
+	<div class="ts-fab-tab" id="ts-fab-bio-below">
+		<div class="ts-fab-avatar"><img alt="Svetlana Gordiyenko" src="http://xbsoftware.com/wp-content/uploads/2014/05/Svetlana-Gordiyenko_avatar_1399470402.png" class="avatar avatar-80 photo" width="80"><div class="ts-fab-social-links"><a href="https://plus.google.com/u/1/103591499304179379622/posts?rel=author" title="Google+"><img src="http://xbsoftware.com/wp-content/plugins/fancier-author-box/images/googleplus.png" width="24" alt="My Google+ profile"></a></div>
+		</div>
+		
+		<div class="ts-fab-text">
+			<p class="ts-fab-header"><h4>Svetlana Gordiyenko</h4></p>
+			<p class="ts-fab-content">XB Software marketing specialist proficient in developing and executing effective online marketing strategies. She is passionate about usability and believes that content is the king of seo.</p>
+		</div>
+	</div>
+	<div class="ts-fab-tab" id="ts-fab-latest-posts-below">
+		<div class="ts-fab-avatar"><img alt="Svetlana Gordiyenko" src="http://xbsoftware.com/wp-content/uploads/2014/05/Svetlana-Gordiyenko_avatar_1399470402.png" class="avatar avatar-80 photo" width="80"><div class="ts-fab-social-links"><a href="https://plus.google.com/u/1/103591499304179379622/posts?rel=author" title="Google+" rel="nofollow"><img src="http://xbsoftware.com/wp-content/plugins/fancier-author-box/images/googleplus.png" width="24" alt="My Google+ profile"></a></div>
+		</div>
+		<div class="ts-fab-text">
+			<div class="ts-fab-header">
+				<h4>Latest posts by Svetlana Gordiyenko <span class="latest-see-all">(<a href="http://xbsoftware.com/author/svetlana/" rel="nofollow">see all</a>)</span></h4>
+			</div>
+			<ul class="ts-fab-latest">
+				<li>
+					<a href="http://xbsoftware.com/blog/wth-2014-social-network-tourists-pintoid/">What the Hack 2014: Social Net For Tourists, Pintoid and Other Hacks (Part 2)</a><span> - November 24, 2014</span> 
+				</li>
+				<li>
+					<a href="http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/">Video: Build Production Ready Javascript Apps With Grunt</a><span> - November 21, 2014</span> 
+				</li>
+				<li>
+					<a href="http://xbsoftware.com/blog/wth-2014-touchpaper-ebuben-other-magic/">What the Hack 2014: TouchPaper, eBuben and Other Magic (Part 1)</a><span> - November 12, 2014</span> 
+				</li>
+		</ul></div>
+	</div>
+		</div>
+	</div>                 
+                <div class="wrapper-tags-block"><div class="post_tags "><a href="http://xbsoftware.com/tag/4front/" title="4front Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">4front</span></a><a href="http://xbsoftware.com/tag/all-posts/" title="All posts Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">All posts</span></a><a href="http://xbsoftware.com/tag/company-news/" title="company news Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">company news</span></a><a href="http://xbsoftware.com/tag/javascript-development/" title="javascript development Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">javascript development</span></a></div></div>                
+                <div class="social_buttons_share">
+                    <a class="google_plusone_share" href="https://plus.google.com/share?url=http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/#sthash.w6LhBUQH.dpuf" target="_blank">
+                        <span class="count">0</span>
+                    </a>
+                    <a class="facebook_share" href="http://www.facebook.com/share.php?u=http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/&amp;title=Video:%20Build%20Production%20Ready%20Javascript%20Apps%20With%20Grunt#sthash.w6LhBUQH.dpuf" target="_blank">
+                        <span class="count">0</span>
+                    </a>
+                    <a class="twitter_share" href="http://twitter.com/home?status=Video:%20Build%20Production%20Ready%20Javascript%20Apps%20With%20Grunt+http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/#sthash.w6LhBUQH.dpuf" target="_blank">
+                        <span class="count">0</span>
+                    </a>
+                    <a class="stumbleupon_share" href="http://www.linkedin.com/shareArticle?mini=true&amp;url=http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/&amp;title=Video:%20Build%20Production%20Ready%20Javascript%20Apps%20With%20Grunt&amp;source=%5BSOURCE/DOMAIN%5D#sthash.w6LhBUQH.dpuf" target="_blank">
+                        <span class="count">0</span>
+                    </a>
+                    <a class="linkedin_share" href="http://www.stumbleupon.com/submit?url=http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/&amp;title=Video:%20Build%20Production%20Ready%20Javascript%20Apps%20With%20Grunt#sthash.w6LhBUQH.dpuf" target="_blank">
+                        <span class="count">0</span>
+                    </a>
+                    <a class="delicious_share" href="http://www.delicious.com/save?v=5&amp;noui&amp;jump=close&amp;url=http://xbsoftware.com/blog/video-build-production-ready-javascript-apps-grunt/&amp;title=Video:%20Build%20Production%20Ready%20Javascript%20Apps%20With%20Grunt" target="_blank"> 
+                        <span class="count">0</span>
+                    </a>
+                </div>
+            </section>
+
+                <a class="all-post-link pull-right" href="http://xbsoftware.com/blog/"><i class="icon all-posts"></i>All posts</a>
+
+        
+<section id="comments" class="comments">
+    <div class="comments-area">
+        <div class="caption nowrap t-padding30">
+            
+            
+        </div>
+            </div>
+</section>
+
+
+        
+    </div>
+    <div class="col-sm-3 ie-col-3 v-padding30">
+        <div class="subscribe-form">
+	
+		<p class="subscribe-title">Sign up to our newsletter and get the latest news and updates</p>
+		<div class="subscribe-wrapper">
+			
+            
+			
+        </div>
+	
+    <div class="xbs-loader">
+        <img src="http://xbsoftware.com/wp-content/themes/xbs/images/xbs-logo.png" class="xbs-logo">
+    </div>
+</div>
+
+<div class="caption nowrap t-padding30">
+    
+    <div>
+        <i class="icon arrow-right-2-icon"></i>
+        <p class="big_header"> <span>Tags</span> </p>
+        <i class="icon arrow-left-2-icon"></i>
+    </div>
+</div>
+<div class="post_tags category_tags"><a href="http://xbsoftware.com/tag/4front/" title="4front Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">4front</span></a><a href="http://xbsoftware.com/tag/all-posts/" title="All posts Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">All posts</span></a><a href="http://xbsoftware.com/tag/android-apps/" title="Android apps Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">Android apps</span></a><a href="http://xbsoftware.com/tag/business-analysis/" title="Business Analysis Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">Business Analysis</span></a><a href="http://xbsoftware.com/tag/company-news/" title="company news Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">company news</span></a><a href="http://xbsoftware.com/tag/employee-and-resource-management/" title="employee and resource management Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">employee and resource management</span></a><a href="http://xbsoftware.com/tag/hackathon/" title="hackathon Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">hackathon</span></a><a href="http://xbsoftware.com/tag/javascript/" title="javascript Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">javascript</span></a><a href="http://xbsoftware.com/tag/javascript-development/" title="javascript development Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">javascript development</span></a><a href="http://xbsoftware.com/tag/outsourcing/" title="outsourcing Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">outsourcing</span></a><a href="http://xbsoftware.com/tag/project-management/" title="Project Management Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">Project Management</span></a><a href="http://xbsoftware.com/tag/promises/" title="Promises Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">Promises</span></a><a href="http://xbsoftware.com/tag/saas/" title="SaaS Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">SaaS</span></a><a href="http://xbsoftware.com/tag/software-development-life-cycle/" title="software development life cycle Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">software development life cycle</span></a><a href="http://xbsoftware.com/tag/tutorials/" title="tutorials Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">tutorials</span></a><a href="http://xbsoftware.com/tag/web-application-development/" title="web application development Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">web application development</span></a><a href="http://xbsoftware.com/tag/web-development/" title="web development Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">web development</span></a><a href="http://xbsoftware.com/tag/webix/" title="webix Tag"><i class="icon tag-bg-left-section"></i><span class="truncate">webix</span></a></div>
+<div class="sidebar-about-company">
+    <div id="one" class="two">			<div class="textwidget"><p><a href="http://xbsoftware.com/">XB Sofware</a> renders<br>
+cost-efficient services in the development of web and mobile applications, business analysis and quality assurance. </p>
+</div>
+		</div></div>
+
+<div class="caption nowrap t-padding30 hidden-x">
+    
+    <div class="caprtion-wrapper">
+        <i class="icon arrow-right-2-icon"></i>
+        <p class="big_header"> <span>Recent Posts</span> </p>
+        <i class="icon arrow-left-2-icon"></i>
+    </div>
+</div>
+
+<ul class="recent-posts-links"><li><a href="http://xbsoftware.com/blog/stop-afraid-promises-be-awesome-instead/" title="">Stop Being Afraid Of Promises And Be Awesome Instead</a></li><li><a href="http://xbsoftware.com/blog/hacked-for-good-at-hackathon-in-minsk/" title="">XB Software Hacked For Good At Hackathon in Minsk</a></li><li><a href="http://xbsoftware.com/blog/wth-2014-social-network-tourists-pintoid/" title="">What the Hack 2014: Social Net For Tourists, Pintoid and Other Hacks (Part 2)</a></li><li><a href="http://xbsoftware.com/blog/xb-software-become-belarus-htp-resident/" title="">XB Software Has Become A Resident Of The Belarus High-Tech Park</a></li><li><a href="http://xbsoftware.com/blog/file-system-javascript-processing-files-browser/" title="">File System and JavaScript. Processing Files in Browser</a></li></ul><div class="">
+                <a href="http://xbsoftware.com/blog/" title="" class="">More Posts</a>
+             </div>
+ 
+    </div>
+</div>
+
+<section class="section-leave-comments gray_bg">
+    <div class="container">
+        <div class="col-sm-12">
+        								<div id="respond" class="comment-respond">
+				
+									
+																										<div class="form-group"><label for="author" class=" col-sm-2 control-label">Full name:<span class="required">*</span></label> </div>
+<div class="form-group"><label for="email" class="col-sm-2  control-label">Email:<span class="required">*</span></label> </div>
+												<div class="form-group"><label for="comment" class="col-sm-2 control-label comment_label">Comment:</label></div>						<div class="form-group"> <p class="col-sm-7 "><span>Notify me when new comments are added</span></p></div>						
+											
+							</div>
+			        <div class="container has_arrow_back-to-top">
+    <div class="row-fluid">
+        
+    </div>
+</div>    </div>
+    </div>
+</section>
+
+
+
+
+    <footer class="footer v-padding30">
+        
+        <div class="container">
+            
+            <div class="row-fluid">
+                <div class="col-xs-12 col-sm-3 v-padding10">
+                    <img src="http://xbsoftware.com/wp-content/themes/xbs/images/logo_gray.png" alt="xb software gray logo" title="xb software gray logo" class="logo_gray">
+                    <p class="copyright"> © 2014 All rights reserved</p>
+                </div>
+                <div class=" col-xs-12 col-sm-9 v-padding10">
+                    <address class="address">
+                        <p class="col-lg-5 col-sm-12"><i class="icon marker-icon"></i>16 Bersona Street, Minsk 220030, Belarus</p>
+                        <p class="col-lg-3 col-sm-12"><i class="icon phone-icon"></i> +375 17 200 03 40 </p>
+                        
+                    </address>
+                </div>
+    
+            </div>
+        </div>
+        <div class="social_buttons social_buttons_bottom visible-xs">
+            <a href="https://plus.google.com/100824646313272709881/about" class="icon32 google_plus" target="_blank"></a>
+            <a href="https://www.facebook.com/xbsoftware" class="icon32 facebook" target="_blank"></a>
+            <a href="https://twitter.com/xbsoftware" class="icon32 twitter" target="_blank"></a>
+            <a href="http://www.linkedin.com/company/xb-software-ltd-?trk=top_nav_home" class="icon32 linkedin" target="_blank"></a>
+            <a href="http://xbsoftware.com/blog/feed" class="icon32 rss rss_on_blog" target="_blank"></a>
+        </div>
+    </footer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Understanding ECMAScript 6.html">Understanding ECMAScript 6</a></li><li><a href="./Getting Started with React and JSX.html">Getting Started with React and JSX</a></li><li><a href="./Regulex：A JavaScript Regular Expression Visualizer.html">Regulex：A JavaScript Regular Expression Visualizer</a></li><li><a href="./What's in a Function Name?.html">What's in a Function Name?</a></li><li><a href="./The Difference Between Java and JavaScript (in comic book form).html">The Difference Between Java and JavaScript (in comic book form)</a></li><li><a href="./PowerArray: The JavaScript Array with Boosted Performance.html">PowerArray: The JavaScript Array with Boosted Performance</a></li><li><a href="./Frontend Javascript-Angular developer at Contentful (Berlin, Germany).html">Frontend Javascript/Angular developer at Contentful (Berlin, Germany)</a></li><li><a href="./JavaScript Devs in High Demand (SF, LA, NY, ORD, BOS).html">JavaScript Devs in High Demand (SF, LA, NY, ORD, BOS)</a></li><li><a href="./Yahoo Mail Moving to Node and React + Flux (slide-deck).html">Yahoo Mail Moving to Node and React + Flux (slide-deck)</a></li><li><a href="./ShirtJS: JavaScript Framework Themed Clothing.html">ShirtJS: JavaScript Framework Themed Clothing</a></li><li><a href="./This Dashcam Simulation Is Just 1K Of JavaScript Magic.html">This Dashcam Simulation Is Just 1K Of JavaScript Magic</a></li><li><a href="./A Beginner's Guide to Grunt: Redux.html">A Beginner's Guide to Grunt: Redux</a></li><li><a href="./An Overview of Functional Techniques (for non FPers) using JavaScript.html">An Overview of Functional Techniques (for non FPers) using JavaScript</a></li><li><a href="./A Faster Start with Backbone.js.html">A Faster Start with Backbone.js</a></li><li><a href="./Tracking Pageviews with Google Analytics and Angular.html">Tracking Pageviews with Google Analytics and Angular</a></li><li><a href="./Understanding JavaScript Generators.html">Understanding JavaScript Generators</a></li><li><a href="./Ten Talks from NodeConf One-Shot Budapest.html">Ten Talks from NodeConf One-Shot Budapest</a></li><li><a href="./Build Production Ready JavaScript Apps With Grunt.html">Build Production Ready JavaScript Apps With Grunt</a></li><li><a href="./Adopting AngularJS for Enterprise Software.html">Adopting AngularJS for Enterprise Software</a></li><li><a href="./The Road to Ember 2.0 with Tom Dale and Yehuda Katz.html">The Road to Ember 2.0 with Tom Dale and Yehuda Katz</a></li><li><a href="./Resources for JavaScript and DOM Compatibility Tables.html">Resources for JavaScript and DOM Compatibility Tables</a></li><li><a href="./Node.js Tools for Visual Studio 1.0 Release Candidate.html">Node.js Tools for Visual Studio 1.0 Release Candidate</a></li><li><a href="./Handsontable: JavaScript Excel-like Data Grid Editor.html">Handsontable: JavaScript Excel-like Data Grid Editor</a></li><li><a href="./SVG Morpheus: JS Library for Morphing Between SVG Icons.html">SVG Morpheus: JS Library for Morphing Between SVG Icons</a></li><li><a href="./Tubemaps: Browser and Node Library and Command-Line Tool for Handling (London) Tube Data.html">Tubemaps: Browser and Node Library and Command-Line Tool for Handling (London) Tube Data</a></li><li><a href="./SmartUnderline: Better Looking Underlines on the Web.html">SmartUnderline: Better Looking Underlines on the Web</a></li><li><a href="./QuaggaJS: An Advanced Barcode-Reader Written in JavaScript.html">QuaggaJS: An Advanced Barcode-Reader Written in JavaScript</a></li><li><a href="./Jss: Dynamic Stylesheets for Web Components.html">Jss: Dynamic Stylesheets for Web Components</a></li></ul></section></div>

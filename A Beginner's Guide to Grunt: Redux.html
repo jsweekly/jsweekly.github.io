@@ -1,0 +1,288 @@
+<div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;"><meta charset="UTF8"/><title>A Beginner's Guide to Grunt: Redux</title><h1>A Beginner's Guide to Grunt: Redux</h1><p><a href="http://mattbailey.io/a-beginners-guide-to-grunt-redux/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="post">
+    
+    <p class="post-date">22 November, 2014</p>
+    <p><img alt="image" src="http://mattbailey.io/images/dist/tumblr_inline_mjrobcZQpo1qz4rgp.png"></p>
+
+<p class="lead">Back in March 2013 I wrote <a href="http://mattbailey.io/a-beginners-guide-to-grunt/" title="Matt Bailey: A Beginner's Guide To Grunt">A Beginner&#x2019;s Guide To Grunt</a>, and it&#x2019;s become the most visited article on my site. I wrote it at a time when I was just starting out with <a href="http://gruntjs.com/" title="Grunt">Grunt</a>, and it was as much a guide for myself as anyone else. Now, 18 months later, I felt it was time to revisit how I use Grunt because I&#x2019;ve learned a lot more in that time.</p>
+
+<p><strong>If you&#x2019;re itching to just see the code it&#x2019;s all <a href="https://github.com/matt-bailey/grunt-frontend-boilerplate">here on Github</a>.</strong></p>
+
+<h2>Install Node and Grunt globally</h2>
+
+<p>First of all you will need to make sure you have <a href="http://nodejs.org/download/">Node</a> and <a href="http://gruntjs.com/getting-started">Grunt CLI</a> (command line interface) installed.</p>
+
+<ul>
+<li>The Node site has various downloadable packages for different systems. <a href="http://nodejs.org/download/">Full details can be found here</a>.</li>
+<li>Once you&#x2019;ve installed Node simply run the following command in your terminal of choice (I use <a href="http://iterm2.com/">iTerm2</a>) to install <strong>grunt-cli</strong>:</li>
+</ul>
+
+<h2>Install Ruby and Sass</h2>
+
+<p><strong>Update:</strong> I&#x2019;ve recently switched from using <code>grunt-contrib-sass</code> to <code>grunt-sass</code> which uses the faster, but experimental <a href="http://libsass.org/">libsass</a> C++ compiler. As such, it doesn&#x2019;t require Ruby or the Sass gem. However, if you experience issues when compiling with <code>grunt-sass</code> you should probably use <code>grunt-contrib-sass</code>, but in that case you will need to install Ruby and the Sass gem.</p>
+
+<p><del>I use Sass as my CSS preprocessor. In order to use the Sass Grunt task you will need to install Ruby (<a href="https://www.ruby-lang.org/en/installation/">full installation instructions can be found here</a>) and, once you&#x2019;ve done that, the <a href="http://sass-lang.com/download.html">Sass</a> gem:</del></p>
+
+<h2>Create the project directories</h2>
+
+<p>Our project requires a couple of directories to be set up. Mirror the structure below:</p>
+<div class="highlight"><pre><code class="language-text">grunt/
+src/
+src/images/
+src/scripts/
+src/styles/
+</code></pre></div>
+<h2>Create a Gruntfile</h2>
+
+<p>First of all, I don&#x2019;t use &#x2018;scaffolding&#x2019; tools any more (such as <code>grunt init</code> or <a href="http://yeoman.io/">Yeoman</a>). I set up everything from scratch, which means I have a much greater understanding of what&#x2019;s going on now. It&#x2019;s really not that hard once you&#x2019;ve done it a few times.</p>
+
+<p>In the root of your project create a file called <code>Gruntfile.js</code>.</p>
+
+<p>In that file add the following code:</p>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">grunt</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="nx">require</span><span class="p">(</span><span class="s1">'time-grunt'</span><span class="p">)(</span><span class="nx">grunt</span><span class="p">);</span>
+
+    <span class="nx">require</span><span class="p">(</span><span class="s1">'load-grunt-config'</span><span class="p">)(</span><span class="nx">grunt</span><span class="p">,</span> <span class="p">{</span>
+        <span class="nx">jitGrunt</span><span class="o">:</span> <span class="kc">true</span>
+    <span class="p">});</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Believe it or not, that&#x2019;s it as far as our Gruntfile is concerned!</p>
+
+<p><code>time-grunt</code> tells you how much time each task and the total build has taken, and <code>jitGrunt: true</code> tells <code>load-grunt-config</code> to use the faster <a href="https://github.com/shootaroo/jit-grunt">jit-grunt</a> (Just In Time) task loader (this is optional, but speed is good right?).</p>
+
+<h2>Create a package file</h2>
+
+<p>Let&#x2019;s move on and also create our basic <code>package.json</code> file. This file will shortly contain our project&#x2019;s dependencies. Add the following (obviously change references to &#x2018;my project&#x2019; to the actual name of your project):</p>
+<div class="highlight"><pre><code class="language-javascript"><span class="p">{</span>
+  <span class="s2">"name"</span><span class="o">:</span> <span class="s2">"my-project"</span><span class="p">,</span>
+  <span class="s2">"version"</span><span class="o">:</span> <span class="s2">"0.0.1"</span><span class="p">,</span>
+  <span class="s2">"description"</span><span class="o">:</span> <span class="s2">"My project"</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>Add some dependencies</h2>
+
+<p>Now we have all we need to be able to start adding some modules. Run each of the lines of code below, one after the other:</p>
+<div class="highlight"><pre><code class="language-bash">npm install grunt --save-dev
+npm install <span class="nb">time</span>-grunt --save
+npm install load-grunt-config --save-dev
+npm install grunt-concurrent --save-dev
+npm install grunt-contrib-clean --save-dev
+npm install grunt-contrib-imagemin --save-dev
+npm install grunt-sass --save-dev
+npm install grunt-contrib-uglify --save-dev
+</code></pre></div>
+<p>If you look in <code>package.json</code> you should now see something like this:</p>
+<div class="highlight"><pre><code class="language-javascript"><span class="p">{</span>
+  <span class="s2">"name"</span><span class="o">:</span> <span class="s2">"my-project"</span><span class="p">,</span>
+  <span class="s2">"version"</span><span class="o">:</span> <span class="s2">"0.0.1"</span><span class="p">,</span>
+  <span class="s2">"description"</span><span class="o">:</span> <span class="s2">"My project"</span><span class="p">,</span>
+  <span class="s2">"devDependencies"</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">"grunt"</span><span class="o">:</span> <span class="s2">"^0.4.5"</span><span class="p">,</span>
+    <span class="s2">"grunt-concurrent"</span><span class="o">:</span> <span class="s2">"^1.0.0"</span><span class="p">,</span>
+    <span class="s2">"grunt-contrib-clean"</span><span class="o">:</span> <span class="s2">"^0.6.0"</span><span class="p">,</span>
+    <span class="s2">"grunt-contrib-imagemin"</span><span class="o">:</span> <span class="s2">"^0.8.1"</span><span class="p">,</span>
+    <span class="s2">"grunt-contrib-uglify"</span><span class="o">:</span> <span class="s2">"^0.6.0"</span><span class="p">,</span>
+    <span class="s2">"grunt-sass"</span><span class="o">:</span> <span class="s2">"^0.16.1"</span><span class="p">,</span>
+    <span class="s2">"load-grunt-config"</span><span class="o">:</span> <span class="s2">"^0.13.1"</span>
+  <span class="p">},</span>
+  <span class="s2">"dependencies"</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">"time-grunt"</span><span class="o">:</span> <span class="s2">"^1.0.0"</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Here is a summary of what we&#x2019;ve just installed:</p>
+
+<ul>
+<li><code>grunt</code>: The task runner itself.</li>
+<li><code>time-grunt</code>: This isn&#x2019;t required, but it&#x2019;s a neat addition - it tells you how much time each task and the total build has taken.</li>
+<li><code>load-grunt-config</code>: Allows you to keep our main Gruntfile short and succinct. More on that in a bit.</li>
+<li><code>grunt-concurrent</code>: Run tasks concurrently - Out-of-the-box Grunt will run each task one after the other, which can take a while depending on the amount and type of tasks you need to run. However, there are often tasks that are not dependent on other tasks which can be run at the same time.</li>
+<li><code>grunt-contrib-clean</code>: Quite simply, this task deletes &#x2018;stuff&#x2019; - use with caution!</li>
+<li><code>grunt-contrib-imagemin</code>: Indispensible for all your image optimisation needs.</li>
+<li><code>grunt-sass</code>: Compiles your SASS/SCSS files into CSS. <strong>Please note:</strong> This Sass task uses the faster, but more experimental <a href="http://libsass.org/">libsass</a> compiler. If you experience problems you should probably use the more stable, but slower <a href="https://github.com/gruntjs/grunt-contrib-sass">grunt-contrib-sass</a> task instead.</li>
+<li><code>grunt-contrib-uglify</code>: Makes your Javascript nice and ugly.</li>
+</ul>
+
+<h2>Configure the tasks</h2>
+
+<p>One of the best modules I&#x2019;ve discovered is <code>load-grunt-config</code>. It allows us to put the config for each of our tasks in separate files, which is far more manageable than having everything in one long Gruntfile.</p>
+
+<p>In the <code>grunt</code> directory create the following files:</p>
+<div class="highlight"><pre><code class="language-text">grunt/aliases.yaml
+grunt/concurrent.js
+grunt/clean.js
+grunt/imagemin.js
+grunt/sass.js
+grunt/uglify.js
+</code></pre></div>
+<p><strong>Note: The names of these files must match the names of the tasks.</strong></p>
+
+<p>Copy and paste the config for each task below into the relelvant file.</p>
+
+<h3>aliases.yaml</h3>
+<div class="highlight"><pre><code class="language-yaml"><span class="l-Scalar-Plain">default</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">prod</span>
+<span class="l-Scalar-Plain">dev</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="s">'concurrent:devFirst'</span>
+  <span class="p-Indicator">-</span> <span class="s">'concurrent:devSecond'</span>
+<span class="l-Scalar-Plain">img</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="s">'concurrent:imgFirst'</span>
+<span class="l-Scalar-Plain">devimg</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">dev</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">img</span>
+<span class="l-Scalar-Plain">prod</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="s">'concurrent:prodFirst'</span>
+  <span class="p-Indicator">-</span> <span class="s">'concurrent:prodSecond'</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">img</span>
+</code></pre></div>
+<p>What we&#x2019;re doing here is defining various aliases for our tasks:</p>
+
+<ul>
+<li><code>default</code> - Runs the <code>prod</code> tasks when you run <code>grunt</code> on the command line.</li>
+<li><code>dev</code> - Runs the development tasks (but not image tasks)</li>
+<li><code>img</code> - Runs the image tasks</li>
+<li><code>devimg</code> - Runs the development and image tasks</li>
+<li><code>prod</code> - Runs the production and image tasks</li>
+</ul>
+
+<p><strong><a href="https://github.com/firstandthird/load-grunt-config#aliases">Click here</a> for more information on configuring task aliases for <code>load-grunt-config</code>.</strong></p>
+
+<h3>concurrent.js</h3>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+
+    <span class="c1">// Task options</span>
+    <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">limit</span><span class="o">:</span> <span class="mi">4</span>
+    <span class="p">},</span>
+
+    <span class="c1">// Dev tasks</span>
+    <span class="nx">devFirst</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">'clean'</span>
+    <span class="p">],</span>
+    <span class="nx">devSecond</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">'sass:dev'</span><span class="p">,</span>
+        <span class="s1">'uglify'</span>
+    <span class="p">],</span>
+
+    <span class="c1">// Production tasks</span>
+    <span class="nx">prodFirst</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">'clean'</span>
+    <span class="p">],</span>
+    <span class="nx">prodSecond</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">'sass:prod'</span><span class="p">,</span>
+        <span class="s1">'uglify'</span>
+    <span class="p">],</span>
+
+    <span class="c1">// Image tasks</span>
+    <span class="nx">imgFirst</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">'imagemin'</span>
+    <span class="p">]</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Taking the dev tasks as an example, you can see that they are set up to run <code>clean</code> first, and then <code>sass:dev</code> and <code>uglify</code> concurrently to regenerate the css and javascript.</p>
+
+<p><strong><a href="https://github.com/sindresorhus/grunt-concurrent">Click here</a> for more information on configuring <code>grunt-concurrent</code>.</strong></p>
+
+<h3>clean.js</h3>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">all</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s2">"dist/"</span>
+    <span class="p">]</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Configuring <code>grunt-contrib-clean</code> is quite simple. Here I&#x2019;m just removing all the contents of the <code>dist/</code> directory. Use this task with caution - it will indiscriminately delete whatever you tell it to without any warnings, so make sure you configure it correctly.</p>
+
+<p><strong><a href="https://github.com/gruntjs/grunt-contrib-clean">Click here</a> for more information on configuring <code>grunt-contrib-clean</code>.</strong></p>
+
+<h3>imagemin.js</h3>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">all</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">files</span><span class="o">:</span> <span class="p">[{</span>
+            <span class="nx">expand</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+            <span class="nx">cwd</span><span class="o">:</span> <span class="s1">'src/'</span><span class="p">,</span>
+            <span class="nx">src</span><span class="o">:</span> <span class="p">[</span><span class="s1">'images/*.{png,jpg,gif}'</span><span class="p">],</span>
+            <span class="nx">dest</span><span class="o">:</span> <span class="s1">'dist/images/'</span>
+        <span class="p">}]</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>The config above simply optimises all images in <code>src/images/</code> and saves them to <code>dist/images/</code>.</p>
+
+<p><strong><a href="https://github.com/gruntjs/grunt-contrib-imagemin">Click here</a> for more information on configuring <code>grunt-contrib-imagemin</code>.</strong></p>
+
+<h3>sass.js</h3>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1">// Development settings</span>
+    <span class="nx">dev</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">outputStyle</span><span class="o">:</span> <span class="s1">'nested'</span><span class="p">,</span>
+            <span class="nx">sourceMap</span><span class="o">:</span> <span class="kc">true</span>
+        <span class="p">},</span>
+        <span class="nx">files</span><span class="o">:</span> <span class="p">[{</span>
+            <span class="nx">expand</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+            <span class="nx">cwd</span><span class="o">:</span> <span class="s1">'src/styles'</span><span class="p">,</span>
+            <span class="nx">src</span><span class="o">:</span> <span class="p">[</span><span class="s1">'*.scss'</span><span class="p">],</span>
+            <span class="nx">dest</span><span class="o">:</span> <span class="s1">'dist/styles'</span><span class="p">,</span>
+            <span class="nx">ext</span><span class="o">:</span> <span class="s1">'.css'</span>
+        <span class="p">}]</span>
+    <span class="p">},</span>
+    <span class="c1">// Production settings</span>
+    <span class="nx">prod</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">outputStyle</span><span class="o">:</span> <span class="s1">'compressed'</span><span class="p">,</span>
+            <span class="nx">sourceMap</span><span class="o">:</span> <span class="kc">false</span>
+        <span class="p">},</span>
+        <span class="nx">files</span><span class="o">:</span> <span class="p">[{</span>
+            <span class="nx">expand</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+            <span class="nx">cwd</span><span class="o">:</span> <span class="s1">'src/styles'</span><span class="p">,</span>
+            <span class="nx">src</span><span class="o">:</span> <span class="p">[</span><span class="s1">'*.scss'</span><span class="p">],</span>
+            <span class="nx">dest</span><span class="o">:</span> <span class="s1">'dist/styles'</span><span class="p">,</span>
+            <span class="nx">ext</span><span class="o">:</span> <span class="s1">'.css'</span>
+        <span class="p">}]</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>I&#x2019;ve split the Sass task into development and production workflows. The config is very similar, but for development purposes I&#x2019;ve set the output style to <code>nested</code> and activated source maps.</p>
+
+<p><strong><a href="https://github.com/sindresorhus/grunt-sass">Click here</a> for more information on configuring <code>grunt-sass</code>.</strong></p>
+
+<h3>uglify.js</h3>
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">all</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">files</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s1">'dist/scripts/main.min.js'</span><span class="o">:</span> <span class="p">[</span><span class="s1">'src/scripts/main.js'</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>The uglify task simply takes Javascript files and minifies them - simples!</p>
+
+<p><strong><a href="https://github.com/gruntjs/grunt-contrib-uglify">Click here</a> for more information on configuring <code>grunt-contrib-uglify</code>.</strong></p>
+
+<h2>Run the tasks</h2>
+
+<p>If you&#x2019;ve finished setting up your project as outlined above then you can now run the tasks. As discussed earlier there are various task aliases you can run. For now just run <code>grunt</code> on the command line from the root of your project.</p>
+
+<p>All being well you should see a load of text scroll up the screen and then finish with a message that looks something like this.</p>
+
+<p><img src="http://mattbailey.io/images/dist/grunt-frontend-boilerplate-1.png" alt="Grunt Production Build Output"></p>
+
+<p>I love the little summary that <code>time-grunt</code> provides. I can see how long each concurrent task-set took to run, plus how long the whole build process took - neat!</p>
+
+<p>Depending on your requirements you could also choose to run <code>grunt dev</code>, <code>grunt devimg</code>, or <code>grunt img</code>.</p>
+
+<h2>Summary</h2>
+
+<p>And that&#x2019;s about all there is to it really. If you experiment with the above you&#x2019;ll soon gain confidence, start adding new tasks and modifying the workflow to better suit your own requirements.</p>
+
+<p><strong>Once again, the code accompanying this article can also be found <a href="https://github.com/matt-bailey/grunt-frontend-boilerplate">on Github</a>.</strong></p>
+
+<p>Leave any questions you have in the comments below, or file issues on <a href="https://github.com/matt-bailey/grunt-frontend-boilerplate/issues">github</a>.</p>
+
+</div>
+
+
+
+
+            </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Understanding ECMAScript 6.html">Understanding ECMAScript 6</a></li><li><a href="./Getting Started with React and JSX.html">Getting Started with React and JSX</a></li><li><a href="./Regulex：A JavaScript Regular Expression Visualizer.html">Regulex：A JavaScript Regular Expression Visualizer</a></li><li><a href="./What's in a Function Name?.html">What's in a Function Name?</a></li><li><a href="./The Difference Between Java and JavaScript (in comic book form).html">The Difference Between Java and JavaScript (in comic book form)</a></li><li><a href="./PowerArray: The JavaScript Array with Boosted Performance.html">PowerArray: The JavaScript Array with Boosted Performance</a></li><li><a href="./Frontend Javascript-Angular developer at Contentful (Berlin, Germany).html">Frontend Javascript/Angular developer at Contentful (Berlin, Germany)</a></li><li><a href="./JavaScript Devs in High Demand (SF, LA, NY, ORD, BOS).html">JavaScript Devs in High Demand (SF, LA, NY, ORD, BOS)</a></li><li><a href="./Yahoo Mail Moving to Node and React + Flux (slide-deck).html">Yahoo Mail Moving to Node and React + Flux (slide-deck)</a></li><li><a href="./ShirtJS: JavaScript Framework Themed Clothing.html">ShirtJS: JavaScript Framework Themed Clothing</a></li><li><a href="./This Dashcam Simulation Is Just 1K Of JavaScript Magic.html">This Dashcam Simulation Is Just 1K Of JavaScript Magic</a></li><li><a href="./A Beginner's Guide to Grunt: Redux.html">A Beginner's Guide to Grunt: Redux</a></li><li><a href="./An Overview of Functional Techniques (for non FPers) using JavaScript.html">An Overview of Functional Techniques (for non FPers) using JavaScript</a></li><li><a href="./A Faster Start with Backbone.js.html">A Faster Start with Backbone.js</a></li><li><a href="./Tracking Pageviews with Google Analytics and Angular.html">Tracking Pageviews with Google Analytics and Angular</a></li><li><a href="./Understanding JavaScript Generators.html">Understanding JavaScript Generators</a></li><li><a href="./Ten Talks from NodeConf One-Shot Budapest.html">Ten Talks from NodeConf One-Shot Budapest</a></li><li><a href="./Build Production Ready JavaScript Apps With Grunt.html">Build Production Ready JavaScript Apps With Grunt</a></li><li><a href="./Adopting AngularJS for Enterprise Software.html">Adopting AngularJS for Enterprise Software</a></li><li><a href="./The Road to Ember 2.0 with Tom Dale and Yehuda Katz.html">The Road to Ember 2.0 with Tom Dale and Yehuda Katz</a></li><li><a href="./Resources for JavaScript and DOM Compatibility Tables.html">Resources for JavaScript and DOM Compatibility Tables</a></li><li><a href="./Node.js Tools for Visual Studio 1.0 Release Candidate.html">Node.js Tools for Visual Studio 1.0 Release Candidate</a></li><li><a href="./Handsontable: JavaScript Excel-like Data Grid Editor.html">Handsontable: JavaScript Excel-like Data Grid Editor</a></li><li><a href="./SVG Morpheus: JS Library for Morphing Between SVG Icons.html">SVG Morpheus: JS Library for Morphing Between SVG Icons</a></li><li><a href="./Tubemaps: Browser and Node Library and Command-Line Tool for Handling (London) Tube Data.html">Tubemaps: Browser and Node Library and Command-Line Tool for Handling (London) Tube Data</a></li><li><a href="./SmartUnderline: Better Looking Underlines on the Web.html">SmartUnderline: Better Looking Underlines on the Web</a></li><li><a href="./QuaggaJS: An Advanced Barcode-Reader Written in JavaScript.html">QuaggaJS: An Advanced Barcode-Reader Written in JavaScript</a></li><li><a href="./Jss: Dynamic Stylesheets for Web Components.html">Jss: Dynamic Stylesheets for Web Components</a></li></ul></section></div>
