@@ -1,0 +1,73 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</title><h1>Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</h1><p><a href="http://duktape.org/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div> 
+<div class="content" id="site-middle"><div id="front-blurp">
+
+<p>Duktape is an <b>embeddable Javascript</b> engine,
+with a focus on <b>portability</b> and compact <b>footprint</b>.</p>
+<p>Duktape is easy to integrate into a C/C++ project: add <tt>duktape.c</tt>
+and <tt>duktape.h</tt> to your build, and use the Duktape API to call Ecmascript
+functions from C code and vice versa.</p>
+<p>Main features:</p>
+<ul><li>Embeddable, portable, compact</li>
+<li>Ecmascript E5/E5.1 compliant</li>
+<li>Built-in regular expression engine</li>
+<li>Built-in Unicode support</li>
+<li>Minimal platform dependencies</li>
+<li>Combined reference counting and mark-and-sweep garbage collection
+    with finalization</li>
+<li>Liberal license</li>
+</ul><p>Current status:</p>
+<ul><li>Alpha: functional, API in flux</li>
+</ul></div><div id="front-steps">
+
+(See <a href="http://duktape.org/guide.html#gettingstarted">Getting started</a> for a more
+detailed introduction.)
+
+<h2><span class="step">1</span> Add to build</h2>
+<p>Add Duktape C source and header to your build.  Any build system can
+be used.  The distributable contains an example Makefile for reference.
+In the simplest case:</p>
+<pre>
+$ gcc -o test test.c duktape.c -lm
+$ ./test
+Hello world!
+</pre>
+<h2><span class="step">2</span> Initialize a context</h2>
+<p>Initialize and use Duktape somewhere in your program:</p>
+<pre class="c-code">
+<span class="preproc">#include</span><span class="string">"duktape.h"</span>
+
+<span class="type">int</span><span class="function">main</span><span class="symbol">(</span><span class="type">int</span><span class="normal"> argc</span><span class="symbol">,</span><span class="type">char</span><span class="symbol">*</span><span class="normal">argv</span><span class="symbol">[])</span><span class="cbracket">{</span>
+<span class="usertype">duk_context</span><span class="symbol">*</span><span class="normal">ctx </span><span class="symbol">=</span><span class="function">duk_create_heap_default</span><span class="symbol">();</span>
+<span class="function">duk_eval_string</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="string">"print('Hello world!');"</span><span class="symbol">);</span>
+<span class="function">duk_destroy_heap</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">);</span>
+<span class="keyword">return</span><span class="number">0</span><span class="symbol">;</span>
+<span class="cbracket">}</span>
+</pre>
+<h2><span class="step">3</span> Add C function bindings</h2>
+<p>To call a C function from Ecmascript code, first declare your
+C function:</p>
+<pre class="c-code"><span class="type">int</span><span class="function">adder</span><span class="symbol">(</span><span class="usertype">duk_context</span><span class="symbol">*</span><span class="normal">ctx</span><span class="symbol">)</span><span class="cbracket">{</span>
+<span class="type">int</span><span class="normal"> i</span><span class="symbol">;</span>
+<span class="type">int</span><span class="normal"> n </span><span class="symbol">=</span><span class="function">duk_get_top</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">);</span>
+<span class="type">double</span><span class="normal"> res </span><span class="symbol">=</span><span class="number">0.0</span><span class="symbol">;</span>
+
+<span class="keyword">for</span><span class="symbol">(</span><span class="normal">i </span><span class="symbol">=</span><span class="number">0</span><span class="symbol">;</span><span class="normal"> i </span><span class="symbol">&lt;</span><span class="normal"> n</span><span class="symbol">;</span><span class="normal"> i</span><span class="symbol">++)</span><span class="cbracket">{</span>
+<span class="normal">    res </span><span class="symbol">+=</span><span class="function">duk_to_number</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="normal"> i</span><span class="symbol">);</span>
+<span class="cbracket">}</span>
+
+<span class="function">duk_push_number</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="normal"> res</span><span class="symbol">);</span>
+<span class="keyword">return</span><span class="number">1</span><span class="symbol">;</span>
+<span class="cbracket">}</span>
+</pre>
+<p>Register your function e.g. into the global object:</p>
+<pre class="c-code"><span class="function">duk_push_global_object</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">);</span>
+<span class="function">duk_push_c_function</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="normal"> adder</span><span class="symbol">,</span><span class="normal"> DUK_VARARGS</span><span class="symbol">);</span>
+<span class="function">duk_put_prop_string</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="symbol">-</span><span class="number">2</span><span class="symbol">,</span><span class="string">"adder"</span><span class="symbol">);</span>
+<span class="function">duk_pop</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">);</span>
+</pre>
+<p>You can then call your function from Ecmascript code:</p>
+<pre class="c-code"><span class="function">duk_eval_string</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">,</span><span class="string">"print('2+3=' + adder(2, 3));"</span><span class="symbol">);</span>
+<span class="function">duk_pop</span><span class="symbol">(</span><span class="normal">ctx</span><span class="symbol">);</span>
+</pre>
+</div></div> 
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./The State of JavaScript in 2015.html">The State of JavaScript in 2015</a></li><li><a href="./io.js: A Node and npm-compatible JavaScript Platform.html">io.js: A Node and npm-compatible JavaScript Platform</a></li><li><a href="./The DailyJS JavaScript Developer Survey 2014.html">The DailyJS JavaScript Developer Survey 2014</a></li><li><a href="./SVG In-Depth Online-In-Person Workshop.html">SVG In-Depth Online/In-Person Workshop</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-30504-i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/30504/i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters"></a></li><li><a href="./Getting Started with JavaScript for Automation on OS X Yosemite.html">Getting Started with JavaScript for Automation on OS X Yosemite</a></li><li><a href="./Preparing for The Future of AngularJS.html">Preparing for The Future of AngularJS</a></li><li><a href="./Relieving Backbone Pain with Flux and React (video).html">Relieving Backbone Pain with Flux and React (video)</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON).html">Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON)</a></li><li><a href="./JS Remote Conf: An Online JavaScript Conference in February 2015.html">JS Remote Conf: An Online JavaScript Conference in February 2015</a></li><li><a href="./An Update on the Node.js Advisory Board.html">An Update on the Node.js Advisory Board</a></li><li><a href="./Demystifying JavaScript Variable Scope and Hoisting.html">Demystifying JavaScript Variable Scope and Hoisting</a></li><li><a href="./JavaScript Modules the ES6 Way.html">JavaScript Modules the ES6 Way</a></li><li><a href="./Top 10 Mistakes Node.js Developers Make.html">Top 10 Mistakes Node.js Developers Make</a></li><li><a href="./Level Up in Backbone.js, A Powerful JavaScript MVC Framework.html">Level Up in Backbone.js, A Powerful JavaScript MVC Framework</a></li><li><a href="./Creating Nice Alerts with sweetAlert.html">Creating Nice Alerts with sweetAlert</a></li><li><a href="./Use ngStorage For All Your AngularJS Local Storage Needs.html">Use ngStorage For All Your AngularJS Local Storage Needs</a></li><li><a href="./Calling an Array of Functions in JavaScript.html">Calling an Array of Functions in JavaScript</a></li><li><a href="./The Anatomy of A Simple Templating Engine.html">The Anatomy of A Simple Templating Engine</a></li><li><a href="./The Case For Marionette.js (a Backbone framework).html">The Case For Marionette.js (a Backbone framework)</a></li><li><a href="./PhotoSwipe: A Photo Gallery, with No Dependencies.html">PhotoSwipe: A Photo Gallery, with No Dependencies</a></li><li><a href="./MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images.html">MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images</a></li><li><a href="./Preceptor: Test Runner and Aggregator.html">Preceptor: Test Runner and Aggregator</a></li><li><a href="./React Tween State: The Equivalent of React's this.setState, but for Animated Tweening.html">React Tween State: The Equivalent of React's this.setState, but for Animated Tweening</a></li><li><a href="./Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C.html">Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</a></li><li><a href="./MetricsGraphics.js: A Lightweight Graphics Library Based On D3.html">MetricsGraphics.js: A Lightweight Graphics Library Based On D3</a></li><li><a href="./Tweene: JavaScript Animation Proxy (Wraps-Abstracts Other Libs).html">Tweene: JavaScript Animation Proxy (Wraps/Abstracts Other Libs)</a></li><li><a href="./MustBe: Authorization Plumbing For Node.js - Express Apps.html">MustBe: Authorization Plumbing For Node.js / Express Apps</a></li></ul></section></div>

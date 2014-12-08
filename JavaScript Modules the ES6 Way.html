@@ -1,0 +1,149 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>JavaScript Modules the ES6 Way</title><h1>JavaScript Modules the ES6 Way</h1><p><a href="http://24ways.org/2014/javascript-modules-the-es6-way/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="article_main e-content">
+                              
+                <p class="lede">JavaScript admittedly has plenty of flaws, but one of the largest and most prominent is the lack of a module system: a way to split up your application into a series of smaller files that can depend on each other to function correctly. </p>
+
+<p>This is something nearly all other languages come with out of the box, whether it be Ruby&#x2019;s <code>require</code>, Python&#x2019;s <code>import</code>, or any other language you&#x2019;re familiar with. Even <span class="caps">CSS</span> has <tt>@import</tt>! JavaScript has nothing of that sort, and this has caused problems for  application developers as they go from working with small websites to full client-side applications. Let&#x2019;s be clear: it doesn&#x2019;t mean the new module system in the upcoming version of JavaScript won&#x2019;t be useful to you if you&#x2019;re building smaller websites rather than the next Instagram.</p>
+
+<p>Thankfully, the lack of a module system will soon be a problem of the past. The next version of JavaScript, <span class="caps">ECMAS</span>cript 6, will bring with it a full-featured module and dependency management solution for JavaScript. The bad news is that it won&#x2019;t be landing in browsers for a while yet &#x2013; but the good news is that the specification for the module system and how it will look has been finalised. The <em>even better</em> news is that there are tools available to get it all working in browsers today without too much hassle. In this post I&#x2019;d like to give you the gift of JS modules and show you the syntax, and how to use them in browsers today. It&#x2019;s much simpler than you might think.</p>
+
+<h2>What is ES6?</h2>
+
+<p><span class="caps">ECMAS</span>cript is a scripting language that is standardised by a company called <a href="http://www.ecma-international.org/">Ecma International</a>. JavaScript is an implementation of <span class="caps">ECMAS</span>cript. <span class="caps">ECMAS</span>cript 6 is simply the next version of the <span class="caps">ECMAS</span>cript standard and, hence, the next version of JavaScript. The spec aims to be fully comfirmed and complete by the end of 2014, with a target initial release date of June 2015. It&#x2019;s impossible to know when we will have full feature support across the most popular browsers, but already some ES6 features are landing in the latest builds of Chrome and Firefox. You shouldn&#x2019;t expect to be able to use the new features across browsers without some form of additional tooling or library for a while yet.</p>
+
+<h2>The ES6 module spec</h2>
+
+<p>The ES6 module spec was fully confirmed in July 2014, so all the syntax I will show you in this article is not expected to change. I&#x2019;ll first show you the syntax and the new <span class="caps">API</span>s being added to the language, and then look at how to use them today. There are two parts to the new module system. The first is the syntax for declaring modules and dependencies in your JS files, and the second is a programmatic <span class="caps">API</span> for loading in modules manually. The first is what most people are expected to use most of the time, so it&#x2019;s what I&#x2019;ll focus on more.</p>
+
+<h3>Module syntax</h3>
+
+<p>The key thing to understand here is that modules have two key components. First, they have <em>dependencies</em>. These are things that the module you are writing depends on to function correctly. For example, if you were building a carousel module that used jQuery, you would say that jQuery is a dependency of your carousel. You <em>import</em> these dependencies into your module, and we&#x2019;ll see how to do that in a minute. Second, modules have <em>exports</em>. These are the functions or variables that your module exposes publicly to anything that imports it. Using jQuery as the example again, you could say that jQuery exports the <code>$</code> function. Modules that depend on and hence import jQuery get access to the <code>$</code> function, because jQuery exports it.</p>
+
+<p>Another important thing to note is that when I discuss a module, all I really mean is a JavaScript file. There&#x2019;s no extra syntax to use other than the new ES6 syntax. Once ES6 lands, modules and files will be analogous.</p>
+
+<h4>Named exports</h4>
+
+<p>Modules can export multiple objects, which can be either plain old variables or JavaScript functions. You denote something to be exported with the <code>export</code> keyword:</p>
+
+<pre class="language-javascript"><code>export function double(x) {
+  return x + x;
+};</code></pre>
+
+
+<p>You can also store something in a variable then export it. If you do that, you have to wrap the variable in a set of curly braces.</p>
+
+<pre class="language-javascript"><code>var double = function(x) {
+  return x + x;
+}
+
+export { double };</code></pre>
+
+<p>A module can then import the <code>double</code> function like so:</p>
+
+<pre class="language-javascript"><code>import { double } from 'mymodule';
+double(2); // 4</code></pre>
+
+<p>Again, curly braces are required around the variable you would like to import. It&#x2019;s also important to note that <code>from 'mymodule'</code> will look for a file called <em>mymodule.js</em> in the same directory as the file you are requesting the import from. There is no need to add the <em>.js</em> extension.</p>
+
+<p>The reason for those extra braces is that this syntax lets you export multiple variables:</p>
+
+<pre class="language-javascript"><code>var double = function(x) {
+  return x + x;
+}
+
+var square = function(x) {
+  return x * x;
+}
+
+export { double, square }</code></pre>
+
+<p>I personally prefer this syntax over the <code>export function &#x2026;</code>, but only because it makes it much clearer to me what the module exports. Typically I will have my <code>export {&#x2026;}</code> line at the bottom of the file, which means I can quickly look in one place to determine what the module is exporting.</p>
+
+<p>A file importing both <code>double</code> and <code>square</code> can do so in just the way you&#x2019;d expect:</p>
+
+<pre class="language-javascript"><code>import { double, square } from 'mymodule';
+double(2); // 4
+square(3); // 9</code></pre>
+
+<p>With this approach you can&#x2019;t easily import an entire module and all its methods. This is by design &#x2013; it&#x2019;s much better and you&#x2019;re encouraged to import just the functions you need to use.</p>
+
+<h4>Default exports</h4>
+
+<p>Along with named exports, the system also lets a module have a default export. This is useful when you are working with a large library such as jQuery, Underscore, Backbone and others, and just want to import the entire library. A module can define its default export (it can only ever have one default export) like so:</p>
+
+<pre class="language-javascript"><code>export default function(x) {
+  return x + x;
+}</code></pre>
+
+<p>And that can be imported:</p>
+
+<pre class="language-javascript"><code>import double from 'mymodule';
+double(2); // 4</code></pre>
+
+
+<p>This time you do not use the curly braces around the name of the object you are importing. Also notice how you can name the import whatever you&#x2019;d like. Default exports are not named, so you can import them as anything you like:</p>
+
+<pre class="language-javascript"><code>import christmas from 'mymodule';
+christmas(2); // 4</code></pre>
+
+<p>The above is entirely valid.</p>
+
+<p>Although it&#x2019;s not something that is used too often, a module can have both named exports and a default export, if you wish.</p>
+
+<p>One of the design goals of the ES6 modules spec was to favour default exports. There are many reasons behind this, and there is a <a href="https://esdiscuss.org/topic/moduleimport#content-0">very detailed discussion on the ES Discuss site</a> about it. That said, if you find yourself preferring named exports, that&#x2019;s fine, and you shouldn&#x2019;t change that to meet the preferences of those designing the spec.</p>
+
+<h3>Programmatic <span class="caps">API</span></h3>
+
+<p>Along with the syntax above, there is also a new <span class="caps">API</span> being added to the language so you can programmatically import modules. It&#x2019;s pretty rare you would use this, but one obvious example is loading a module conditionally based on some variable or property. You could easily import a polyfill, for example, if the user&#x2019;s browser didn&#x2019;t support a feature your app relied on. An example of doing this is:</p>
+
+<pre class="language-javascript"><code>if(someFeatureNotSupported) {
+  System.import('my-polyfill').then(function(myPolyFill) {
+    // use the module from here
+  });
+}</code></pre>
+
+<p><code>System.import</code> will return a promise, which, if you&#x2019;re not familiar, you can read about in this <a href="http://www.html5rocks.com/en/tutorials/es6/promises/">excellent article on HTMl5 Rocks by Jake Archibald</a>. A promise basically lets you attach callback functions that are run when the asynchronous operation (in this case, <code>System.import</code>), is complete.</p>
+
+<p>This programmatic <span class="caps">API</span> opens up a lot of possibilities and will also provide hooks to allow you to register callbacks that will run at certain points in the lifetime of a module. Those hooks and that syntax are slightly less set in stone, but when they are confirmed they will provide really useful functionality. For example, you could write code that would run every module that you import through something like <span class="caps">JSH</span>int before importing it. In development that would provide you with an easy way to keep your code quality high without having to run a command line watch task.</p>
+
+<h2>How to use it today</h2>
+
+<p>It&#x2019;s all well and good having this new syntax, but right now it won&#x2019;t work in any browser &#x2013; and it&#x2019;s not likely to for a long time. Maybe in next year&#x2019;s 24 ways there will be an article on how you can use ES6 modules with no extra work in the browser, but for now we&#x2019;re stuck with a bit of extra work.</p>
+
+<h3>ES6 module transpiler</h3>
+
+<p>One solution is to use the <a href="https://github.com/esnext/es6-module-transpiler">ES6 module transpiler</a>, a compiler that lets you write your JavaScript using the ES6 module syntax (actually a subset of it &#x2013; not quite everything is supported, but the main features are) and have it compiled into either CommonJS-style code (CommonJS is the module specification that NodeJS and Browserify use), or into <span class="caps">AMD</span>-style code (the spec RequireJS uses). There are also <a href="https://github.com/esnext/es6-module-transpiler#build-tools">plugins for all the popular build tools, including Grunt and Gulp</a>.</p>
+
+<p>The advantage of using this transpiler is that if you are already using a tool like RequireJS or Browserify, you can drop the transpiler in, start writing in ES6 and not worry about any additional work to make the code work in the browser, because you should already have that set up already. If you don&#x2019;t have any system in place for handling modules in the browser, using the transpiler doesn&#x2019;t really make sense. Remember, all this does is convert ES6 module code into CommonJS- or <span class="caps">AMD</span>-compliant JavaScript. It doesn&#x2019;t do anything to help you get that code running in the browser, but if you have that part sorted it&#x2019;s a really nice addition to your workflow. If you would like a tutorial on how to do this, I wrote a post back in June 2014 on <a href="http://javascriptplayground.com/blog/2014/06/es6-modules-today/">using ES6 with the ES6 module transpiler</a>.</p>
+
+<h3>SystemJS</h3>
+
+<p>Another solution is <a href="https://github.com/systemjs/systemjs">SystemJS</a>. It&#x2019;s the best solution in my opinion, particularly if you are starting a new project from scratch, or want to use ES6 modules on a project where you have no current module system in place. SystemJS is a spec-compliant universal module loader: it loads ES6 modules, <span class="caps">AMD</span> modules, CommonJS modules, as well as modules that just add a variable to the global scope (<code>window</code>, in the browser).</p>
+
+<p>To load in ES6 files, SystemJS also depends on two other libraries: the <a href="https://github.com/ModuleLoader/es6-module-loader/tree/v0.9.4">ES6 module loader polyfill</a>; and <a href="https://github.com/google/traceur-compiler/">Traceur</a>. Traceur is best accessed through the <a href="https://github.com/jmcriffey/bower-traceur">bower-traceur</a> package, as the main repository doesn&#x2019;t have an easy to find downloadable version. The ES6 module load polyfill implements <code>System.import</code>, and lets you load in files using it. Traceur is an ES6-to-ES5 module loader. It takes code written in ES6, the newest version of JavaScript, and <em>transpiles</em> it into ES5, the version of JavaScript widely implemented in browsers. The advantage of this is that you can play with the new features of the language today, even though they are not supported in browsers. The drawback is that you have to run all your files through Traceur every time you save them, but this is easily automated. Additionally, if you use SystemJS, the Traceur compilation is done automatically for you.</p>
+
+<p>All you need to do to get SystemJS running is to add a <code>&lt;script&gt;</code> element to load SystemJS into your webpage. It will then automatically load the ES6 module loader and Traceur files when it needs them. In your <span class="caps">HTML</span> you then need to use <code>System.import</code> to load in your module:</p>
+
+<pre class="html"><code>&lt;script&gt;
+  System.import('./app');
+&lt;/script&gt;</code></pre>
+
+<p>When you load the page, <em>app.js</em> will be asynchronously loaded. Within <em>app.js</em>, you can now use ES6 modules. SystemJS will detect that the file is an ES6 file, automatically load Traceur, and compile the file into ES5 so that it works in the browser. It does all this dynamically in the browser, but there are tools to bundle your application in production, so it doesn&#x2019;t make a lot of requests on the live site. In development though, it makes for a really nice workflow.</p>
+
+<p>When working with SystemJS and modules in general, the best approach is to have a main module (in our case <em>app.js</em>) that is the main entry point for your application. <em>app.js</em> should then be responsible for loading all your application&#x2019;s modules. This forces you to keep your application organised by only loading one file initially, and having the rest dealt with by that file.</p>
+
+<p>SystemJS also provides a <a href="https://github.com/systemjs/systemjs#es6-systemregister-compilation">workflow for bundling your application together into one file</a>.</p>
+
+<h2>Conclusion</h2>
+
+<p>ES6 modules may be at least six months to a year away (if not more) but that doesn&#x2019;t mean they can&#x2019;t be used today. Although there is an overhead to using them now &#x2013; with the work required to set up SystemJS, the module transpiler, or another solution &#x2013; that doesn&#x2019;t mean it&#x2019;s not worthwhile. Using any module system in the browser, whether that be RequireJS, Browserify or another alternative, requires extra tooling and libraries to support it, and I would argue that the effort to set up SystemJS is no greater than that required to configure any other tool. It also comes with the extra benefit that when the syntax is supported in browsers, you get a free upgrade. You&#x2019;ll be able to remove SystemJS and have everything continue to work, backed by the native browser solution.</p>
+
+<p>If you are starting a new project, I would strongly advocate using ES6 modules. It is a syntax and specification that is not going away at all, and will soon be supported in browsers. Investing time in learning it now will pay off hugely further down the road.</p>
+
+<h2>Further reading</h2>
+
+<p>If you&#x2019;d like to delve further into ES6 modules (or ES6 generally) and using them today, I recommend the following resources:</p>
+
+
+            </div>
+
+            </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./The State of JavaScript in 2015.html">The State of JavaScript in 2015</a></li><li><a href="./io.js: A Node and npm-compatible JavaScript Platform.html">io.js: A Node and npm-compatible JavaScript Platform</a></li><li><a href="./The DailyJS JavaScript Developer Survey 2014.html">The DailyJS JavaScript Developer Survey 2014</a></li><li><a href="./SVG In-Depth Online-In-Person Workshop.html">SVG In-Depth Online/In-Person Workshop</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-30504-i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/30504/i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters"></a></li><li><a href="./Getting Started with JavaScript for Automation on OS X Yosemite.html">Getting Started with JavaScript for Automation on OS X Yosemite</a></li><li><a href="./Preparing for The Future of AngularJS.html">Preparing for The Future of AngularJS</a></li><li><a href="./Relieving Backbone Pain with Flux and React (video).html">Relieving Backbone Pain with Flux and React (video)</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON).html">Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON)</a></li><li><a href="./JS Remote Conf: An Online JavaScript Conference in February 2015.html">JS Remote Conf: An Online JavaScript Conference in February 2015</a></li><li><a href="./An Update on the Node.js Advisory Board.html">An Update on the Node.js Advisory Board</a></li><li><a href="./Demystifying JavaScript Variable Scope and Hoisting.html">Demystifying JavaScript Variable Scope and Hoisting</a></li><li><a href="./JavaScript Modules the ES6 Way.html">JavaScript Modules the ES6 Way</a></li><li><a href="./Top 10 Mistakes Node.js Developers Make.html">Top 10 Mistakes Node.js Developers Make</a></li><li><a href="./Level Up in Backbone.js, A Powerful JavaScript MVC Framework.html">Level Up in Backbone.js, A Powerful JavaScript MVC Framework</a></li><li><a href="./Creating Nice Alerts with sweetAlert.html">Creating Nice Alerts with sweetAlert</a></li><li><a href="./Use ngStorage For All Your AngularJS Local Storage Needs.html">Use ngStorage For All Your AngularJS Local Storage Needs</a></li><li><a href="./Calling an Array of Functions in JavaScript.html">Calling an Array of Functions in JavaScript</a></li><li><a href="./The Anatomy of A Simple Templating Engine.html">The Anatomy of A Simple Templating Engine</a></li><li><a href="./The Case For Marionette.js (a Backbone framework).html">The Case For Marionette.js (a Backbone framework)</a></li><li><a href="./PhotoSwipe: A Photo Gallery, with No Dependencies.html">PhotoSwipe: A Photo Gallery, with No Dependencies</a></li><li><a href="./MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images.html">MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images</a></li><li><a href="./Preceptor: Test Runner and Aggregator.html">Preceptor: Test Runner and Aggregator</a></li><li><a href="./React Tween State: The Equivalent of React's this.setState, but for Animated Tweening.html">React Tween State: The Equivalent of React's this.setState, but for Animated Tweening</a></li><li><a href="./Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C.html">Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</a></li><li><a href="./MetricsGraphics.js: A Lightweight Graphics Library Based On D3.html">MetricsGraphics.js: A Lightweight Graphics Library Based On D3</a></li><li><a href="./Tweene: JavaScript Animation Proxy (Wraps-Abstracts Other Libs).html">Tweene: JavaScript Animation Proxy (Wraps/Abstracts Other Libs)</a></li><li><a href="./MustBe: Authorization Plumbing For Node.js - Express Apps.html">MustBe: Authorization Plumbing For Node.js / Express Apps</a></li></ul></section></div>

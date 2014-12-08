@@ -1,0 +1,159 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Demystifying JavaScript Variable Scope and Hoisting</title><h1>Demystifying JavaScript Variable Scope and Hoisting</h1><p><a href="http://www.sitepoint.com/demystifying-javascript-variable-scope-hoisting/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><section class="article_body">
+
+            <p>Every building needs strong foundation to build on. Understanding variable scope in JavaScript is one of the keys to building a solid foundation. This article will explain how JavaScript&#x2019;s scoping system works. We&#x2019;ll also cover a related topic known as <a href="http://www.sitepoint.com/back-to-basics-javascript-hoisting/">hoisting</a>.</p>
+<h2 id="variable-scope">Variable Scope</h2>
+<p>To work with JavaScript efficiently, one of the first things you need to understand is the concept of variable scope. The scope of a variable is controlled by the location of the variable declaration, and defines the part of the program where a particular variable is accessible.</p>
+<p>Scoping rules vary from language to language. JavaScript has two scopes &#x2013; <em>global</em> and <em>local</em>. Any variable declared outside of a function belongs to the global scope, and is therefore accessible from anywhere in your code. Each function has its own scope, and any variable declared within that function is only accessible from that function and any nested functions. Because local scope in JavaScript is created by functions, it&#x2019;s also called function scope. When we put a function inside another function, then we create nested scope.</p>
+<p>Currently, JavaScript, unlike many other languages, does not support block level scoping. This means that declaring a variable inside of a block structure like a <code>for</code> loop, does not restrict that variable to the loop. Instead, the variable will be accessible from the entire function. It&#x2019;s worth noting that the upcoming <a href="http://www.sitepoint.com/preparing-ecmascript-6-let-const/">ECMAScript 6 will support block level scopes via the <code>let</code> keyword</a>.</p>
+<p>To make things clear let&#x2019;s use a simple metaphor. Every country in our world has frontiers. Everything inside these frontiers belongs to the country&#x2019;s scope. In every country there are many cities, and each one of them has its own city&#x2019;s scope. The countries and cities are just like JavaScript functions &#x2013; they have their local scopes. The same is true for the continents. Although they are huge in size they also can be defined as locales. On the other hand, the world&#x2019;s oceans can&#x2019;t be defined as having local scope, because it actually wraps all local objects &#x2013; continents, countries, and cities &#x2013; and thus, its scope is defined as global. Let&#x2019;s visualize this in the next example:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">  
+var locales = {
+  europe: function() {          // The Europe continent's local scope
+    var myFriend = "Monique";
+
+    var france = function() {   // The France country's local scope
+      var paris = function() {  // The Paris city's local scope
+        console.log(myFriend);
+      };
+
+      paris();
+    };
+
+    france();
+  }
+};
+
+locales.europe();
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/1/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>Now that we understand what local and global scopes are, and how they are created, it&#x2019;s time to learn how the JavaScript interpreter uses them to find a particular variable.</p>
+<p>Back to the given metaphor, let&#x2019;s say I want to find a friend of mine whose name is Monique. I know that she lives in Paris, so I start my searching from there. When I can&#x2019;t find her in Paris I go one level up and expand my searching in all of France. But again, she is not there. Next, I expand my searching again by going another level up. Finally, I found her in Italy, which in our case is the local scope of Europe. </p>
+<p>In the previous example my friend Monique is represented by the variable <code>myFriend</code>. In the last line we call the <code>europe()</code> function, which calls <code>france()</code>, and finally when the <code>paris()</code> function is called, the searching begins. The JavaScript interpreter works from the currently executing scope and works it way out until it finds the variable in question. If the variable is not found in any scope, then an exception is thrown.</p>
+<p>This type of look up is called <a href="http://en.wikipedia.org/wiki/Lexical_scoping#Lexical_scoping">lexical (static) scope</a>. The static structure of a program determines the variable scope. The scope of a variable is defined by its location within the source code, and nested functions have access to variables declared in their outer scope. No matter where a function is called from, or even how it&#x2019;s called, its lexical scope depends only by where the function was declared.</p>
+<p>In JavaScript, variables with the same name can be specified at multiple layers of nested scope. In such case local variables gain priority over global variables. If you declare a local variable and a global variable with the same name, the local variable will take precedence when you use it inside a function. This type of behavior is called <em>shadowing</em>. Simply put, the inner variable shadows the outer.</p>
+<p>That&#x2019;s the exact mechanism used when a JavaScript interpreter is trying to find a particular variable. It starts at the innermost scope being executed at the time, and continue until the first match is found, no matter whether there are other variables with the same name in the outer levels or not. Let&#x2019;s see an example:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+var test = "I'm global";
+
+function testScope() {
+  var test = "I'm local";
+
+  console.log (test);     
+}
+
+testScope();           // output: I'm local
+
+console.log(test);     // output: I'm global
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/2/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>As we can see even with the same name the local variable doesn&#x2019;t overwrite the global one after the execution of <code>testScope()</code> function. But this is not always the truth. Let&#x2019;s consider this:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+var test = "I'm global";
+
+function testScope() {
+  test = "I'm local";
+
+  console.log(test);     
+}
+
+console.log(test);     // output: I'm global
+
+testScope();           // output: I'm local
+
+console.log(test);     // output: I'm local (the global variable is reassigned)
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/3/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>This time the local variable <code>test</code> overwrites the global variable with the same name. When we run the code inside <code>testScope()</code> function the global variable is reassigned. If a local variable is assigned without first being declared with the <code>var</code> keyword, it becomes a global variable. To avoid such unwanted behavior you should always declare your local variables before you use them. Any variable declared with the <code>var</code> keyword inside of a function is a local variable. It&#x2019;s considered best practice to declare your variables.</p>
+<p>Note &#x2013; In <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode">strict mode</a>, it is an error, if you assign value to variable without first declaring the variable.</p>
+<h2 id="hoisting">Hoisting</h2>
+<p>A JavaScript interpreter performs many things behind the scene, and one of them is called hoisting. If you are not aware of this &#x201C;hidden&#x201D; behavior, it can cause a lot of confusion. The best way of thinking about the behavior of JavaScript variables is to always visualize them as consisting of two parts: a declaration and an assignment:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+var state;             // variable declaration
+state = "ready";       // variable definition (assignment)
+
+var state = "ready";   // declaration plus definition
+</pre>
+<p>In the above code we first declare variable <code>state</code>, and then we assign the value &#x201C;ready&#x201D; to it. And in the last line of code we see that these two steps can be combined. But what you need to bear in mind is, even though they seem like one statement, in practice, the JavaScript engine treats that single statement as two separate statements, just like in the first two lines in the example.</p>
+<p>We already know that any variable declared within a scope belongs to that scope. But what we don&#x2019;t know yet, is that no matter where variables are declared within a particular scope, all variable declarations are moved to the top of their scope (global or local). This is called <em>hoisting</em>, as the variable declarations are hoisted to the top of the scope. Note that hoisting only moves the declaration. Any assignments are left in place. Let&#x2019;s see an example:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+console.log(state);   // output: undefined
+var state = "ready";
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/4/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>As you can see when we log the value of <code>state</code>, the output is <code>undefined</code>, because we reference it before the actual assignment. You may have expected a ReferenceError to be thrown because <code>state</code> is not declared yet. But what you don&#x2019;t know is that the variable <em>is</em> declared behind the scene. Here is how the code is interpreted by a JavaScript engine:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+var state;           // moved to the top
+console.log(state);   
+state = "ready";     // left in place
+</pre>
+<p>Hoisting also affects function declarations. But before we see some examples, let&#x2019;s first learn the difference between function declaration and function expression.</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+function showState() {}          // function declaration
+var showState = function() {};   // function expression
+</pre>
+<p>The easiest way to distinguish a function declaration from a function expression is to check the position of the word <code>function</code> in the statement. If <code>function</code> is the very first thing in the statement, then it&#x2019;s a function declaration. Otherwise, it&#x2019;s a function expression.</p>
+<p>Function declarations are hoisted completely. This means that the entire function&#x2019;s body is moved to the top. This allows you to call a function before it has been declared:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+showState();            // output: Ready
+
+function showState() {
+  console.log("Ready");
+} 
+
+var showState = function() {
+  console.log("Idle");
+};
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/5/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>The reason the preceding code works is that JavaScript engine moves the declaration of <code>showState()</code> function, and all its content, to the beginning of the scope. The code is interpreted like this:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+function showState() {     // moved to the top (function declaration)
+  console.log("Ready");
+} 
+
+var showState;            // moved to the top (variable declaration)
+
+showState();  
+
+showState = function() {   // left in place (variable assignment)
+  console.log("Idle");
+};
+</pre>
+<p>As you may have noticed, only the function declaration is hoisted, but the function expression is not. When a function is assigned to a variable, the rules are the same as for variable hoisting (only the declaration is moved, while the assignment is left in place).</p>
+<p>In the code above we saw that the function declaration takes precedence over the variable declaration. And in the next example we&#x2019;ll see that when we have function declaration versus variable assignment, the last takes priority.</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+var showState = function() {
+  console.log("Idle");
+};
+
+function showState() {
+  console.log("Ready");
+} 
+
+showState();            // output: Idle
+</pre>
+<p><a href="http://jsbin.com/lewufuroqi/6/edit?js,console,output">Try out the example in JS Bin</a></p>
+<p>This time we call <code>showState()</code> function in the last line of code which change the situation. Now we get output &#x201C;Idle&#x201D;. Here is how it looks when interpreted by JavaScript engine:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+function showState(){        // moved to the top (function declaration)
+  console.log("Ready");
+} 
+
+var showState;               // moved to the top (variable declaration)
+
+showState = function(){      // left in place (variable assignment)
+  console.log("Idle");
+};
+
+showState();
+</pre>
+<h2 id="things-to-remember">Things to Remember</h2>
+<ul>
+<li>All declarations, both functions and variables, are hoisted to the top of the containing scope, before any part of your code is executed. </li>
+<li>Functions are hoisted first, and then variables. </li>
+<li>Function declarations have priority over variable declarations, but not over variable assignments.</li>
+</ul>
+
+        </section>
+
+        </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./The State of JavaScript in 2015.html">The State of JavaScript in 2015</a></li><li><a href="./io.js: A Node and npm-compatible JavaScript Platform.html">io.js: A Node and npm-compatible JavaScript Platform</a></li><li><a href="./The DailyJS JavaScript Developer Survey 2014.html">The DailyJS JavaScript Developer Survey 2014</a></li><li><a href="./SVG In-Depth Online-In-Person Workshop.html">SVG In-Depth Online/In-Person Workshop</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-30504-i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/30504/i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters"></a></li><li><a href="./Getting Started with JavaScript for Automation on OS X Yosemite.html">Getting Started with JavaScript for Automation on OS X Yosemite</a></li><li><a href="./Preparing for The Future of AngularJS.html">Preparing for The Future of AngularJS</a></li><li><a href="./Relieving Backbone Pain with Flux and React (video).html">Relieving Backbone Pain with Flux and React (video)</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON).html">Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON)</a></li><li><a href="./JS Remote Conf: An Online JavaScript Conference in February 2015.html">JS Remote Conf: An Online JavaScript Conference in February 2015</a></li><li><a href="./An Update on the Node.js Advisory Board.html">An Update on the Node.js Advisory Board</a></li><li><a href="./Demystifying JavaScript Variable Scope and Hoisting.html">Demystifying JavaScript Variable Scope and Hoisting</a></li><li><a href="./JavaScript Modules the ES6 Way.html">JavaScript Modules the ES6 Way</a></li><li><a href="./Top 10 Mistakes Node.js Developers Make.html">Top 10 Mistakes Node.js Developers Make</a></li><li><a href="./Level Up in Backbone.js, A Powerful JavaScript MVC Framework.html">Level Up in Backbone.js, A Powerful JavaScript MVC Framework</a></li><li><a href="./Creating Nice Alerts with sweetAlert.html">Creating Nice Alerts with sweetAlert</a></li><li><a href="./Use ngStorage For All Your AngularJS Local Storage Needs.html">Use ngStorage For All Your AngularJS Local Storage Needs</a></li><li><a href="./Calling an Array of Functions in JavaScript.html">Calling an Array of Functions in JavaScript</a></li><li><a href="./The Anatomy of A Simple Templating Engine.html">The Anatomy of A Simple Templating Engine</a></li><li><a href="./The Case For Marionette.js (a Backbone framework).html">The Case For Marionette.js (a Backbone framework)</a></li><li><a href="./PhotoSwipe: A Photo Gallery, with No Dependencies.html">PhotoSwipe: A Photo Gallery, with No Dependencies</a></li><li><a href="./MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images.html">MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images</a></li><li><a href="./Preceptor: Test Runner and Aggregator.html">Preceptor: Test Runner and Aggregator</a></li><li><a href="./React Tween State: The Equivalent of React's this.setState, but for Animated Tweening.html">React Tween State: The Equivalent of React's this.setState, but for Animated Tweening</a></li><li><a href="./Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C.html">Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</a></li><li><a href="./MetricsGraphics.js: A Lightweight Graphics Library Based On D3.html">MetricsGraphics.js: A Lightweight Graphics Library Based On D3</a></li><li><a href="./Tweene: JavaScript Animation Proxy (Wraps-Abstracts Other Libs).html">Tweene: JavaScript Animation Proxy (Wraps/Abstracts Other Libs)</a></li><li><a href="./MustBe: Authorization Plumbing For Node.js - Express Apps.html">MustBe: Authorization Plumbing For Node.js / Express Apps</a></li></ul></section></div>

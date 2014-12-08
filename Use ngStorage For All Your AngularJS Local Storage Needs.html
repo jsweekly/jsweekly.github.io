@@ -1,0 +1,105 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Use ngStorage For All Your AngularJS Local Storage Needs</title><h1>Use ngStorage For All Your AngularJS Local Storage Needs</h1><p><a href="http://blog.nraboy.com/2014/12/use-ngstorage-angularjs-local-storage-needs/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="entry-content">
+			<p>I&#x2019;ve been doing a lot of work with <a href="https://angularjs.org/" title="AngularJS" target="_blank">AngularJS</a> lately, and in particular <a href="http://www.ionicframework.com" title="Ionic Framework" target="_blank">Ionic Framework</a>. &#xA0;However, up until recently I have been using either HTML5 local storage or SQLite.</p>
+<p>Now I&#x2019;ve switched gears and started using the AngularJS module <a href="https://github.com/gsklee/ngStorage" title="ngStorage on Github" target="_blank">ngStorage</a> which has made my life a lot easier.</p>
+
+<p>Previously when using HTML5 local storage, I continuously had to serialize and unserialize my objects before using or saving them. &#xA0;For example, let&#x2019;s say I had the following object:</p>
+
+
+		<div id="crayon-547e3b6284240568621708" class="crayon-syntax crayon-theme-github crayon-font-monaco crayon-os-pc print-yes notranslate">
+		
+			<p class="crayon-toolbar"><span class="crayon-title">JavaScript Object</span>
+			</p>
+			
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547e3b6284240568621708-1"><span class="crayon-t">var</span><span class="crayon-v">myObj</span><span class="crayon-o">=</span><span class="crayon-sy">{</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b6284240568621708-2"><span class="crayon-v">firstname</span><span class="crayon-o">:</span><span class="crayon-s">"Nic"</span><span class="crayon-sy">,</span></p><p class="crayon-line" id="crayon-547e3b6284240568621708-3"><span class="crayon-v">lastname</span><span class="crayon-o">:</span><span class="crayon-s">"Raboy"</span><span class="crayon-sy">,</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b6284240568621708-4"><span class="crayon-v">website</span><span class="crayon-o">:</span><span class="crayon-s">"http://blog.nraboy.com"</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+
+<p>If I wanted to save this object into local storage I would have had to serialize it using the&#xA0;<strong>JSON.stringify</strong> function.</p>
+
+
+		<div id="crayon-547e3b6284256657077681" class="crayon-syntax crayon-theme-github crayon-font-monaco crayon-os-pc print-yes notranslate">
+		
+			<p class="crayon-toolbar"><span class="crayon-title">Serialize JavaScript Object For Saving</span>
+			</p>
+			
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547e3b6284256657077681-1"><span class="crayon-v">window</span><span class="crayon-sy">.</span><span class="crayon-v">localStorage</span><span class="crayon-sy">.</span><span class="crayon-e">set</span><span class="crayon-sy">(</span><span class="crayon-s">"saved"</span><span class="crayon-sy">,</span><span class="crayon-v">JSON</span><span class="crayon-sy">.</span><span class="crayon-e">stringify</span><span class="crayon-sy">(</span><span class="crayon-v">myObj</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+
+<p>The above code will save our object under the key&#xA0;<strong>saved</strong> in local storage.</p>
+<p>If we wanted to use the object that we saved we would have to unserialize it using the&#xA0;<strong>JSON.parse</strong> function.</p>
+
+
+		<div id="crayon-547e3b6284261312424320" class="crayon-syntax crayon-theme-github crayon-font-monaco crayon-os-pc print-yes notranslate">
+		
+			<p class="crayon-toolbar"><span class="crayon-title">Unserialize Object From Local Storage</span>
+			</p>
+			
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547e3b6284261312424320-1"><span class="crayon-t">var</span><span class="crayon-v">myObj</span><span class="crayon-o">=</span><span class="crayon-v">JSON</span><span class="crayon-sy">.</span><span class="crayon-e">parse</span><span class="crayon-sy">(</span><span class="crayon-v">window</span><span class="crayon-sy">.</span><span class="crayon-v">localStorage</span><span class="crayon-sy">.</span><span class="crayon-e">get</span><span class="crayon-sy">(</span><span class="crayon-s">"saved"</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+
+<p>Alright, so you&#x2019;re probably wondering by now what makes ngStorage different.</p>
+<p>ngStorage via <a href="https://github.com/gsklee/ngStorage#ngstorage" title="ngStorage on GitHub" target="_blank">GitHub</a> repository:</p>
+<blockquote><p>Right from AngularJS homepage: &#x201C;Unlike other frameworks, there is no need to [...] wrap the model in accessors methods. Just plain old JavaScript here.&#x201D; Now you can enjoy the same benefit while achieving data persistence with Web Storage.</p></blockquote>
+<p>You can save and use your objects in object form. &#xA0;No need to serialize or unserialize your data.</p>
+<p>So lets get a sample AngularJS project started to demonstrate how to use the ngStorage library.</p>
+
+
+		<div id="crayon-547e3b628426c195900738" class="crayon-syntax crayon-theme-github crayon-font-monaco crayon-os-pc print-yes notranslate">
+		
+			<p class="crayon-toolbar"><span class="crayon-title">$localStorage Example</span>
+			</p>
+			
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547e3b628426c195900738-1"><span class="crayon-o">&lt;</span><span class="crayon-e">html</span><span class="crayon-o">&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-2"><span class="crayon-o">&lt;</span><span class="crayon-e">head</span><span class="crayon-o">&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-3"><span class="crayon-ta">&lt;script </span><span class="crayon-e ">src</span><span class="crayon-o">=</span><span class="crayon-s">"https://ajax.googleapis.com/ajax/libs/angularjs/1.2.27/angular.min.js"</span><span class="crayon-o">&gt;</span><span class="crayon-ta">&lt;/script&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-4"><span class="crayon-ta">&lt;script </span><span class="crayon-e ">src</span><span class="crayon-o">=</span><span class="crayon-s">"ngStorage.min.js"</span><span class="crayon-o">&gt;</span><span class="crayon-ta">&lt;/script&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-5"><span class="crayon-ta">&lt;script&gt;</span></p><p class="crayon-line crayon-marked-line crayon-top crayon-striped-line" id="crayon-547e3b628426c195900738-6"><span class="crayon-t">var</span><span class="crayon-v">example</span><span class="crayon-o">=</span><span class="crayon-v">angular</span><span class="crayon-sy">.</span><span class="crayon-e">module</span><span class="crayon-sy">(</span><span class="crayon-s">"example"</span><span class="crayon-sy">,</span><span class="crayon-sy">[</span><span class="crayon-s">"ngStorage"</span><span class="crayon-sy">]</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p><p class="crayon-line crayon-marked-line crayon-bottom" id="crayon-547e3b628426c195900738-7"><span class="crayon-v">example</span><span class="crayon-sy">.</span><span class="crayon-e">controller</span><span class="crayon-sy">(</span><span class="crayon-s">"ExampleController"</span><span class="crayon-sy">,</span><span class="crayon-t">function</span><span class="crayon-sy">(</span><span class="crayon-sy">$</span><span class="crayon-v">scope</span><span class="crayon-sy">,</span><span class="crayon-sy">$</span><span class="crayon-v">localStorage</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-9"><span class="crayon-sy">$</span><span class="crayon-v">scope</span><span class="crayon-sy">.</span><span class="crayon-v">save</span><span class="crayon-o">=</span><span class="crayon-t">function</span><span class="crayon-sy">(</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-10"><span class="crayon-sy">$</span><span class="crayon-v">localStorage</span><span class="crayon-sy">.</span><span class="crayon-e ">message</span><span class="crayon-o">=</span><span class="crayon-s">"Hello World"</span><span class="crayon-sy">;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-13"><span class="crayon-sy">$</span><span class="crayon-v">scope</span><span class="crayon-sy">.</span><span class="crayon-v">load</span><span class="crayon-o">=</span><span class="crayon-t">function</span><span class="crayon-sy">(</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-14"><span class="crayon-sy">$</span><span class="crayon-v">scope</span><span class="crayon-sy">.</span><span class="crayon-v">data</span><span class="crayon-o">=</span><span class="crayon-sy">$</span><span class="crayon-v">localStorage</span><span class="crayon-sy">.</span><span class="crayon-v">message</span><span class="crayon-sy">;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-17"><span class="crayon-sy">}</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-18"><span class="crayon-ta">&lt;/script&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-19"><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-v">head</span><span class="crayon-o">&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-20"><span class="crayon-o">&lt;</span><span class="crayon-e">body </span><span class="crayon-v">ng</span><span class="crayon-o">-</span><span class="crayon-v">app</span><span class="crayon-o">=</span><span class="crayon-s">"example"</span><span class="crayon-o">&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-21"><span class="crayon-o">&lt;</span><span class="crayon-e">div </span><span class="crayon-v">ng</span><span class="crayon-o">-</span><span class="crayon-v">controller</span><span class="crayon-o">=</span><span class="crayon-s">"ExampleController"</span><span class="crayon-o">&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-22"><span class="crayon-o">&lt;</span><span class="crayon-e">button </span><span class="crayon-v">ng</span><span class="crayon-o">-</span><span class="crayon-v">click</span><span class="crayon-o">=</span><span class="crayon-s">"save()"</span><span class="crayon-o">&gt;</span><span class="crayon-v">Save</span><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-v">button</span><span class="crayon-o">&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-23"><span class="crayon-o">&lt;</span><span class="crayon-e">button </span><span class="crayon-v">ng</span><span class="crayon-o">-</span><span class="crayon-v">click</span><span class="crayon-o">=</span><span class="crayon-s">"load()"</span><span class="crayon-o">&gt;</span><span class="crayon-e">Load</span><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-e">button</span><span class="crayon-o">&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-24"><span class="crayon-o">&lt;</span><span class="crayon-e">br</span><span class="crayon-o">&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-25"><span class="crayon-sy">{</span><span class="crayon-sy">{</span><span class="crayon-v">data</span><span class="crayon-sy">}</span><span class="crayon-sy">}</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-26"><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-v">div</span><span class="crayon-o">&gt;</span></p><p class="crayon-line" id="crayon-547e3b628426c195900738-27"><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-v">body</span><span class="crayon-o">&gt;</span></p><p class="crayon-line crayon-striped-line" id="crayon-547e3b628426c195900738-28"><span class="crayon-o">&lt;</span><span class="crayon-o">/</span><span class="crayon-v">html</span><span class="crayon-o">&gt;</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+
+<p>The above code is just a very basic example page that demonstrates how to use ngStorage in your project. &#xA0;Notice the two highlighted lines. &#xA0;This is how you include the library in your project for use.</p>
+<p>With the library set up and ready to go, you can use it like any other JavaScript object. &#xA0;Keeps your code clean with minimal headache.</p>
+<p>A video version of this article can be seen below.</p>
+<p><iframe width="648" height="365" src="https://www.youtube.com/embed/g4vLTauq5j8?feature=oembed"></iframe></p>
+					</div>
+
+		
+	</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./The State of JavaScript in 2015.html">The State of JavaScript in 2015</a></li><li><a href="./io.js: A Node and npm-compatible JavaScript Platform.html">io.js: A Node and npm-compatible JavaScript Platform</a></li><li><a href="./The DailyJS JavaScript Developer Survey 2014.html">The DailyJS JavaScript Developer Survey 2014</a></li><li><a href="./SVG In-Depth Online-In-Person Workshop.html">SVG In-Depth Online/In-Person Workshop</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-30504-i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/30504/i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters"></a></li><li><a href="./Getting Started with JavaScript for Automation on OS X Yosemite.html">Getting Started with JavaScript for Automation on OS X Yosemite</a></li><li><a href="./Preparing for The Future of AngularJS.html">Preparing for The Future of AngularJS</a></li><li><a href="./Relieving Backbone Pain with Flux and React (video).html">Relieving Backbone Pain with Flux and React (video)</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON).html">Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON)</a></li><li><a href="./JS Remote Conf: An Online JavaScript Conference in February 2015.html">JS Remote Conf: An Online JavaScript Conference in February 2015</a></li><li><a href="./An Update on the Node.js Advisory Board.html">An Update on the Node.js Advisory Board</a></li><li><a href="./Demystifying JavaScript Variable Scope and Hoisting.html">Demystifying JavaScript Variable Scope and Hoisting</a></li><li><a href="./JavaScript Modules the ES6 Way.html">JavaScript Modules the ES6 Way</a></li><li><a href="./Top 10 Mistakes Node.js Developers Make.html">Top 10 Mistakes Node.js Developers Make</a></li><li><a href="./Level Up in Backbone.js, A Powerful JavaScript MVC Framework.html">Level Up in Backbone.js, A Powerful JavaScript MVC Framework</a></li><li><a href="./Creating Nice Alerts with sweetAlert.html">Creating Nice Alerts with sweetAlert</a></li><li><a href="./Use ngStorage For All Your AngularJS Local Storage Needs.html">Use ngStorage For All Your AngularJS Local Storage Needs</a></li><li><a href="./Calling an Array of Functions in JavaScript.html">Calling an Array of Functions in JavaScript</a></li><li><a href="./The Anatomy of A Simple Templating Engine.html">The Anatomy of A Simple Templating Engine</a></li><li><a href="./The Case For Marionette.js (a Backbone framework).html">The Case For Marionette.js (a Backbone framework)</a></li><li><a href="./PhotoSwipe: A Photo Gallery, with No Dependencies.html">PhotoSwipe: A Photo Gallery, with No Dependencies</a></li><li><a href="./MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images.html">MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images</a></li><li><a href="./Preceptor: Test Runner and Aggregator.html">Preceptor: Test Runner and Aggregator</a></li><li><a href="./React Tween State: The Equivalent of React's this.setState, but for Animated Tweening.html">React Tween State: The Equivalent of React's this.setState, but for Animated Tweening</a></li><li><a href="./Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C.html">Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</a></li><li><a href="./MetricsGraphics.js: A Lightweight Graphics Library Based On D3.html">MetricsGraphics.js: A Lightweight Graphics Library Based On D3</a></li><li><a href="./Tweene: JavaScript Animation Proxy (Wraps-Abstracts Other Libs).html">Tweene: JavaScript Animation Proxy (Wraps/Abstracts Other Libs)</a></li><li><a href="./MustBe: Authorization Plumbing For Node.js - Express Apps.html">MustBe: Authorization Plumbing For Node.js / Express Apps</a></li></ul></section></div>

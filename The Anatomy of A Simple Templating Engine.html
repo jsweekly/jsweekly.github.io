@@ -1,0 +1,135 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>The Anatomy of A Simple Templating Engine</title><h1>The Anatomy of A Simple Templating Engine</h1><p><a href="http://jsforallof.us/2014/12/01/the-anatomy-of-a-simple-templating-engine/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><article class="post-content">
+  <p>If you&#x2019;ve never used JavaScript templating before, I&#x2019;d first check out this blog&#x2019;s <a href="http://jsforallof.us/2014/08/08/templating/">post on templating</a> for a high-level overview and use-cases for using them. If you have used them or at least had exposure to them, you might have used one or more of these:</p>
+
+<ul>
+  <li><a href="http://handlebarsjs.com">Handlebarsjs</a></li>
+  <li><a href="http://mustache.github.io">Mustache</a></li>
+  <li><a href="http://underscorejs.org/#template">Underscore.js templates</a></li>
+</ul>
+
+
+
+<p>As a note, this post <strong>does not</strong> demonstrate the complexities and thought that goes into making a production-ready library like the three mentioned above, it simply serves as a rudimentary breakdown of the anatomy of what a templating engine does and how it does it.</p>
+
+<p>As a quick recap, the (simplistic) idea of templating is to have a fragment of HTML (sometimes called a partial) like this: </p>
+
+<div class="highlight"><pre><code class="language-html"><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"entry"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;h1&gt;</span>{{ title }}<span class="nt">&lt;/h1&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"body"</span><span class="nt">&gt;</span>
+    {{ body }}
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/div&gt;</span></code></pre></div>
+
+<p>And to be able to dynamically generate HTML from this template, but with the <code>{{}}</code> placeholders replaced by real values.</p>
+
+<h2 id="usage">Usage</h2>
+
+<p>When creating functionality in development, I always like to start with the desired usage and work backwards. That way, you know exactly what you&#x2019;re trying to achieve as you&#x2019;re writing your implementation code.</p>
+
+<p>We want to be able to do the following:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">template</span> <span class="o">=</span> <span class="nx">templater</span><span class="p">(</span><span class="s2">"&lt;p&gt;hey there {{ name }}&lt;/p&gt;"</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">div</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">"div"</span><span class="p">);</span>
+<span class="nx">div</span><span class="p">.</span><span class="nx">innerHTML</span> <span class="o">=</span> <span class="nx">template</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s2">"Neo"</span>
+<span class="p">});</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">div</span><span class="p">);</span></code></pre></div>
+
+<p>and for it to produce the following string: &#x201C;hey there Neo&#x201D;</p>
+
+<p>As you can see, somewhere, we&#x2019;ll have a function defined called <code>templater</code> and this will accept a string of HTML and return you a function to use. This returned function will accept an object of keys and values. All you do is pass in the relevant keys and the desired values and you&#x2019;ll receive a string of HTML back with all the placeholders replaced appropriately.</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>Let&#x2019;s start of with defining our <code>templater</code> function:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">templater</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">html</span><span class="p">){</span>
+  
+<span class="p">};</span></code></pre></div>
+
+<p>There we go. Step 1 complete.</p>
+
+<p>Now we need it to return us a function that accepts an object but also that can still access our <code>html</code> argument from the <code>templater</code> function.</p>
+
+<p>We can achieve this by creating a closure and returning it, like so:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">templater</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">html</span><span class="p">){</span>
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">){</span>
+    <span class="k">return</span> <span class="nx">html</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">};</span></code></pre></div>
+
+<p>To keep context, if we left our implementation of <code>templater</code> in the state it&#x2019;s in above, we would pass it the string:</p>
+
+<div class="highlight"><pre><code class="language-html"><span class="nt">&lt;p&gt;</span>hey there {{ name }}<span class="nt">&lt;/p&gt;</span></code></pre></div>
+
+<p>and it would return it in the exact same state you passed it in. That&#x2019;s no good.</p>
+
+<p>We need to now use the object the user passed in and start replacing some placeholders.</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">templater</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">html</span><span class="p">){</span>
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">){</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">x</span> <span class="k">in</span> <span class="nx">data</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">re</span> <span class="o">=</span> <span class="cm">/* a regex string */</span><span class="p">;</span>
+      <span class="nx">html</span> <span class="o">=</span> <span class="nx">html</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">re</span><span class="p">,</span> <span class="s2">"ig"</span><span class="p">),</span> <span class="nx">data</span><span class="p">[</span><span class="nx">x</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">html</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">};</span></code></pre></div>
+
+<p>All we&#x2019;re doing in the above code, is using a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in">for in</a> loop to access the values within our <code>data</code> object. Within each iteration of the loop, <code>x</code> will be equal to the current key and <code>data[x]</code> will give us the value for that key. </p>
+
+<h2 id="regex">Regex</h2>
+
+<p>At this point, it&#x2019;s worth taking a deeper dive into the meat of a templating engine; Regex. A <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regular Expression</a> is a pattern string which is used to match expressions within other strings. This topic most certainly deserves a standalone post, but for the purposes of making our mini-templating engine, we can just use a sprinkling of Regex to achieve it.</p>
+
+<p>Inside the loop, <code>html</code> starts out as the initial string, but with each iteration, it (hopefully!) has it&#x2019;s placeholders replaced by the values from the object.</p>
+
+<p>Now that we know, in theory, what we&#x2019;re trying to achieve with our Regex, let&#x2019;s move onto actually implementing it.</p>
+
+<h2 id="returning-html">Returning HTML</h2>
+
+<p>All that&#x2019;s left to do is to fill in our regex and we are done.</p>
+
+<p>Our regex will look like this:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">re</span> <span class="o">=</span> <span class="s2">"{{\\s?"</span> <span class="o">+</span> <span class="nx">x</span> <span class="o">+</span> <span class="s2">"\\s?}}"</span><span class="p">;</span></code></pre></div>
+
+<p>First up, we&#x2019;re going to match the <code>{{}}</code>. We then want to account for the user writing their placeholders like this:</p>
+
+<p><code>{{name}}</code></p>
+
+<p>or like this:</p>
+
+<p><code>{{ name }}</code></p>
+
+<p>So we need to say &#x201C;if there&#x2019;s a space between the curly brace and the key name, fine, but it&#x2019;s not mandatory&#x201D;. We can do this by using <code>\s</code> (match the space) and by placing a <code>?</code> right after it, which means &#x201C;match zero or one of the preceding element&#x201D;. Just to make things more interesting, because we&#x2019;re using the <code>RegExp</code> constructor (read more on the MDN link from above), we have to pass it a string, which means that elements like <code>\s</code> need to be double escaped, hence: <code>\\s</code>.</p>
+
+<p>We can then use normal JavaScript string concatenation to insert the <code>x</code> value into our Regex string. This means that first our first (and only iteration) in our example, the final Regex will be output as: <code>{{\s?name\s?}}</code>.</p>
+
+<p>The final piece of the puzzle is to supply our RegExp constructor with a second argument, the Regex flags. These are special identifiers that inform the Regex engine how to apply the regex to our string. In our case, we&#x2019;ve given it <code>i</code> and <code>g</code>. </p>
+
+<ul>
+  <li><code>i</code> - Case-insensitive. It&#x2019;ll match <code>NAME</code>, <code>nAmE</code> &amp; <code>name</code> in our example</li>
+  <li><code>g</code> - Global. If we placed two placeholders in our template HTML and we wanted them both replaced, we need to make sure the global flag is supplied so our replacement will be applied to all occurrences in the string.</li>
+</ul>
+
+<p>And there we go. You can see the complete <code>templater</code> function below:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="kd">var</span> <span class="nx">templater</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">html</span><span class="p">){</span>
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">){</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">x</span> <span class="k">in</span> <span class="nx">data</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">re</span> <span class="o">=</span> <span class="s2">"{{\\s?"</span> <span class="o">+</span> <span class="nx">x</span> <span class="o">+</span> <span class="s2">"\\s?}}"</span><span class="p">;</span>
+      <span class="nx">html</span> <span class="o">=</span> <span class="nx">html</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="nx">re</span><span class="p">,</span> <span class="s2">"ig"</span><span class="p">),</span> <span class="nx">data</span><span class="p">[</span><span class="nx">x</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">html</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">};</span></code></pre></div>
+
+<h2 id="notes">Notes</h2>
+
+<p>Like I mentioned above, this is a ridiculous simplification of the work that goes into making a fully-fledged templating engine, but what I do hope you take away from this run-through is a better understanding of closures, and hopefully Regex seems a little more approachable to you.</p>
+
+  </article>
+
+  </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./The State of JavaScript in 2015.html">The State of JavaScript in 2015</a></li><li><a href="./io.js: A Node and npm-compatible JavaScript Platform.html">io.js: A Node and npm-compatible JavaScript Platform</a></li><li><a href="./The DailyJS JavaScript Developer Survey 2014.html">The DailyJS JavaScript Developer Survey 2014</a></li><li><a href="./SVG In-Depth Online-In-Person Workshop.html">SVG In-Depth Online/In-Person Workshop</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-30504-i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/30504/i.png" style="border: 0px solid #bbbbbb" width="120" height="120" alt="Frontend Masters"></a></li><li><a href="./Getting Started with JavaScript for Automation on OS X Yosemite.html">Getting Started with JavaScript for Automation on OS X Yosemite</a></li><li><a href="./Preparing for The Future of AngularJS.html">Preparing for The Future of AngularJS</a></li><li><a href="./Relieving Backbone Pain with Flux and React (video).html">Relieving Backbone Pain with Flux and React (video)</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON).html">Javascript Devs in High Demand! (SF, LA, NYC, ORD, BOS, LON)</a></li><li><a href="./JS Remote Conf: An Online JavaScript Conference in February 2015.html">JS Remote Conf: An Online JavaScript Conference in February 2015</a></li><li><a href="./An Update on the Node.js Advisory Board.html">An Update on the Node.js Advisory Board</a></li><li><a href="./Demystifying JavaScript Variable Scope and Hoisting.html">Demystifying JavaScript Variable Scope and Hoisting</a></li><li><a href="./JavaScript Modules the ES6 Way.html">JavaScript Modules the ES6 Way</a></li><li><a href="./Top 10 Mistakes Node.js Developers Make.html">Top 10 Mistakes Node.js Developers Make</a></li><li><a href="./Level Up in Backbone.js, A Powerful JavaScript MVC Framework.html">Level Up in Backbone.js, A Powerful JavaScript MVC Framework</a></li><li><a href="./Creating Nice Alerts with sweetAlert.html">Creating Nice Alerts with sweetAlert</a></li><li><a href="./Use ngStorage For All Your AngularJS Local Storage Needs.html">Use ngStorage For All Your AngularJS Local Storage Needs</a></li><li><a href="./Calling an Array of Functions in JavaScript.html">Calling an Array of Functions in JavaScript</a></li><li><a href="./The Anatomy of A Simple Templating Engine.html">The Anatomy of A Simple Templating Engine</a></li><li><a href="./The Case For Marionette.js (a Backbone framework).html">The Case For Marionette.js (a Backbone framework)</a></li><li><a href="./PhotoSwipe: A Photo Gallery, with No Dependencies.html">PhotoSwipe: A Photo Gallery, with No Dependencies</a></li><li><a href="./MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images.html">MagicEye.js: JS Lib (+ demo) for Generating 3D Magic Eye Images</a></li><li><a href="./Preceptor: Test Runner and Aggregator.html">Preceptor: Test Runner and Aggregator</a></li><li><a href="./React Tween State: The Equivalent of React's this.setState, but for Animated Tweening.html">React Tween State: The Equivalent of React's this.setState, but for Animated Tweening</a></li><li><a href="./Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C.html">Duktape: An Embeddable JavaScript Engine (ES 5.1 Compliant) Written in C</a></li><li><a href="./MetricsGraphics.js: A Lightweight Graphics Library Based On D3.html">MetricsGraphics.js: A Lightweight Graphics Library Based On D3</a></li><li><a href="./Tweene: JavaScript Animation Proxy (Wraps-Abstracts Other Libs).html">Tweene: JavaScript Animation Proxy (Wraps/Abstracts Other Libs)</a></li><li><a href="./MustBe: Authorization Plumbing For Node.js - Express Apps.html">MustBe: Authorization Plumbing For Node.js / Express Apps</a></li></ul></section></div>
