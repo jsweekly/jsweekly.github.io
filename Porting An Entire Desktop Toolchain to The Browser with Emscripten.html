@@ -1,0 +1,337 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Porting An Entire Desktop Toolchain to The Browser with Emscripten</title><h1>Porting An Entire Desktop Toolchain to The Browser with Emscripten</h1><p><a href="http://www.drewdevault.com/2014/11/30/Porting-an-entire-toolchain-to-the-browser-with-emscripten.html?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><body>
+        
+        <h2>
+            <small>Published 30 Nov 2014</small>
+            
+                <small>on <a href="http://www.drewdevault.com/">Drew DeVault's blog</a></small>
+            
+        </h2>
+        
+
+
+
+<p>Emscripten is pretty damn cool! It lets you write portable C and cross-compile
+it to JavaScript so it&#x2019;ll run in a web browser. As the maintainer of
+<a href="http://www.knightos.org">KnightOS</a>, I looked to emscripten as a potential means
+of reducing the cost of entry for new developers hoping to target the OS.</p>
+
+<h2 id="rationale-for-emscripten">Rationale for Emscripten</h2>
+
+<p>There are several pieces of software in the toolchain that are required to write
+and test software for KnightOS:</p>
+
+<ul>
+  <li><a href="https://github.com/KnightOS/scas">scas</a> - a z80 assembler</li>
+  <li><a href="https://github.com/KnightOS/genkfs">genkfs</a> - generates KFS filesystem images</li>
+  <li><a href="https://github.com/KnightOS/kpack">kpack</a> - packaging tool, like makepkg on Arch Linux</li>
+  <li><a href="https://github.com/KnightOS/z80e">z80e</a> - a z80 calculator emulator</li>
+</ul>
+
+<p>You also need a copy of the latest kernel and any of your dependencies from
+<a href="https://packages.knightos.org">packages.knightos.org</a>. Getting all of this is
+not straightforward. On Linux and Mac, there are no official packages for any of
+these tools. On Windows, there are still no official packages, and you have to
+use Cygwin on top of that. The first step to writing KnightOS programs is to
+manually compile and install several tools, which is a lot to ask of someone who
+just wants to experiment.</p>
+
+<p>All of the tools in our toolchain are written in C. We saw Emscripten as an
+opportunity to reduce all of this effort into simply firing up your web browser.
+It works, too! Here&#x2019;s what was involved.</p>
+
+<blockquote>
+  <p><strong>Note</strong>: Click the screen on the emulator to the left to give it your
+keyboard. Click away to take it back. You can use your arrow keys, F1-F5,
+enter, and escape (as MODE).</p>
+</blockquote>
+
+<h2 id="the-final-product">The final product</h2>
+
+<p>Let&#x2019;s start by showing you what we&#x2019;ve accomplished. It&#x2019;s now possible for
+curious developers to try out KnightOS programming in their web browser. Of
+course, they still have to do it in assembly, but we&#x2019;re <a href="https://github.com/KnightOS/kcc">working on
+that</a> &#x1F609;. Here&#x2019;s a &#x201C;hello world&#x201D; you can run in
+your web browser:</p>
+
+
+
+<p>We can also install new dependencies on the fly and use them in our programs.
+Here&#x2019;s another program that draws the &#x201C;hello world&#x201D; message in a window. You
+should install <code>core/corelib</code> first:</p>
+
+
+
+
+
+<p>You can find more packages to try out on
+<a href="https://packages.knightos.org">packages.knightos.org</a>. Here&#x2019;s another example,
+this one launches the file manager. You&#x2019;ll have to install a few packages for it
+to work:</p>
+
+<p>Install:
+
+
+</p>
+
+
+
+<p>Feel free to edit any of these examples! You can run them again with the Run
+button, of course. These resources might be useful if you want to play with this
+some more:</p>
+
+<p><a href="http://www.z80.info/z80-op.txt">z80 instruction set</a> - <a href="http://tutorials.eeems.ca/ASMin28Days/lesson/toc.html">z80 assembly tutorial</a> - <a href="http://www.knightos.org/documentation/reference">KnightOS reference documentation</a></p>
+
+<p>Note: our toolchain has some memory leaks, so eventually emscripten is going to
+run out of memory and then you&#x2019;ll have to refresh. Sorry!</p>
+
+<h2 id="how-all-of-the-pieces-fit-together">How all of the pieces fit together</h2>
+
+<p>When you
+loaded this page, a bunch of things happened. First, the <a href="https://github.com/KnightOS/kernel/releases">latest
+release</a> of the <a href="https://github.com/KnightOS/kernel">KnightOS
+kernel</a> was downloaded. Then all of the
+emscripten ports of the toolchain were downloaded and loaded. The various
+virtual filesystems were set up, and two packages were downloaded and installed:
+<code>core/init</code>, and <code>core/kernel-headers</code>. Extracting those packages involves
+copying them into kpack&#x2019;s virtual filesystem and running <code>kpack -e
+path/to/package root/</code>.</p>
+
+<p>When you click &#x201C;Run&#x201D; on one of these text boxes, the contents of the text box is
+written to <code>/main.asm</code> in the assembler&#x2019;s virtual filesystem. The package
+installation process extracts headers to <code>/include/</code>, and scas itself is run
+with <code>/main.asm -I/include -o /executable</code>, which assembles the program and
+writes the output to <code>/executable</code>.</p>
+
+<p>Then we copy the executable into the genkfs filesystem (this is the tool that
+generates filesystem images). We also copy the empty kernel into this
+filesystem, as well as any of the packages we&#x2019;ve installed. We then run <code>genkfs
+/kernel.rom /root</code>, which creates a filesystem image from <code>/root</code> and bakes it
+into <code>kernel.rom</code>. This produces a ready-to-emulate ROM image that we can load
+into the z80e emulator on the left.</p>
+
+<h2 id="the-emscripten-details">The emscripten details</h2>
+
+<p>Porting all this stuff to emscripten wasn&#x2019;t straightforward. The easiest part
+was cross-compiling all of them to JavaScript:</p>
+
+<pre><code>cd build
+emconfigure cmake ..
+emmake make
+</code></pre>
+
+<p>The process was basically that simple for each piece of software. There were
+<a href="https://github.com/KnightOS/genkfs/commit/c4eefa87a3b5bdbafcc6d971654608c594f779a1">a</a>
+<a href="https://github.com/KnightOS/scas/commit/d2044e7d7586a946422ce6493cc6dff01127d1c2">few</a>
+<a href="https://github.com/KnightOS/scas/commit/8bc31af28e8419a9fa6c421147ea522935bd0df4">changes</a>
+made to some of the tools to fix a few problems. The hard part
+came when I wanted to run all of them on the same page. Emscripten compiled code
+assumes that it will be the only emscripten module on the page at any given
+time, so this was a bit challenging and involved editing the generated JS.</p>
+
+<p>The first thing I did was wrap all of the modules in isolated AMD loaders. You
+can see how some of this ended up looking by visiting the actual scripts
+(warning, big files):</p>
+
+<ul>
+  <li><a href="http://localhost:4000/tools/scas.js">scas.js</a></li>
+  <li><a href="http://localhost:4000/tools/kpack.js">kpack.js</a></li>
+  <li><a href="http://localhost:4000/tools/genkfs.js">genkfs.js</a></li>
+</ul>
+
+<p>That was enough to make it so that they could all run. These are part of a
+toolchain, though, so somehow they needed to share files. Emscripten&#x2019;s <a href="http://kripken.github.io/emscripten-site/docs/api_reference/Filesystem-API.html">FS
+object</a>
+cannot be shared between modules, and their API for mounting filesystems is
+pretty crappy. So the solution was to write a little JS:</p>
+
+<div class="highlight"><pre><code class="language-coffeescript"><span class="nv">copy_between_systems = </span><span class="nf">(fs1, fs2, from, to, encoding) -&gt;</span>
+    <span class="k">for</span> <span class="nx">f</span> <span class="k">in</span> <span class="nx">fs1</span><span class="p">.</span><span class="nx">readdir</span><span class="p">(</span><span class="nx">from</span><span class="p">)</span>
+        <span class="k">continue</span> <span class="k">if</span> <span class="nx">f</span> <span class="k">in</span> <span class="p">[</span><span class="s">'.'</span><span class="p">,</span> <span class="s">'..'</span><span class="p">]</span>
+        <span class="nv">fs1p = </span><span class="nx">from</span> <span class="o">+</span> <span class="s">'/'</span> <span class="o">+</span> <span class="nx">f</span>
+        <span class="nv">fs2p = </span><span class="nx">to</span> <span class="o">+</span> <span class="s">'/'</span> <span class="o">+</span> <span class="nx">f</span>
+        <span class="nv">s = </span><span class="nx">fs1</span><span class="p">.</span><span class="nx">stat</span><span class="p">(</span><span class="nx">fs1p</span><span class="p">)</span>
+        <span class="nx">log</span><span class="p">(</span><span class="s">"Writing </span><span class="si">#{</span><span class="nx">fs1p</span><span class="si">}</span><span class="s"> to </span><span class="si">#{</span><span class="nx">fs2p</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">fs1</span><span class="p">.</span><span class="nx">isDir</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">mode</span><span class="p">)</span>
+            <span class="k">try</span>
+                <span class="nx">fs2</span><span class="p">.</span><span class="nx">mkdir</span><span class="p">(</span><span class="nx">fs2p</span><span class="p">)</span>
+            <span class="k">catch</span>
+                <span class="c1"># pass</span>
+            <span class="nx">copy_between_systems</span><span class="p">(</span><span class="nx">fs1</span><span class="p">,</span> <span class="nx">fs2</span><span class="p">,</span> <span class="nx">fs1p</span><span class="p">,</span> <span class="nx">fs2p</span><span class="p">,</span> <span class="nx">encoding</span><span class="p">)</span>
+        <span class="k">else</span>
+            <span class="nx">fs2</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="nx">fs2p</span><span class="p">,</span> <span class="nx">fs1</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="nx">fs1p</span><span class="p">,</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="nx">encoding</span> <span class="p">}),</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="nx">encoding</span> <span class="p">})</span></code></pre></div>
+
+<p>With this, we can extract packages in the kpack filesystem and copy them to the
+genkfs filesystem:</p>
+
+<div class="highlight"><pre><code class="language-coffeescript"><span class="nv">install_package = </span><span class="nf">(repo, name, callback) -&gt;</span>
+    <span class="nv">full_name = </span><span class="nx">repo</span> <span class="o">+</span> <span class="s">'/'</span> <span class="o">+</span> <span class="nx">name</span>
+    <span class="nx">log</span><span class="p">(</span><span class="s">"Downloading "</span> <span class="o">+</span> <span class="nx">full_name</span><span class="p">)</span>
+    <span class="nv">xhr = </span><span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">()</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s">'GET'</span><span class="p">,</span> <span class="s">"https://packages.knightos.org/"</span> <span class="o">+</span> <span class="nx">full_name</span> <span class="o">+</span> <span class="s">"/download"</span><span class="p">)</span>
+    <span class="nv">xhr.responseType = </span><span class="s">'arraybuffer'</span>
+    <span class="nv">xhr.onload = </span><span class="nf">() -&gt;</span>
+        <span class="nx">log</span><span class="p">(</span><span class="s">"Installing "</span> <span class="o">+</span> <span class="nx">full_name</span><span class="p">)</span>
+        <span class="nv">file_name = </span><span class="s">'/packages/'</span> <span class="o">+</span> <span class="nx">repo</span> <span class="o">+</span> <span class="s">'-'</span> <span class="o">+</span> <span class="nx">name</span> <span class="o">+</span> <span class="s">'.pkg'</span>
+        <span class="nv">data = </span><span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">)</span>
+        <span class="nx">toolchain</span><span class="p">.</span><span class="nx">kpack</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="nx">file_name</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="s">'binary'</span> <span class="p">})</span>
+        <span class="nx">toolchain</span><span class="p">.</span><span class="nx">kpack</span><span class="p">.</span><span class="nx">Module</span><span class="p">.</span><span class="nx">callMain</span><span class="p">([</span><span class="s">'-e'</span><span class="p">,</span> <span class="nx">file_name</span><span class="p">,</span> <span class="s">'/pkgroot'</span><span class="p">])</span>
+        <span class="nx">copy_between_systems</span><span class="p">(</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">kpack</span><span class="p">.</span><span class="nx">FS</span><span class="p">,</span> <span class="nx">toolchain</span><span class="p">.</span><span class="nx">scas</span><span class="p">.</span><span class="nx">FS</span><span class="p">,</span> <span class="s">"/pkgroot/include"</span><span class="p">,</span> <span class="s">"/include"</span><span class="p">,</span> <span class="s">"utf8"</span><span class="p">)</span>
+        <span class="nx">copy_between_systems</span><span class="p">(</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">kpack</span><span class="p">.</span><span class="nx">FS</span><span class="p">,</span> <span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">FS</span><span class="p">,</span> <span class="s">"/pkgroot"</span><span class="p">,</span> <span class="s">"/root"</span><span class="p">,</span> <span class="s">"binary"</span><span class="p">)</span>
+        <span class="nx">log</span><span class="p">(</span><span class="s">"Package installed."</span><span class="p">)</span>
+        <span class="nx">callback</span><span class="p">()</span> <span class="k">if</span> <span class="nx">callback</span><span class="o">?</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">send</span><span class="p">()</span></code></pre></div>
+
+<p>And this puts all the pieces in place for us to actually pass an assembly file
+through our toolchain:</p>
+
+<div class="highlight"><pre><code class="language-coffeescript"><span class="nv">run_project = </span><span class="nf">(main) -&gt;</span>
+    <span class="c1"># Assemble</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">scas</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="s">'/main.asm'</span><span class="p">,</span> <span class="nx">main</span><span class="p">)</span>
+    <span class="nx">log</span><span class="p">(</span><span class="s">"Calling assembler..."</span><span class="p">)</span>
+    <span class="nv">ret = </span><span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">scas</span><span class="p">.</span><span class="nx">Module</span><span class="p">.</span><span class="nx">callMain</span><span class="p">([</span><span class="s">'/main.asm'</span><span class="p">,</span> <span class="s">'-I/include/'</span><span class="p">,</span> <span class="s">'-o'</span><span class="p">,</span> <span class="s">'executable'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nx">ret</span> <span class="k">if</span> <span class="nx">ret</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="nx">log</span><span class="p">(</span><span class="s">"Assembly done!"</span><span class="p">)</span>
+    <span class="c1"># Build filesystem</span>
+    <span class="nv">executable = </span><span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">scas</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="s">"/executable"</span><span class="p">,</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="s">'binary'</span> <span class="p">})</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="s">"/root/bin/executable"</span><span class="p">,</span> <span class="nx">executable</span><span class="p">,</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="s">'binary'</span> <span class="p">})</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="s">"/root/etc/inittab"</span><span class="p">,</span> <span class="s">"/bin/executable"</span><span class="p">)</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">writeFile</span><span class="p">(</span><span class="s">"/kernel.rom"</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">kernel_rom</span><span class="p">),</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="s">'binary'</span> <span class="p">})</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">Module</span><span class="p">.</span><span class="nx">callMain</span><span class="p">([</span><span class="s">"/kernel.rom"</span><span class="p">,</span> <span class="s">"/root"</span><span class="p">])</span>
+    <span class="nv">rom = </span><span class="nb">window</span><span class="p">.</span><span class="nx">toolchain</span><span class="p">.</span><span class="nx">genkfs</span><span class="p">.</span><span class="nx">FS</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="s">"/kernel.rom"</span><span class="p">,</span> <span class="p">{</span> <span class="nv">encoding: </span><span class="s">'binary'</span> <span class="p">})</span>
+
+    <span class="nx">log</span><span class="p">(</span><span class="s">"Loading your program into the emulator!"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">current_emulator</span> <span class="o">!=</span> <span class="kc">null</span>
+        <span class="nx">current_emulator</span><span class="p">.</span><span class="nx">cleanup</span><span class="p">()</span>
+    <span class="nv">current_emulator = </span><span class="k">new</span> <span class="nx">toolchain</span><span class="p">.</span><span class="nx">ide_emu</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s">'screen'</span><span class="p">))</span>
+    <span class="nx">current_emulator</span><span class="p">.</span><span class="nx">load_rom</span><span class="p">(</span><span class="nx">rom</span><span class="p">.</span><span class="nx">buffer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></code></pre></div>
+
+<p>This was fairly easy to put together once we got all the tools to cooperate.
+After all, these are all command-line tools. Invoking them is as simple as
+calling <code>main</code> and then fiddling with the files that come out. Porting z80e, on
+the other hand, was not nearly as simple.</p>
+
+<h2 id="porting-z80e-to-the-browser">Porting z80e to the browser</h2>
+
+<p><a href="https://github.com/KnightOS/z80e">z80e</a> is our calculator emulator. It&#x2019;s also
+written in C, but needs to interact much more closely with the user. We need to
+be able to render the display to a canvas, and to receive input from the user.
+This isn&#x2019;t nearly as simple as just calling <code>main</code> and playing with some files.</p>
+
+<p>To accomplish this, we&#x2019;ve put together
+<a href="https://github.com/KnightOS/OpenTI">OpenTI</a>, a set of JavaScript bindings to
+z80e. This is mostly the work of my friend puckipedia, but I can explain a bit
+of what is involved. The short of it is that we needed to map native structs to
+JavaScript objects and pass JavaScript code as function pointers to z80e&#x2019;s
+hooks. So far as I know, the KnightOS team is the only group to have attempted
+something with this deep of integration between emscripten and JavaScript -
+because we had to do a ton of the work ourselves.</p>
+
+<p>OpenTI contains a
+<a href="https://github.com/KnightOS/OpenTI/blob/master/webui/js/OpenTI/wrap.js">wrap</a>
+module that is capable of wrapping structs and pointers in JavaScript objects.
+This is a tedious procedure, because we have to know the offset and size of each
+field in native code. An example of a wrapped object is given here:</p>
+
+<div class="highlight"><pre><code class="language-javascript"><span class="nx">define</span><span class="p">([</span><span class="s2">"../wrap"</span><span class="p">],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">Wrap</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">Registers</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pointer</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">pointer</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s2">"This object can only be instantiated with a memory region predefined!"</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">pointer</span> <span class="o">=</span> <span class="nx">pointer</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"AF"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"F"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"A"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">flags</span> <span class="o">=</span> <span class="p">{};</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">7</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"N"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>  <span class="mi">64</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"PV"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">,</span>  <span class="mi">32</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"3"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>  <span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"H"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>   <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"5"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>   <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"Z"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>   <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">flags</span><span class="p">,</span> <span class="s2">"S"</span><span class="p">,</span>  <span class="nx">pointer</span><span class="p">,</span>   <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"BC"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"B"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"DE"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"E"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"D"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"HL"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"L"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"H"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"_AF"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"_BC"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">2</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"_DE"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">4</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"_HL"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">6</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">8</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"PC"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"SP"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">2</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IX"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IXL"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IXH"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt16</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IY"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IYL"</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"IYH"</span><span class="p">,</span> <span class="nx">pointer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span>
+
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="nx">pointer</span><span class="o">++</span><span class="p">);</span>
+        <span class="nx">Wrap</span><span class="p">.</span><span class="nx">UInt8</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">,</span> <span class="nx">pointer</span><span class="o">++</span><span class="p">);</span>
+
+        <span class="c1">// 2 dummy bytes needed for 4-byte alignment</span>
+    <span class="p">}</span>
+
+    <span class="nx">Registers</span><span class="p">.</span><span class="nx">sizeOf</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">26</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">Registers</span><span class="p">;</span>
+<span class="p">});</span></code></pre></div>
+
+<p>The result of that effort is that you can find out what the current value of a
+register is from some nice clean JavaScript: <code>asic.cpu.registers.PC</code> (it&#x2019;s <code id="register-pc"></code>, by the way).</p>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p>I&#x2019;ve put all of this together on <a href="http://try.knightos.org">try.knightos.org</a>.
+The source is available on
+<a href="https://github.com/KnightOS/try.knightos.org">GitHub</a>. It&#x2019;s entirely
+client-side, so it can be hosted on GitHub Pages. I&#x2019;m hopeful that this will
+make it easier for people to get interested in KnightOS development, but it&#x2019;ll
+be a lot better once I can get more documentation and tutorials written. It&#x2019;d be
+pretty cool if we could have interactive tutorials like this!</p>
+
+<p>It was a lot of effort to make this happen, but it was worth it. This is some
+pretty cool shit we&#x2019;ve got as a result.</p>
+
+<p>If you, reader, are interested in working on some pretty cool shit, there&#x2019;s a
+place for you! We have things to do in Assembly, C, JavaScript, Python, and a
+handful of other things. Did you notice how bad try.knightos.org looks? Maybe
+you have a knack for design and want to help improve it. Whatever the case may
+be, if you have interest in this stuff, come hang out with us on IRC: <a href="http://webchat.freenode.net/?channels=knightos&amp;uio=d4">#knightos
+on irc.freenode.net</a>.</p>
+
+
+
+
+
+        
+        
+        <p>This site and all its contents are <a href="http://opensource.org/licenses/MIT">MIT licensed</a>.</p>
+    </body>
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>

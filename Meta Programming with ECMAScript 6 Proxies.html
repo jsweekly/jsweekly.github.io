@@ -1,0 +1,999 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Meta Programming with ECMAScript 6 Proxies</title><h1>Meta Programming with ECMAScript 6 Proxies</h1><p><a href="http://www.2ality.com/2014/12/es6-proxies.html?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="post-body entry-content">
+<p>This blog post explains the ECMAScript 6 (ES6) feature <em>proxies</em>. Proxies enable you to intercept and customize operations performed on objects (such as getting properties). They are a meta programming feature.</p>
+<a name="more"></a>
+
+<p>The code in this post occasionally uses other ES6 features. Consult &#x201C;<a href="http://www.2ality.com/2014/08/es6-today.html">Using ECMAScript 6 today</a>&#x201D; for an overview of all of ES6.</p>
+<p>Before we can get into what proxies are and why they are useful, we first need to understand what <em>meta programming</em> is.</p>
+
+<p>In programming, there are levels:</p>
+<ul>
+<li>At the <em>base level</em> (also called: <em>application level</em>), code processes user input.</li>
+<li>At the <em>meta level</em>, code processes base level code.</li>
+</ul>
+<p>Base and meta level can be diffent languages. In the following meta program, the meta programming language is JavaScript and the base programming language is Java.</p>
+<pre class="javascript">
+    let str = 'Hello' + '!'.repeat(3);
+    console.log('System.out.println("'+str+'")');
+</pre>
+<p>Meta programming can take different forms. In the previous example, we have printed Java code to the console. Let&#x2019;s use JavaScript as both meta programming language and base programming language. The classic example for this is the <a href="http://speakingjs.com/es5/ch23.html#_dynamically_evaluating_javascript_code_via_eval_and_new_function"><code>eval()</code> function</a>, which lets you evaluate/compile JavaScript code on the fly. There are <a href="http://speakingjs.com/es5/ch23.html#_legitimate_use_cases">very few actual use cases</a> for <code>eval()</code>. In the interaction below, we use it to evaluate the expression <code>5 + 2</code>.</p>
+<pre class="repl">
+    &gt; eval('5 + 2')
+    7
+</pre>
+<p>Other JavaScript operations may not look like meta programming, but actually are, if you look closer:</p>
+<pre class="javascript">
+    // Base level
+    let obj = {
+        hello() {
+            console.log('Hello!');
+        }
+    };
+    
+    // Meta level
+    for (let key of Object.keys(obj)) {
+        console.log(key);
+    }
+</pre>
+<p>The program is examining its own structure while running. This doesn&#x2019;t look like meta programming, because the separation between programming constructs and data structures is fuzzy in JavaScript. All of the <a href="http://speakingjs.com/es5/ch17.html#oop_cheat_sheet"><code>Object.*</code> methods</a> can be considered meta programming functionality.</p>
+<p>Reflective meta programming means that a program processes itself.
+Kiczales et al. <a class="ptr">[2]</a> distinguish three kinds of reflective meta programming:</p>
+<ul>
+<li><strong>Introspection:</strong> you have read-only access to the structure of a program.</li>
+<li><strong>Self-modification:</strong> you can change that structure.</li>
+<li><strong>Intercession:</strong> you can redefine the semantics of some language operations.</li>
+</ul>
+<p>Let&#x2019;s look at examples.</p>
+<p><strong>Example: introspection.</strong> <code>Object.keys()</code> performs introspection (see previous example).</p>
+<p><strong>Example: self-modification.</strong> The following function <code>moveProperty</code> moves a property from a source to a target. It performs self-modification via the bracket operator for property access, the assignment operator and the <code>delete</code> operator. (In production code, you&#x2019;d probably use <a href="http://speakingjs.com/es5/ch17.html#property_attributes">property descriptors</a> for this task.)</p>
+<pre class="javascript">
+    function moveProperty(source, propertyName, target) {
+        target[propertyName] = source[propertyName];
+        delete source[propertyName];
+    }
+</pre>
+<p>Using <code>moveProperty()</code>:</p>
+<pre class="javascript">
+    &gt; let obj1 = { prop: 'abc' };
+    &gt; let obj2 = {};
+    &gt; moveProperty(obj1, 'prop', obj2);
+    
+    &gt; obj1
+    {}
+    &gt; obj2
+    { prop: 'abc' }
+</pre>
+<p>JavaScript doesn&#x2019;t currently support intercession, proxies were created to fill that gap.</p>
+
+<h3 id="an_overview_of_proxies">An overview of proxies</h3><p>ECMAScript 6 proxies bring intercession to JavaScript. They work as follows. There are many operations that you can perform on an object <code>obj</code>. For example:</p>
+<ul>
+<li>Getting a property <code>prop</code> (via <code>obj.prop</code>)</li>
+<li>Listing enumerable own properties (via <code>Object.keys(obj)</code>)</li>
+</ul>
+<p>Proxies are special objects that allow you to provide custom implementations for some of these operations. A proxy is created with two parameters:</p>
+<ul>
+<li><code>handler</code>: For each operation, there is a corresponding handler method that &#x2013; if present &#x2013; performs that operation. Such a method <em>intercepts</em> the operation (on its way to the target) and is called a <em>trap</em> (a term borrowed from the domain of operating systems).</li>
+<li><code>target</code>: If the handler doesn&#x2019;t intercept an operation then it is performed on the target. That is, it acts as a fallback for the handler. In a way, the proxy wraps the target.</li>
+</ul>
+<p>In the following example, the handler intercepts the operations <code>get</code> (getting properties) and <code>ownKey</code> (retrieving the own property keys).</p>
+<pre class="javascript">
+    let target = {};
+    let handler = {
+        get(target, propKey, receiver) {
+            console.log('get ' + propKey);
+            return 123;
+        },
+        ownKeys(target) {
+            console.log('ownKeys');
+            return ['hello', 'world'];
+        }
+    };
+    let proxy = new Proxy(target, handler);
+</pre>
+<p>When we get property <code>foo</code>, the handler intercepts that operation:</p>
+<pre class="repl">
+    &gt; proxy.foo
+    get foo
+    123
+</pre>
+<p>Similarly, <code>Object.keys()</code> triggers <code>ownKeys</code>:</p>
+<pre class="repl">
+    &gt; Object.keys(proxy)
+    ownKeys
+    [ 'hello', 'world' ]
+</pre>
+<p>The handler doesn&#x2019;t implement the trap <code>set</code> (setting properties). Therefore, setting <code>proxy.bar</code> leads to <code>target.bar</code> being set.</p>
+<pre class="repl">
+    &gt; proxy.bar = 'abc';
+    &gt; target.bar
+    'abc'
+</pre>
+<h4 id="function-specific_traps">Function-specific traps</h4><p>Two operations can only be intercepted if the target is a function:</p>
+<ul>
+<li><code>apply</code>: Making a function call, triggered via <code>proxy(&#xB7;&#xB7;&#xB7;)</code>, <code>proxy.call(&#xB7;&#xB7;&#xB7;)</code>, <code>proxy.apply(&#xB7;&#xB7;&#xB7;)</code>.</li>
+<li><code>construct</code>: Making a constructor call, triggered via <code>new proxy(&#xB7;&#xB7;&#xB7;)</code>.</li>
+</ul>
+<p>Thus, you can only call or constructor-call a proxy if its target is a function. The reason for that is simple: The operations <code>apply</code> and <code>construct</code> can only be forwarded to the target if it is a function.</p>
+<h4 id="revocable_proxies">Revocable proxies</h4><p>ECMAScript 6 lets you create proxies that can be <em>revoked</em> (switched off):</p>
+<pre class="javascript">
+    let {proxy, revoke} = Proxy.revocable(target, handler);
+</pre>
+<p>On the left hand side of the assignment operator (<code>=</code>), we are using <a href="http://www.2ality.com/2014/06/es6-multiple-return-values.html">destructuring</a> to access the properties <code>proxy</code> and <code>revoke</code> of the object returned by <code>Proxy.revocable()</code>.</p>
+<p>After you call the function <code>revoke</code> for the first time, any operation you apply to <code>proxy</code> causes a <code>TypeError</code>. Subsequent calls of <code>revoke</code> have no further effect.</p>
+<pre class="javascript">
+    let target = {}; // Start with an empty object
+    let handler = {}; // Don&#x2019;t intercept anything
+    let {proxy, revoke} = Proxy.revocable(target, handler);
+    
+    proxy.foo = 123;
+    console.log(proxy.foo); // 123
+    
+    revoke();
+    
+    console.log(proxy.foo); // TypeError: Revoked
+</pre>
+<h4 id="proxies_as_prototypes">Proxies as prototypes</h4><p>A proxy <code>proto</code> can become the prototype of an object <code>obj</code>. Some operations that begin in <code>obj</code> may continue in <code>proto</code>. One such operation is <code>get</code>.</p>
+<pre class="javascript">
+    let proto = new Proxy({}, {
+        get(target, propertyKey, receiver) {
+            console.log('GET '+propertyKey);
+            return target[propertyKey];
+        }
+    });
+    
+    let obj = Object.create(proto);
+    obj.bla; // Output: GET bla
+</pre>
+<p>The property <code>bla</code> can&#x2019;t be found in <code>obj</code>, which is why the search continues in <code>proto</code> and the trap <code>get</code> is triggered there. There are more operations that affect prototypes, they are listed at the end of this post.</p>
+<h4 id="forwarding_operations">Forwarding operations</h4><p>Operations whose traps the handler doesn&#x2019;t implement are automatically forwarded to the target. Sometimes there is some task you want to perform in addition to forwarding the operation. For example, a handler that intercepts all operations and logs them, but doesn&#x2019;t prevent them from reaching the target:</p>
+<pre class="javascript">
+    let handler = {
+        deleteProperty(target, propKey) {
+            console.log('DELETE ' + propKey);
+            return delete target[propKey];
+        },
+        has(target, propKey) {
+            console.log('HAS ' + propKey);
+            return propKey in target;
+        },
+        // Other traps: similar
+    }
+</pre>
+<p>For each trap, we first log the name of the operation and then forward it by performing it manually. ECMAScript 6 has the module-like object <code>Reflect</code> that helps with forwarding: for each trap</p>
+<pre class="javascript">
+    handler.trap(target, arg_1, &#xB7;&#xB7;&#xB7;, arg_n)
+</pre>
+<p><code>Reflect</code> has a method</p>
+<pre class="javascript">
+    Reflect.trap(target, arg_1, &#xB7;&#xB7;&#xB7;, arg_n)
+</pre>
+<p>If we use <code>Reflect</code>, the previous example looks as follows.</p>
+<pre class="javascript">
+    let handler = {
+        deleteProperty(target, propKey) {
+            console.log('DELETE ' + propKey);
+            return Reflect.deleteProperty(target, propKey);
+        },
+        has(target, propKey) {
+            console.log('HAS ' + propKey);
+            return Reflect.has(target, propKey);
+        },
+        // Other traps: similar
+    }
+</pre>
+<p>Now what each of the traps does is so similar that we can implement the handler via a proxy:</p>
+<pre class="javascript">
+    let handler = new Proxy({}, {
+        get(target, trapName, receiver) {
+            // Return the handler method named trapName
+            return function (...args) {
+                // Slice away target object in args[0]
+                console.log(trapName.toUpperCase()+' '+args.slice(1));
+                // Forward the operation
+                return Reflect[trapName](...args);
+            }
+        }
+    });
+</pre>
+<p>For each trap, the proxy asks for a handler method via the <code>get</code> operation and we give it one. That is, all of the handler methods can be implemented via the single meta method <code>get</code>. It was one of the goals for the proxy API to make this kind of virtualization simple.</p>
+<p>Let&#x2019;s use this proxy-based handler:</p>
+<pre class="repl">
+    &gt; let target = {};
+    &gt; let proxy = new Proxy(target, handler);
+    &gt; proxy.foo = 123;
+    SET foo,123,[object Object]
+    &gt; proxy.foo
+    GET foo,[object Object]
+    123
+</pre>
+<p>The following interaction confirms that the <code>set</code> operation was correctly forwarded to the target:</p>
+<pre class="repl">
+    &gt; target.foo
+    123
+</pre>
+
+<h3 id="use_cases_for_proxies">Use cases for proxies</h3><p>This section demonstrates what proxies can be used for. That will also give you the opportunity to see the API in action.</p>
+<h4 id="implementing_the_dom_in_javascript">Implementing the DOM in JavaScript</h4><p>The browser Document Object Model (DOM) is usually implemented as a mix of JavaScript and C++. Implementing it in pure JavaScript is useful for:</p>
+<ul>
+<li>Emulating a browser environment, e.g. to manipulate HTML in Node.js. <a href="https://github.com/tmpvar/jsdom">jsdom</a> is one library that does that.</li>
+<li>Speeding the DOM up (switching between JavaScript and C++ costs time).</li>
+</ul>
+<p>Alas, the standard DOM can do things that are not easy to replicate in JavaScript. For example, most DOM collections are live views on the current state of the DOM that change dynamically whenever the DOM changes. As a result, pure JavaScript implementations of the DOM are not very efficient. One of the reasons for adding proxies to JavaScript was to help write more efficient DOM implementations.</p>
+<h4 id="revocable_references">Revocable references</h4><p><em>Revocable references</em> work as follows: A client is not allowed to access an important resource (an object) directly, only via a reference (an intermediate object, a wrapper around the resource). Normally, every operation applied to the reference is forwarded to the resource. After the client is done, the resource is protected by <em>revoking</em> the reference, by switching it off. Henceforth, applying operations to the reference throws exceptions and nothing is forwarded, anymore.</p>
+<p>In the following example, we create a revocable reference for a resource. We then read one of the resource&#x2019;s properties via the reference. That works, because the reference grants us access. Next, we revoke the reference. Now the reference doesn&#x2019;t let us read the property, anymore.</p>
+<pre class="javascript">
+    let resource = { x: 11, y: 8 };
+    let {reference, revoke} = createRevocableReference(resource);
+    
+    // Access granted
+    console.log(reference.x); // 11
+    
+    revoke();
+    
+    // Access denied
+    console.log(reference.x); // TypeError: Revoked
+</pre>
+<p>Proxies are ideally suited for implementing revocable references, because they can intercept and forward operations. This is a simple proxy-based implementation of <code>createRevocableReference</code>:</p>
+<pre class="javascript">
+    function createRevocableReference(target) {
+        let enabled = true;
+        return {
+            reference: new Proxy(target, {
+                get(target, propKey, receiver) {
+                    if (!enabled) {
+                        throw new TypeError('Revoked');
+                    }
+                    return Reflect.get(target, propKey, receiver);
+                },
+                has(target, propKey) {
+                    if (!enabled) {
+                        throw new TypeError('Revoked');
+                    }
+                    return Reflect.has(target, propKey);
+                },
+                &#xB7;&#xB7;&#xB7;
+            }),
+            revoke() {
+                enabled = false;
+            },
+        };
+    }
+</pre>
+<p>The code can be simplified via the proxy-as-handler technique from the previous section. This time, the handler basically is the <code>Reflect</code> object. Thus, the <code>get</code> trap normally returns the appropriate <code>Reflect</code> method. If the reference has been revoked, a <code>TypeError</code> is thrown, instead.</p>
+<pre class="javascript">
+    function createRevocableReference(target) {
+        let enabled = true;
+        let handler = new Proxy({}, {
+            get(dummyTarget, trapName, receiver) {
+                if (!enabled) {
+                    throw new TypeError('Revoked');
+                }
+                return Reflect[trapName];
+            }
+        });
+        return {
+            reference: new Proxy(target, handler),
+            revoke() {
+                enabled = false;
+            },
+        };
+    }
+</pre>
+<p>However, you don&#x2019;t have to implement revocable references yourself, because ECMAScript 6 lets you create proxies that can be revoked. This time, the revoking happens in the proxy, not in the handler. All the handler has to do is forward every operation to the target. As we have seen that happens automatically if the handler doesn&#x2019;t implement any traps.</p>
+<pre class="javascript">
+    function createRevocableReference(target) {
+        let handler = {}; // forward everything
+        let { proxy, revoke } = Proxy.revocable(target, handler);
+        return { reference: proxy, revoke };
+    }
+</pre>
+<h5 id="membranes">Membranes</h5><p><em>Membranes</em> build on the idea of recocable references: Environments that are designed to run untrusted code wrap a membrane around that code to isolate it and keep the rest of the system safe. Objects pass the membrane in two directions:</p>
+<ul>
+<li>The code may receive objects from the outside.</li>
+<li>Or it may hand objects to the outside.</li>
+</ul>
+<p>In both cases, revocable references are wrapped around the objects. Objects returned by wrapped functions or methods are also wrapped.</p>
+<p>Once the untrusted code is done, all of those references are revoked. As a result, none of its code on the outside can be executed anymore and outside objects that it has cease to work, as well. The <a href="https://developers.google.com/caja/">Caja Compiler</a> is &#x201C;a tool for making third party HTML, CSS and JavaScript safe to embed in your website&#x201D;. It uses membranes to achieve this task.</p>
+<h4 id="accessing_a_restful_web_service">Accessing a restful web service</h4><p>A proxy can be used to create an object on which arbitrary methods can be invoked. In the following example, the function <code>createWebService</code> creates one such object, <code>service</code>. Invoking a method on <code>service</code> retrieves the contents of the web service resource with the same name. Retrieval is handled via an <a href="http://www.2ality.com/2014/10/es6-promises-api.html">ECMAScript 6 promise</a>.</p>
+<pre class="javascript">
+    let service = createWebService('http://example.com/data');
+    // Read JSON data in http://example.com/data/employees
+    service.employees().then(json =&gt; {
+        let employees = JSON.parse(json);
+        &#xB7;&#xB7;&#xB7;
+    });
+</pre>
+<p>The following code is a quick and dirty implementation of <code>createWebService</code> in ECMAScript 5. Because we don&#x2019;t have proxies, we need to know beforehand what methods will be invoked on <code>service</code>. The parameter <code>propKeys</code> provides us with that information, it holds an array with method names.</p>
+<pre class="javascript">
+    function createWebService(baseUrl, propKeys) {
+        let service = {};
+        propKeys.forEach(function (propKey) {
+            Object.defineProperty(service, propKey, {
+                get: function () {
+                    return httpGet(baseUrl+'/'+propKey);
+                }
+            });
+        });
+        return service;
+    }
+</pre>
+<p>The ECMAScript 6 implementation of <code>createWebService</code> can use proxies and is simpler:</p>
+<pre class="javascript">
+    function createWebService(baseUrl) {
+        return new Proxy({}, {
+            get(target, propKey, receiver) {
+                return httpGet(baseUrl+'/'+propKey);
+            }
+        });
+    }
+</pre>
+<p>Both implementations use the following function to make HTTP GET requests (how it works is explained in the <a href="http://www.2ality.com/2014/10/es6-promises-api.html">2ality blog post on promises</a>).</p>
+<pre class="javascript">
+    function httpGet(url) {
+        return new Promise(
+            (resolve, reject) =&gt; {
+                let request = new XMLHttpRequest();
+                Object.assign(request, {
+                    onreadystatechange() {
+                        if (this.status === 200) {
+                            // Success
+                            resolve(this.response);
+                        } else {
+                            // Something went wrong (404 etc.)
+                            reject(new Error(this.statusText));
+                        }
+                    },
+                    onerror() {
+                        reject(new Error(
+                            'XMLHttpRequest Error: '+this.statusText));
+                    }
+                });
+                request.open('GET', url);
+                request.send();    
+            });
+    }
+</pre>
+<h4 id="tracing_property_accesses">Tracing property accesses</h4><p>The example in this section is inspired by Brendan Eich&#x2019;s talk &#x201C;<a href="http://jsconf.eu/2010/speaker/be_proxy_objects.html">Proxies are Awesome</a>&#x201D;: We want to trace when a given set of properties is read or changed. To demonstrate how that works, let&#x2019;s create a class for points and trace accesses to the properties of an instance.</p>
+<pre class="javascript">
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        toString() {
+            return 'Point('+this.x+','+this.y+')';
+        }
+    }
+    // Trace accesses to properties `x` and `y`
+    let p = new Point(5, 7);
+    p = tracePropAccess(p, ['x', 'y']);
+</pre>
+<p>Getting and setting properties of <code>p</code> now has the following effects:</p>
+<pre class="repl">
+    &gt; p.x
+    GET x
+    5
+    &gt; p.x = 21
+    SET x=21
+    21
+</pre>
+<p>Intriguingly, tracing also works whenever <code>Point</code> accesses the properties, because <code>this</code> now refers to the proxy, not to an instance of <code>Point</code>.</p>
+<pre class="repl">
+    &gt; p.toString()
+    GET x
+    GET y
+    'Point(21,7)'
+</pre>
+<p>In ECMAScript 5, you&#x2019;d implement <code>tracePropAccess()</code> as follows. We replace each property with a getter and a setter that traces accesses. The setters and getters use an extra object, <code>propData</code>, to store the data of the properties. Note that we are destructively changing the original implementation, which means that we are meta programming.</p>
+<pre class="javascript">
+    function tracePropAccess(obj, propKeys) {
+        // Store the property data here
+        let propData = Object.create(null);
+        // Replace each property with a getter and a setter
+        propKeys.forEach(function (propKey) {
+            propData[propKey] = obj[propKey];
+            Object.defineProperty(obj, propKey, {
+                get: function () {
+                    console.log('GET '+propKey);
+                    return propData[propKey];
+                },
+                set: function (value) {
+                    console.log('SET '+propKey+'='+value);
+                    propData[propKey] = value;
+                },
+            });
+        });
+        return obj;
+    }
+</pre>
+<p>In ECMAScript 6, we can use a simpler, proxy-based solution. We intercept property getting and setting and don&#x2019;t have to change the implementation.</p>
+<pre class="javascript">
+    function tracePropAccess(obj, propKeys) {
+        let propKeySet = new Set(...propKeys);
+        return new Proxy(obj, {
+            get(target, propKey, receiver) {
+                if (propKeySet.has(propKey)) {
+                    console.log('GET '+propKey);
+                }
+                return Reflect.get(target, propKey, receiver);
+            },
+            set(target, propKey, value, receiver) {
+                if (propKeySet.has(propKey)) {
+                    console.log('SET '+propKey+'='+value);
+                }
+                return Reflect.set(target, propKey, value, receiver);
+            },
+        });
+    }
+</pre>
+<h4 id="warning_about_unknown_properties">Warning about unknown properties</h4><p>When it comes to accessing properties, JavaScript is very forgiving. For example, if you try to read a property and misspell its name, you don&#x2019;t get an exception, you get the result <code>undefined</code>. You can use proxies to get an exception in such a case. This works as follows. We make the proxy a prototype of an object.</p>
+<p>If a property isn&#x2019;t found in the object, the <code>get</code> trap of the proxy is triggered. If the property doesn&#x2019;t even exist in the prototype chain after the proxy, it really is missing and we throw an exception. Otherwise, we return the value of the inherited property. We do so by forwarding the <code>get</code> operation to the target, whose prototype is the prototype of the proxy.</p>
+<pre class="javascript">
+    let PropertyChecker = new Proxy({}, {
+        get(target, propKey, receiver) {
+            if (!(propKey in target)) {
+                throw new ReferenceError('Unknown property: '+propKey);
+            }
+            return Reflect.get(target, propKey, receiver);
+        }
+    });
+</pre>
+<p>Let&#x2019;s use <code>PropertyChecker</code> for an object that we create:</p>
+<pre class="repl">
+    &gt; let obj = { __proto__: PropertyChecker, foo: 123 };
+    &gt; obj.foo  // own
+    123
+    &gt; obj.fo
+    ReferenceError: Unknown property: fo
+    &gt; obj.toString()  // inherited
+    '[object Object]'
+</pre>
+<p>If we turn <code>PropertyChecker</code> into a constructor, we can use it for ECMAScript 6 classes via <code>extends</code>:</p>
+<pre class="javascript">
+    function PropertyChecker() { }
+    PropertyChecker.prototype = new Proxy(&#xB7;&#xB7;&#xB7;);
+    
+    class Point extends PropertyChecker {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+    
+    let p = new Point(5, 7);
+    console.log(p.x); // 5
+    console.log(p.z); // ReferenceError
+</pre>
+<p>If you are worried about accidentally <em>creating</em> properties, you have two options: You can either create a proxy that traps <code>set</code>. Or you can make an object <code>obj</code> non-extensible via <a href="http://speakingjs.com/es5/ch17.html#_preventing_extensions"><code>Object.preventExtensions(obj)</code></a>, which means that JavaScript doesn&#x2019;t let you add new (own) properties to <code>obj</code>.</p>
+<h4 id="negative_array_indices">Negative array indices</h4><p>Some array methods let you refer to the last element via <code>-1</code>, to the second-to-last element via <code>-2</code>, etc. For example:</p>
+<pre class="repl">
+    &gt; ['a', 'b', 'c'].slice(-1)
+    [ 'c' ]
+</pre>
+<p>Alas, that doesn&#x2019;t work when accessing elements via the bracket operator (<code>[]</code>). We can, however, use proxies to add that capability. The following function <code>createArray()</code> creates arrays that support negative indices. It does so by wrapping proxies around array instances. The proxies intercept the <code>get</code> operation that is triggered by the bracket operator.</p>
+<pre class="javascript">
+    function createArray(...elements) {
+        let handler = {
+            get(target, propKey, receiver) {
+                let index = Number(propKey);
+                // Sloppy way of checking for negative indices
+                if (index &lt; 0) {
+                    propKey = String(target.length + index);
+                }
+                return Reflect.get(target, propKey, receiver);
+            }
+        };
+        // Wrap a proxy around an array
+        let target = [];
+        target.push(...elements);
+        return new Proxy(target, handler);
+    }
+    let arr = createArray('a', 'b', 'c');
+    console.log(arr[-1]); // c
+</pre>
+<p>Acknowledgement: The idea for this example comes from a <a href="http://h3manth.com/new/blog/2013/negative-array-index-in-javascript/">blog post</a> by hemanth.hm.</p>
+<h4 id="data_binding">Data binding</h4><p>Data binding is about syncing data between objects. One popular use case are widgets based on the MVC (Model View Controler) pattern: With data binding, the <em>view</em> (the widget) stays up-to-date if you change the <em>model</em> (the data visualized by the widget).</p>
+<p>To implement data binding, you have to observe and react to changes made to an object. In the following code snippet, I sketch how that could work for an array.</p>
+<pre class="javascript">
+    let array = [];
+    let observedArray = new Proxy(array, {
+        set(target, propertyKey, value, receiver) {
+            console.log(propertyKey+'='+value);
+            target[propertyKey] = value;
+        }
+    });
+    observedArray.push('a');
+</pre>
+<p>Output:</p>
+<pre class="undefined">
+    0=a
+    length=1
+</pre>
+<p>Data binding is a complex topic. Given its popularity and concerns over proxies not being performant enough, a dedicated mechanism has been created for data binding: <code>Object.observe()</code>. It will probably be part of ECMAScript 7 and is already <a href="http://kangax.github.io/compat-table/es7/#Object.observe">supported</a> by Chrome.</p>
+<p>Consult Addy Osmani&#x2019;s article &#x201C;<a href="http://www.html5rocks.com/en/tutorials/es7/observe/">Data-binding Revolutions with Object.observe()</a>&#x201D; for more information on <code>Object.observe()</code>.</p>
+<h4 id="other_use_cases">Other use cases</h4><p>There are more use cases for proxies. For example:</p>
+<ul>
+<li>Local placeholders that forward method invocations to remote objects. Similar: web service example.</li>
+<li>Data access objects for databases: reading and writing to the object reads and writes to the database. Similar: web service example.</li>
+<li>Profiling: Intercept method invocations to track how much time is spent in each method. Similar: tracing example.</li>
+<li>Type checking: Nicholas Zakas has used proxies to <a href="http://www.nczonline.net/blog/2014/04/29/creating-type-safe-properties-with-ecmascript-6-proxies/">type-check objects</a>.</li>
+</ul>
+
+<h3 id="the_design_of_the_proxy_api">The design of the proxy API</h3><p>In this section, we go deeper into how proxies work and why they work that way.</p>
+<p>Firefox has allowed you to do some interceptive meta programming for a while: If you define a method whose name is <code>__noSuchMethod__</code>, it is notified whenever a method is called that doesn&#x2019;t exist. The following is an example of using <code>__noSuchMethod__</code>.</p>
+<pre class="javascript">
+    let obj = {
+        __noSuchMethod__: function (name, args) {
+            console.log(name+': '+args);
+        }
+    };
+    // Neither of the following two methods exist,
+    // but we can make it look like they do
+    obj.foo(1);    // Output: foo: 1
+    obj.bar(1, 2); // Output: bar: 1,2
+</pre>
+<p>Thus, <code>__noSuchMethod__</code> works similarly to a proxy trap. In contrast to proxies, the trap is an own or inherited method of the object whose operations we want to intercept. The problem with that approach is that base level and meta level are mixed. Base-level code may accidentally invoke or see a meta level method and there is the possibility of accidentally defining a meta level method.</p>
+<p>Even in standard ECMAScript 5, base level and meta level are sometimes mixed. For example, the following meta programming mechanisms can fail, because they exist at the base level:</p>
+<ul>
+<li><code>obj.hasOwnProperty(propKey)</code>: This call can fail if a property in the prototype chain overrides the built-in implementation. For example, it fails if <code>obj</code> is <code>{ hasOwnProperty: null }</code>. Safe ways to call this method are <code>Object.prototype.hasOwnProperty.call(obj, propKey)</code> and its abbreviated version <code>{}.hasOwnProperty.call(obj, propKey)</code>.</li>
+<li><code>func.call(&#xB7;&#xB7;&#xB7;)</code>, <code>func.apply(&#xB7;&#xB7;&#xB7;)</code>: For these two methods, problem and solution are the same as with <code>hasOwnProperty</code>.</li>
+<li><code>obj.__proto__</code>: In most JavaScript engines, <code>__proto__</code> is a special property that lets you get and set the prototype of <code>obj</code>. Hence, when you use objects as dictionaries, you must be careful to <a href="http://speakingjs.com/es5/ch17.html#_pitfall_3_the_special_property___proto">avoid <code>__proto__</code> as a property key</a>.</li>
+</ul>
+<p>By now, it should be obvious that making (base level) property keys special is problematic. Therefore, proxies are <em>stratified</em> &#x2013; base level (the proxy object) and meta level (the handler object) are separate.</p>
+<h4 id="virtual_objects_versus_wrappers">Virtual objects versus wrappers</h4><p>Proxies are used in two roles:</p>
+<ul>
+<li><p>As <em>wrappers</em>, they <em>wrap</em> their targets, they control access to them. Examples of wrappers are: revocable resources and tracing proxies.</p>
+</li>
+<li><p>As <em>virtual objects</em>, they are simply objects with special behavior and their targets don&#x2019;t matter. An example is a proxy that forwards method calls to a remote object.</p>
+</li>
+</ul>
+<p>An earlier design of the proxy API conceived proxies as purely virtual objects. However, it turned out that even in that role, a target was useful, to enforce invariants (which is explained later) and as a fallback for traps that the handler doesn&#x2019;t implement.</p>
+<h4 id="transparent_virtualization_and_handler_encapsulation">Transparent virtualization and handler encapsulation</h4><p>Proxies are shielded in two ways:</p>
+<ul>
+<li>It is impossible to determine whether an object is a proxy or not (<em>transparent virtualization</em>).</li>
+<li>You can&#x2019;t access a handler via its proxy (<em>handler encapsulation</em>).</li>
+</ul>
+<p>Both principles give proxies considerable power for impersonating other objects. One reason for enforcing <em>invariants</em> (as explained later) is to keep that power in check.</p>
+<p>If you do need a way to tell proxies apart from non-proxies, you have to implement it yourself. The following code is a module <code>lib.js</code> that exports two functions: one of them creates proxies, the other one determines whether an object is one of those proxies.</p>
+<pre class="javascript">
+    // lib.js
+    
+    let proxies = new WeakSet();
+    
+    export function createProxy(obj) {
+        let handler = {};
+        let proxy = new Proxy(obj, handler);
+        proxies.add(proxy);
+        return proxy;
+    }
+    
+    export function isProxy(obj) {
+        return proxies.has(obj);
+    }
+</pre>
+<p>This module uses the ECMAScript 6 data structure <code>WeakSet</code> for keeping track of proxies. <code>WeakSet</code> is ideally suited for this purpose, because it doesn&#x2019;t prevent its elements from being garbage-collected.</p>
+<p>The next example shows how <code>lib.js</code> can be used.</p>
+<pre class="javascript">
+    // main.js
+    
+    import { createProxy, isProxy } from './lib.js';
+    
+    let p = createProxy({});
+    console.log(isProxy(p)); // true
+    console.log(isProxy({})); // false
+</pre>
+<p>This section examines how JavaScript is structured internally and how the set of proxy traps was chosen.</p>
+<p>The term <em>protocol</em> is highly overloaded in computer science. One definition is:</p>
+<blockquote>
+<p>A prototcol is about achieving tasks via an object, it comprises a set of methods plus a set of rules for using them.</p>
+</blockquote>
+<p>Note that this definition is different from viewing protocols as interfaces (as, for example, Objective C does), because it includes rules.</p>
+<p>The ECMAScript specification describes how to execute JavaScript code. It includes a <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ordinary-and-exotic-objects-behaviours">protocol for handling objects</a>. This protocol operates at a meta level and is sometimes called the meta object protocol (MOP). The JavaScript MOP consists of own internal methods that all objects have. &#x201C;Internal&#x201D; means that they exist only in the specification (JavaScript engines may or may not have them) and are not accessible from JavaScript. The names of internal methods are written in double square brackets.</p>
+<p>The internal method for getting properties is called <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver"><code>[[Get]]</code></a>. If we pretend that property names with square brackets are legal, this method would roughly be implemented as follows in JavaScript.</p>
+<pre class="javascript">
+    // Method definition
+    [[Get]](propKey, receiver) {
+        let desc = this.[[GetOwnProperty]](propKey);
+        if (desc === undefined) {
+            let parent = this.[[GetPrototypeOf]]();
+            if (parent === null) return undefined;
+            return parent.[[Get]](propKey, receiver); // (*)
+        }
+        if ('value' in desc) {
+            return desc.value;
+        }
+        let getter = desc.get;
+        if (getter === undefined) return undefined;
+        return getter.[[Call]](receiver, []);
+    }
+</pre>
+<p>The MOP methods called in this code are:</p>
+<ul>
+<li><code>[[GetOwnProperty]]</code> (trap <code>getOwnPropertyDescriptor</code>)</li>
+<li><code>[[GetPrototypeOf]]</code> (trap <code>getPrototypeOf</code>)</li>
+<li><code>[[Get]]</code> (trap <code>get</code>)</li>
+<li><code>[[Call]]</code> (trap <code>apply</code>)</li>
+</ul>
+<p>In line (*) you can see why proxies in a prototype chain find out about <code>get</code> if a property isn&#x2019;t found in an &#x201C;earlier&#x201D; object: If there is no own property whose key is <code>propKey</code>, the search continues in the prototype <code>parent</code> of <code>this</code>.</p>
+<p><strong>Fundamental versus derived operations.</strong> You can see that <code>[[Get]]</code> calls other MOP operations. Operations that do that are called <em>derived</em>. Operations that don&#x2019;t depend on other operations are called <em>fundamental</em>.</p>
+<h5 id="the_mop_of_proxies">The MOP of proxies</h5><p>The <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-proxy-object-internal-methods-and-internal-slots">meta object protocol of proxies</a> is different from that of normal objects. For normal objects, derived operations call other operations. For proxies, each operation is either intercepted by a handler method or forwarded to the target.</p>
+<p>What operations should be interceptable via proxies? One possibility is to only provide traps for fundamental operations. The alternative is to include some derived operations. The advantage of derived traps is that they increase performance and are more convenient: If there wasn&#x2019;t a trap for <code>get</code>, you&#x2019;d have to implement its functionality via <code>getOwnPropertyDescriptor</code>. One problem with derived traps is that they can lead to proxies behaving inconsistently. For example, <code>get</code> may return a value that is different from the value stored in the descriptor returned by <code>getOwnPropertyDescriptor</code>.</p>
+<h5 id="selective_intercession%3A_what_operations_should_be_interceptable%3F">Selective intercession: what operations should be interceptable?</h5><p>Intercession by proxies is <em>selective</em>: you can&#x2019;t intercept every language operation. Why were some operations excluded? Let&#x2019;s look at two reasons.</p>
+<p>First, stable operations are not well suited for intercession. An operation is <em>stable</em> if it always produces the same results for the same arguments. If a proxy can trap a stable operation, it can become unstable and thus unreliable. <a href="http://speakingjs.com/es5/ch09.html#_strict_equality">Strict equality</a> (<code>===</code>) is one such stable operation. It can&#x2019;t be trapped and its result is computed by treating the proxy itself as just another object. Another way of maintaining stability is by applying an operation to the target instead of the proxy. As explained later, when we look at how invariants are enfored for proxies, this happens when <code>Object.getPrototypeOf()</code> is applied to a proxy whose target is non-extensible.</p>
+<p>A second reason for not making more operations interceptable is that intercession means executing custom code in situations where that normally isn&#x2019;t possible. The more this interleaving of code happens, the harder it is to understand and debug a program.</p>
+<h5 id="traps%3A_%E2%80%9Cget%E2%80%9D_versus_%E2%80%9Cinvoke%E2%80%9D">Traps: &#x201C;get&#x201D; versus &#x201C;invoke&#x201D;</h5><p>If you want to create virtual methods via ECMAScript 6 proxies, you have to return functions from a <code>get</code> trap. That raises the question: why not introduce an extra trap for method invocations (e.g. <code>invoke</code>)? That would enable us to distinguish between:</p>
+<ul>
+<li>Getting properties via <code>obj.prop</code> (trap <code>get</code>)</li>
+<li>Invoking methods via <code>obj.prop()</code> (trap <code>invoke</code>)</li>
+</ul>
+<p>There are two reasons for not doing so.</p>
+<p>First, not all implementations distinguish between <code>get</code> and <code>invoke</code>. For example, <a href="https://mail.mozilla.org/pipermail/es-discuss/2010-May/011062.html">Apple&#x2019;s JavaScriptCore doesn&#x2019;t</a>.</p>
+<p>Second, extracting a method and invoking it later via <code>call()</code> or <code>apply()</code> should have the same effect as invoking the method via dispatch. In other words, the following two variants should work equivalently. If there was an extra trap <code>invoke</code> then that equivalence would be harder to maintain.</p>
+<pre class="javascript">
+    // Variant 1: call via dynamic dispatch
+    let result = obj.m();
+    
+    // Variant 2: extract and call directly
+    let m = obj.m;
+    let result = m.call(obj);
+</pre>
+<p><strong>Only possible with <code>invoke</code>.</strong> Some things can only be done if you are able to distinguish between <code>get</code> and <code>invoke</code>. Those things are therefore impossible with the current proxy API. Two examples are: auto-binding and intercepting missing methods.</p>
+<p>First, by making a proxy the prototype of an object <code>obj</code>, you can automatically bind methods:</p>
+<ul>
+<li>Retrieving the value of a method <code>m</code> via <code>obj.m</code> returns a function whose <code>this</code> is bound to <code>obj</code>.</li>
+<li><code>obj.m()</code> performs a method call.</li>
+</ul>
+<p>Auto-binding helps with using methods as callbacks. For example, variant 2 from the previous example becomes simpler:</p>
+<pre class="javascript">
+    let boundMethod = obj.m;
+    let result = boundMethod();
+</pre>
+<p>Second, <code>invoke</code> lets a proxy emulate the previously mentioned <code>__noSuchMethod__</code> mechanism that Firefox supports. The proxy would again become the prototype of an object <code>obj</code>. It would react differently depending on how an unknown property <code>foo</code> is accessed:</p>
+<ul>
+<li>If you read that property via <code>obj.foo</code>, no intercession happens and <code>undefined</code> is returned.</li>
+<li>If you make the method call <code>obj.foo()</code> then the proxy intercepts and, e.g., notifies a callback.</li>
+</ul>
+<h4 id="enforcing_invariants_for_proxies">Enforcing invariants for proxies</h4><p>Before we look at what invariants are and how they are enforced for proxies, let&#x2019;s review how objects can be protected via non-extensibility and non-configurability.</p>
+<h5 id="protecting_objects">Protecting objects</h5><p>There are two ways of protecting objects:</p>
+<ul>
+<li>non-extensibility protects objects</li>
+<li>non-configurability protects properties (or rather, their attributes)</li>
+</ul>
+<p><strong>Non-extensibility.</strong> If an object is non-extensible, you can&#x2019;t add properties and you can&#x2019;t change its prototype:</p>
+<pre class="javascript">
+    'use strict'; // switch on strict mode to get TypeErrors
+    
+    let obj = Object.preventExtensions({});
+    console.log(Object.isExtensible(obj)); // false
+    obj.foo = 123; // TypeError: object is not extensible
+    Object.setPrototypeOf(obj, null); // TypeError: object is not extensible
+</pre>
+<p><strong>Non-configurability.</strong> All the data of a property is stored in <em>attributes</em>. A property is like a record and attributes are like the fields of that record. Examples of attributes:</p>
+<ul>
+<li>The attribute <code>value</code> holds the value of a property.</li>
+<li>The boolean attribute <code>writable</code> controls whether a property&#x2019;s value can be changed.</li>
+<li>The boolean attribute <code>configurable</code> controls whether a property&#x2019;s attributes can be changed.</li>
+</ul>
+<p>Thus, if a property is both non-writable and non-configurable, it is read-only and remains that way:</p>
+<pre class="javascript">
+    'use strict'; // switch on strict mode to get TypeErrors
+    
+    let obj = {};
+    Object.defineProperty(obj, 'foo', {
+        value: 123,
+        writable: false,
+        configurable: false
+    });
+    console.log(obj.foo); // 123
+    obj.foo = 'a'; // TypeError: Cannot assign to read only property
+    
+    Object.defineProperty(obj, 'foo', {
+        configurable: true
+    }); // TypeError: Cannot redefine property
+</pre>
+<p>For more details on these topics (including how <code>Object.defineProperty()</code> works) consult the following sections in &#x201C;Speaking JavaScript&#x201D;:</p>
+<ul>
+<li><a href="http://speakingjs.com/es5/ch17.html#property_attributes">Property Attributes and Property Descriptors</a></li>
+<li><a href="http://speakingjs.com/es5/ch17.html#protecting_objects">Protecting Objects</a></li>
+</ul>
+<h5 id="enforcing_invariants">Enforcing invariants</h5><p>Traditionally, non-extensibility and non-configurability are:</p>
+<ul>
+<li>Universal: they work for all objects.</li>
+<li>Monotonic: once switched on, they can&#x2019;t be switched off again.</li>
+</ul>
+<p>These and other characteristics that remain unchanged in the face of language operations are called <em>invariants</em>. With proxies, it is easy to violate invariants, as they are not intrinsically bound by non-extensibility etc.</p>
+<p>The proxy API prevents proxies from violating invariants by checking the parameters and results of handler methods. Non-extensibility and non-configurability are enforced by using the target object for bookkeeping. The following are a few examples of invariants (for an arbitrary object <code>obj</code>) and how they are enforced for proxies (an exhaustive list is given at the end of this post):</p>
+<ul>
+<li>Invariant: <code>Object.isExtensible(obj)</code> must return a boolean.<ul>
+<li>Enforced by coercing the value returned by the handler to a boolean.</li>
+</ul>
+</li>
+<li>Invariant: <code>Object.getOwnPropertyDescriptor(obj, &#xB7;&#xB7;&#xB7;)</code> must return an object or <code>undefined</code>.<ul>
+<li>Enforced by throwing a <code>TypeError</code> if the handler doesn&#x2019;t return an appropriate value.</li>
+</ul>
+</li>
+<li>Invariant: If <code>Object.preventExtensions(obj)</code> returns <code>true</code> then all future calls must return <code>false</code> and <code>obj</code> must now be non-extensible.<ul>
+<li>Enforced by throwing a <code>TypeError</code> if the handler returns <code>true</code>, but the target object is not extensible.</li>
+</ul>
+</li>
+<li>Invariant: Once an object has been made non-extensible, <code>Object.isExtensible(obj)</code> must always return <code>false</code>.<ul>
+<li>Enforced by throwing a <code>TypeError</code> if the result returned by the handler is not the same (after coercion) as <code>Object.isExtensible(target)</code>.</li>
+</ul>
+</li>
+</ul>
+<p>Enforcing invariants has the following benefits:</p>
+<ul>
+<li>Proxies work like all other objects with regard to extensibility and configurability. Therefore, universality is maintained. This is achieved without preventing proxies from virtualizing (impersonating) protected objects.</li>
+<li>A protected object can&#x2019;t be misrepresented by wrapping a proxy around it. Misrepresentation can be caused by bugs or by malicious code.</li>
+</ul>
+<p>The following sections give examples of invariants being enforced.</p>
+<h5 id="example%3A_the_prototype_of_a_non-extensible_target_must_be_represented_faithfully">Example: the prototype of a non-extensible target must be represented faithfully</h5><p>In response to the <code>getPrototypeOf</code> trap, the proxy must return the target&#x2019;s prototype if the target is non-extensible.</p>
+<p>To demonstrate this invariant, let&#x2019;s create a handler that returns a prototype that is different from the target&#x2019;s prototype:</p>
+<pre class="javascript">
+    let fakeProto = {};
+    let handler = {
+        getPrototypeOf(t) {
+            return fakeProto;
+        }
+    };
+</pre>
+<p>Faking the prototype works if the target is extensible:</p>
+<pre class="javascript">
+    let extensibleTarget = {};
+    let ext = new Proxy(extensibleTarget, handler);
+    console.log(Object.getPrototypeOf(ext) === fakeProto); // true
+</pre>
+<p>We do, however, get an error if we fake the prototype for a non-extensible object.</p>
+<pre class="javascript">
+    let nonExtensibleTarget = {};
+    Object.preventExtensions(nonExtensibleTarget);
+    let nonExt = new Proxy(nonExtensibleTarget, handler);
+    Object.getPrototypeOf(nonExt); // TypeError
+</pre>
+<h5 id="example%3A_non-writable_non-configurable_target_properties_must_be_represented_faithfully">Example: non-writable non-configurable target properties must be represented faithfully</h5><p>If the target has a non-writable non-configurable property then the handler must return that property&#x2019;s value in response to a <code>get</code> trap. To demonstrate this invariant, let&#x2019;s create a handler that always returns the same value for properties.</p>
+<pre class="javascript">
+    let handler = {
+        get(target, propKey) {
+            return 'abc';
+        }
+    };
+    let target = Object.defineProperties(
+        {}, {
+            foo: {
+                value: 123,
+                writable: true,
+                configurable: true
+            },
+            bar: {
+                value: 456,
+                writable: false,
+                configurable: false
+            },
+        });
+    let proxy = new Proxy(target, handler);
+</pre>
+<p>Property <code>target.foo</code> is not both non-writable and non-configurable, which means that the handler is allowed to pretend that it has a different value:</p>
+<pre class="repl">
+    &gt; proxy.foo
+    'abc'
+</pre>
+<p>However, property <code>target.bar</code> is both non-writable and non-configurable. Therefore, we can&#x2019;t fake its value:</p>
+<pre class="repl">
+    &gt; proxy.bar
+    TypeError: Invariant check failed
+</pre>
+
+<h3 id="reference%3A_the_proxy_api">Reference: the proxy API</h3><p>This section serves as a quick reference for the proxy API: the global objects <code>Proxy</code> and <code>Reflect</code>.</p>
+<h4 id="creating_proxies">Creating proxies</h4><p>There are two ways to create proxies:</p>
+<ul>
+<li><p><code>proxy = new Proxy(target, handler)</code><br>Creates a new proxy object with the given target and the given handler.</p>
+</li>
+<li><p><code>{proxy, revoke} = Proxy.revocable(target, handler)</code>
+Creates a proxy that can be revoked via the function <code>revoke</code>. <code>revoke</code> can be called multiple times, but only the first call has an effect and switches <code>proxy</code> off. Afterwards, any operation performed on <code>proxy</code> leads to a <code>TypeError</code> being thrown.</p>
+</li>
+</ul>
+<h4 id="handler_methods">Handler methods</h4><p>This subsection explains what traps can be implemented by handlers and what operations trigger them. Several traps return boolean values. For the traps <code>has</code> and <code>isExtensible</code>, the boolean is the result of the operation. For all other traps, the boolean indicates whether the operation succeeded or not.</p>
+<p>Traps for all objects:</p>
+<ul>
+<li><code>defineProperty(target, propKey, propDesc)</code> &#x2192; <code>boolean</code><ul>
+<li><code>Object.defineProperty(proxy, propKey, propDesc)</code></li>
+</ul>
+</li>
+<li><code>deleteProperty(target, propKey)</code> &#x2192; <code>boolean</code><ul>
+<li><code>delete proxy[propKey]</code></li>
+<li><code>delete proxy.foo // propKey = 'foo'</code></li>
+</ul>
+</li>
+<li><code>enumerate(target)</code> &#x2192; <code>Iterator</code>
+</li>
+<li><code>get(target, propKey, receiver)</code> &#x2192; <code>any</code><ul>
+<li><code>receiver[propKey]</code></li>
+<li><code>receiver.foo // propKey = 'foo'</code></li>
+</ul>
+</li>
+<li><code>getOwnPropertyDescriptor(target, propKey)</code> &#x2192; <code>PropDesc|Undefined</code><ul>
+<li><code>Object.getOwnPropertyDescriptor(proxy, propKey)</code></li>
+</ul>
+</li>
+<li><code>getPrototypeOf(target)</code> &#x2192; <code>Object|Null</code><ul>
+<li><code>Object.getPrototypeOf(proxy)</code></li>
+</ul>
+</li>
+<li><code>has(target, propKey)</code> &#x2192; <code>boolean</code>
+</li>
+<li><code>isExtensible(target)</code> &#x2192; <code>boolean</code><ul>
+<li><code>Object.isExtensible(proxy)</code></li>
+</ul>
+</li>
+<li><code>ownKeys(target)</code> &#x2192; <code>Array&lt;PropertyKey&gt;</code><ul>
+<li><code>Object.getOwnPropertyPropertyNames(proxy)</code></li>
+<li><code>Object.getOwnPropertyPropertySymbols(proxy)</code></li>
+<li><code>Object.keys(proxy)</code></li>
+</ul>
+</li>
+<li><code>preventExtensions(target)</code> &#x2192; <code>boolean</code><ul>
+<li><code>Object.preventExtensions(proxy)</code></li>
+</ul>
+</li>
+<li><code>set(target, propKey, value, receiver)</code> &#x2192; <code>boolean</code><ul>
+<li><code>receiver[propKey] = value</code></li>
+<li><code>receiver.foo = value // propKey = 'foo'</code></li>
+</ul>
+</li>
+<li><code>setPrototypeOf(target, proto)</code> &#x2192; <code>boolean</code><ul>
+<li><code>Object.setPrototypeOf(proxy, proto)</code></li>
+</ul>
+</li>
+</ul>
+<p>Traps for functions (available if target is a function):</p>
+<ul>
+<li><code>apply(target, thisArgument, argumentsList)</code> &#x2192; <code>any</code><ul>
+<li><code>proxy.apply(thisArgument, argumentsList)</code></li>
+<li><code>proxy.call(thisArgument, ...argumentsList)</code></li>
+<li><code>proxy(...argumentsList)</code></li>
+</ul>
+</li>
+<li><code>construct(target, argumentsList)</code> &#x2192; <code>Object</code><ul>
+<li><code>new proxy(..argumentsList)</code></li>
+</ul>
+</li>
+</ul>
+<h5 id="fundamental_operations_versus_derived_operations">Fundamental operations versus derived operations</h5><p>The following operations are <em>fundamental</em>, they don&#x2019;t use other operations to do their work: <code>apply</code>, <code>defineProperty</code>, <code>deleteProperty</code>, <code>getOwnPropertyDescriptor</code>, <code>getPrototypeOf</code>, <code>isExtensible</code>, <code>ownKeys</code>, <code>preventExtensions</code>, <code>setPrototypeOf</code></p>
+<p>All other operations are <em>derived</em>, they can be implemented via fundamental operations. For example, for data properties, <code>get</code> can be implemented by iterating over the prototype chain via <code>getPrototypeOf</code> and calling <code>getOwnPropertyDescriptor</code> for each chain member until either an own property is found or the chain ends.</p>
+<h4 id="invariants">Invariants</h4><p>Invariants are safety constraints for handlers. This subsection documents what invariants are enforced by the proxy API and how. Whenever you read &#x201C;the handler must do X&#x201D; below, it means that a <code>TypeError</code> is thrown if it doesn&#x2019;t. Some invariants restrict return values, others restrict parameters. Ensuring the correct return value of a trap is ensured in two ways: Normally, an illegal value means that a <code>TypeError</code> is thrown. But whenever a boolean is expected, coercion is used to convert non-booleans to legal values.</p>
+<p>This is the complete list of invariants that are enforced (source: <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-proxy-object-internal-methods-and-internal-slots">ECMAScript 6 specification</a>):</p>
+<ul>
+<li><code>apply(target, thisArgument, argumentsList)</code><ul>
+<li>No invariants are enforced.</li>
+</ul>
+</li>
+<li><code>construct(target, argumentsList)</code><ul>
+<li>The result returned by the handler must be an object (not <code>null</code> or a primitive value).</li>
+</ul>
+</li>
+<li><code>defineProperty(target, propKey, propDesc)</code><ul>
+<li>If the target is not extensible then <code>propDesc</code> can&#x2019;t create a property that the target doesn&#x2019;t already have.</li>
+<li>If <code>propDesc</code> sets the attribute <code>configurable</code> to <code>false</code> then the target must have a non-configurable own property whose key is <code>propKey</code>.</li>
+<li>If <code>propDesc</code> was used to (re)define an own property for the target then that must not cause an exception. An exception is thrown if a change is forbidden by the attributes <code>writable</code> and <code>configurable</code>.</li>
+</ul>
+</li>
+<li><code>deleteProperty(target, propKey)</code><ul>
+<li>Non-configurable own properties of the target can&#x2019;t be deleted.</li>
+</ul>
+</li>
+<li><code>enumerate(target)</code><ul>
+<li>The handler must return an object.</li>
+</ul>
+</li>
+<li><code>get(target, propKey, receiver)</code><ul>
+<li>If the target has an own, non-writable, non-configurable data property whose key is <code>propKey</code> then the handler must return that property&#x2019;s value.</li>
+<li>If the target has an own, non-configurable, getter-less accessor property then the handler must return <code>undefined</code>.</li>
+</ul>
+</li>
+<li><code>getOwnPropertyDescriptor(target, propKey)</code><ul>
+<li>The handler must return either an object or <code>undefined</code>.</li>
+<li>Non-configurable own properties of the target can&#x2019;t be reported as non-existent by the handler.</li>
+<li>If the target is non-extensible then exactly the target&#x2019;s own properties must be reported by the handler as existing (and none of them as missing).</li>
+<li>If the handler reports a property as non-configurable then that property must be a non-configurable own property of the target.</li>
+<li>If the result returned by the handler were used to (re)define an own property for the target then that must not cause an exception. An exception is thrown if the change is not allowed by the attributes <code>writable</code> and <code>configurable</code>. Therefore, the handler can&#x2019;t report a non-configurable property as configurable and it can&#x2019;t report a different value for a non-configurable non-writable property.</li>
+</ul>
+</li>
+<li><code>getPrototypeOf(target)</code><ul>
+<li>The result must be either an object or <code>null</code>.</li>
+<li>If the target object is not extensible then the handler must return the prototype of the target object.</li>
+</ul>
+</li>
+<li><code>has(target, propKey)</code><ul>
+<li>A handler must not hide (report as non-existent) a non-configurable own property of the target.</li>
+<li>If the target is non-extensible then no own property of the target may be hidden.</li>
+</ul>
+</li>
+<li><code>isExtensible(target)</code><ul>
+<li>The result returned by the handler is coerced to boolean.</li>
+<li>After coercion to boolean, the value returned by the handler must be the same as <code>target.isExtensible()</code>.</li>
+</ul>
+</li>
+<li><code>ownKeys(target)</code><ul>
+<li>The handler must return an object, which treated as array-like and converted into an array.</li>
+<li>Each element of the result must be either a string or a symbol.</li>
+<li>The result must contain the keys of all non-configurable own properties of the target.</li>
+<li>If the target is not extensible then the result must contain exactly the keys of the own properties of the target (and no other values).</li>
+</ul>
+</li>
+<li><code>preventExtensions(target)</code><ul>
+<li>The result returned by the handler is coerced to boolean.</li>
+<li>If the handler returns a truthy value (indicating a successful change) then <code>target.isExtensible()</code> must be <code>false</code> afterwards.</li>
+</ul>
+</li>
+<li><code>set(target, propKey, value, receiver)</code><ul>
+<li>If the target has an own, non-writable, non-configurable data property whose key is <code>propKey</code> then <code>value</code> must be the same as the value of that property (i.e., the property can&#x2019;t be changed).</li>
+<li>If the target has an own, non-configurable, setter-less accessor property then a <code>TypeError</code> is thrown (i.e., such a property can&#x2019;t be set).</li>
+</ul>
+</li>
+<li><code>setPrototypeOf(target, proto)</code><ul>
+<li>The result returned by the handler is coerced to boolean.</li>
+<li>If the target is not extensible, the prototype can&#x2019;t be changed. This is enforced as follows: If the target is not extensible and the handler returns a truthy value (indicating a successful change) then <code>proto</code> must be the same as the prototype of the target. Otherwise, a <code>TypeError</code> is thrown.</li>
+</ul>
+</li>
+</ul>
+<h4 id="the_prototype_chain">The prototype chain</h4><p>The following operations of normal objects perform operations on objects in the prototype chain (source: <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ordinary-object-internal-methods-and-internal-slots">ECMAScript 6 specification</a>). Therefore, if one of the objects in that chain is a proxy, its traps are triggered. The specification implements the operations as internal own methods (that are not visible to JavaScript code). But in this section, we pretend that they are normal methods that have the same names as the traps. The parameter <code>target</code> becomes the receiver of the method call.</p>
+<ul>
+<li><code>target.enumerate()</code><br>  Traverses the prototype chain of <code>target</code> via <code>getPrototypeOf</code>. Per object, it retrieves the keys via <code>ownKeys</code> and examines whether a property is enumerable via <code>getOwnPropertyDescriptor</code>.</li>
+<li><code>target.get(propertyKey, receiver)</code><br>  If <code>target</code> has no own property with the given key, <code>get</code> is invoked on the prototype of <code>target</code>.</li>
+<li><code>target.has(propertyKey)</code><br>  Similarly to <code>get</code>, <code>has</code> is invoked on the prototype of <code>target</code> if <code>target</code> has no own property with the given key.</li>
+<li><code>target.set(propertyKey, value, receiver)</code><br>  Similarly to <code>get</code>, <code>set</code> is invoked on the prototype of <code>target</code> if <code>target</code> has no own property with the given key.</li>
+</ul>
+<p>All other operations only affect own properties, they have no effect on the prototype chain.</p>
+<h4 id="reflect">Reflect</h4><p>The global object <code>Reflect</code> implements all interceptable operations of the JavaScript meta object protocol as methods. The names of those methods are the same as those of the handler methods, which, as we have seen, helps with forwarding operations from the handler to the target.</p>
+<ul>
+<li><code>Reflect.apply(target, thisArgument, argumentsList)</code> &#x2192; <code>any</code><br>  Better version of <code>Function.prototype.apply()</code>.</li>
+<li><code>Reflect.construct(target, argumentsList)</code> &#x2192; <code>Object</code><br>  The <code>new</code> operator as a function.</li>
+<li><code>Reflect.defineProperty(target, propertyKey, propDesc)</code> &#x2192; <code>boolean</code><br>  Similar to <code>Object.defineProperty()</code>.</li>
+<li><code>Reflect.deleteProperty(target, propertyKey)</code> &#x2192; <code>boolean</code><br>  The <code>delete</code> operator as a function.</li>
+<li><code>Reflect.enumerate(target)</code> &#x2192; <code>Iterator</code><br>  Returns an iterater over all enumerable string property keys of <code>target</code>. In other words, the iterator returns all values that the <code>for-in</code> loop would iterate over.</li>
+<li><code>Reflect.get(target, propertyKey, receiver?)</code> &#x2192; <code>any</code><br>  A function that gets properties.</li>
+<li><code>Reflect.getOwnPropertyDescriptor(target, propertyKey)</code> &#x2192; <code>PropDesc|Undefined</code><br>  Same as <code>Object.getOwnPropertyDescriptor()</code>.</li>
+<li><code>Reflect.getPrototypeOf(target)</code> &#x2192; <code>Object|Null</code><br>  Same as <code>Object.getPrototypeOf()</code>.</li>
+<li><code>Reflect.has(target, propertyKey)</code> &#x2192; <code>boolean</code><br>  The <code>in</code> operator as a function.</li>
+<li><code>Reflect.isExtensible(target)</code> &#x2192; <code>boolean</code><br>  Same as <code>Object.isExtensible()</code>.</li>
+<li><code>Reflect.ownKeys(target)</code> &#x2192; <code>Array&lt;PropertyKey&gt;</code><br>  Returns all own property keys (strings and symbols!) in an array.</li>
+<li><code>Reflect.preventExtensions(target)</code> &#x2192; <code>boolean</code><br>  Similar to <code>Object.preventExtensions()</code>.</li>
+<li><code>Reflect.set(target, propertyKey, value, receiver?)</code> &#x2192; <code>boolean</code><br>  A function that sets properties.</li>
+<li><code>Reflect.setPrototypeOf(target, proto)</code> &#x2192; <code>boolean</code><br>  The new standard way of setting the prototype of an object. The current non-standard way that works in most engines is to set the special property <code>__proto__</code>.</li>
+</ul>
+<p>Several methods have boolean results. For <code>has</code> and <code>isExtensible</code>, they are the results of the operation. For the remaining methods, they indicate whether the operation succeeded.</p>
+<p>Apart from forwarding operations, why is <code>Reflect</code> useful <a class="ptr">[4]</a>?</p>
+<ul>
+<li>Different return values: <code>Reflect</code> duplicates the following methods of <code>Object</code>, but its methods return booleans indicating whether the operation succeeded (where the <code>Object</code> methods return the object that was modified).<ul>
+<li><code>Object.defineProperty(obj, propKey, propDesc)</code> &#x2192; <code>Object</code></li>
+<li><code>Object.preventExtensions(obj)</code> &#x2192; <code>Object</code></li>
+<li><code>Object.setPrototypeOf(obj, proto)</code> &#x2192; <code>Object</code></li>
+</ul>
+</li>
+<li>Operators as functions: The following <code>Reflect</code> methods implement functionality that is otherwise only available via operators:<ul>
+<li><code>Reflect.construct(target, argumentsList)</code> &#x2192; <code>Object</code></li>
+<li><code>Reflect.deleteProperty(target, propertyKey)</code> &#x2192; <code>boolean</code></li>
+<li><code>Reflect.get(target, propertyKey, receiver?)</code> &#x2192; <code>any</code></li>
+<li><code>Reflect.has(target, propertyKey)</code> &#x2192; <code>boolean</code></li>
+<li><code>Reflect.set(target, propertyKey, value, receiver?)</code> &#x2192; <code>boolean</code></li>
+</ul>
+</li>
+<li>The <code>for-in</code> loop as an iterator: This is rarely useful, but if you need it, you can get an iterator over all enumerable (own and inherited) string property keys of an object.<ul>
+<li><code>Reflect.enumerate(target)</code> &#x2192; <code>Iterator</code></li>
+</ul>
+</li>
+<li>Shorter version of <code>apply</code>: The only safe way to invoke the built-in function method <code>apply</code> is via <code>Function.prototype.apply.call(func, thisArg, args)</code> (or similar). <code>Reflect.apply(func, thisArg, args)</code> is cleaner and shorter.</li>
+</ul>
+
+<h3 id="state_of_implementations">State of implementations</h3><p>As usual, <a href="http://kangax.github.io/compat-table/es6/#Proxy">Kangax&#x2019; ES6 compatibility table</a> is the best way of finding out how well engines support proxies. As of December 2014, Internet Explorer has the most complete support and Firefox supports some of the API (caveats: <code>get</code> doesn&#x2019;t work properly, <code>getPrototypeOf</code> is not supported yet and <code>Reflect</code> is empty). No other browser or engine currently supports proxies.</p>
+
+<h3 id="conclusion">Conclusion</h3><p>This concludes our in-depth look at the proxy API. For each application, you have to take performance into consideration and &#x2013; if necessary &#x2013; measure. Proxies may not always be fast enough. On the other hand, performance is often not crucial and it is nice to have the meta programming power that proxies give us. As we have seen, there are numerous use cases they can help with.</p>
+
+<h3 id="acknowledgements">Acknowledgements</h3><p>Thanks go to Tom Van Cutsem: his paper <a class="ptr">[1]</a> is the most important source of this blog post and he kindly answered questions about the proxy API that I had.</p>
+<p><strong>Technical Review:</strong></p>
+
+
+<h3 id="further_reading">Further reading</h3>
+
+</div>
+
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>

@@ -1,0 +1,358 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Making A Complete Polyfill For The HTML5 'details' Element</title><h1>Making A Complete Polyfill For The HTML5 'details' Element</h1><p><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><article class="post-211371 post type-post status-publish format-standard has-post-thumbnail hentry category-coding tag-css tag-html5 tag-javascript">
+                    
+                
+                
+                                    <p>HTML5 introduced a bunch of new tags, one of which is <code>&lt;details&gt;</code>. This element is a solution for a common UI component: a collapsible block. Almost every framework, including Bootstrap and jQuery UI, has its own plugin for a similar solution, but none conform to the HTML5 specification &#x2014; probably because most were around long before <code>&lt;details&gt;</code> got specified and, therefore, represent different approaches. A standard element allows everyone to use the same markup for a particular type of content. That&#x2019;s why creating a robust polyfill <a href="http://caniuse.com/#feat=details">makes sense</a><sup class="po" id="note-1"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#1">1</a></sup>.</p>
+<p><em>Disclaimer</em>: This is quite a technical article, and while I&#x2019;ve tried to minimize the code snippets, the article still contains quite a few of them. So, be prepared!</p>
+<h3>Existing Solutions Are Incomplete</h3>
+<p><a href="https://github.com/mathiasbynens/jquery-details">I&#x2019;m not</a><sup class="po" id="note-2"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#2">2</a></sup> the <a href="https://github.com/manuelbieh/Details-Polyfill">first person</a><sup class="po" id="note-3"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#3">3</a></sup> to try to implement such a polyfill. Unfortunately, all other solutions exhibit one or another problem:</p>
+<ol>
+<li><strong>No support for future content</strong><br>
+Support for future content is extremely valuable for single-page applications. Without it, you would have to invoke the initialization function every time you add content to the page. Basically, a developer wants to be able to drop <code>&lt;details&gt;</code> into the DOM and be done with it, and not have to fiddle with JavaScript to get it going.</li>
+<li><strong>Not a true polyfill for the <code>open</code> attribute</strong><br>
+According to <a href="http://www.w3.org/html/wg/drafts/html/master/interactive-elements.html#the-details-element">the specification</a><sup class="po" id="note-4"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#4">4</a></sup>, <code>&lt;details&gt;</code> comes with the <code>open</code> attribute, which is used to toggle the visibility of the contents of <code>&lt;details&gt;</code>.</li>
+<li><strong>The <code>toggle</code> event is missing</strong><br>
+This event is a notification that a <code>details</code> element has changed its <code>open</code> state. Ideally, it should be a vanilla DOM event.</li>
+</ol>
+<p>In this article we&#x2019;ll use <a href="https://github.com/chemerisuk/better-dom">better-dom</a><sup class="po" id="note-5"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#5">5</a></sup> to make things simpler. The main reason is the <a href="https://github.com/chemerisuk/better-dom/wiki/Live-extensions">live extensions</a><sup class="po" id="note-6"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#6">6</a></sup> feature, which solves the problem of invoking the initialization function for dynamic content. (For more information, read my <a href="http://www.smashingmagazine.com/2014/02/05/introducing-live-extensions-better-dom-javascript/">detailed article about live extensions</a><sup class="po" id="note-7"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#7">7</a></sup>.) Additionally, better-dom outfits live extensions with a <strong>set of tools that do not (yet) exist in vanilla DOM</strong> but that come in handy when implementing a polyfill like this one.</p>
+<figure><a href="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/1-details-element-in-Safari-8-large-opt.jpg"><img src="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/1-details-element-in-Safari-8-opt.jpg" alt="1-details-element-in-Safari-8-opt" width="500"></a><sup class="po" id="note-8"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#8">8</a></sup><figcaption>The <code>details</code> element in Safari 8 (<a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/">View large version</a><sup class="po" id="note-18"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#18">18</a></sup><sup class="po" id="note-14"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#14">14</a></sup><sup class="po" id="note-9"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#9">9</a></sup>)</figcaption></figure>
+<p>Check out the <a href="http://chemerisuk.github.io/better-details-polyfill/">live demo</a><sup class="po" id="note-10"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#10">10</a></sup>.</p>
+<p>Let&#x2019;s take a closer look at all of the hurdles we have to overcome to make <code>&lt;details&gt;</code> available in browsers that don&#x2019;t support it.</p>
+<h3>Future Content Support</h3>
+<p>To start, we need to declare a live extension for the <code>"details"</code> selector. What if the browser already supports the element natively? Then we&#x2019;ll need to add some feature detection. This is easy with the optional second argument <code>condition</code>, which prevents the logic from executing if its value is equal to <code>false</code>:</p>
+<pre><code class="language-javascript">// Invoke extension only if there is no native support
+var open = DOM.create("details").get("open");
+
+DOM.extend("details", typeof open !== "boolean", {
+  constructor: function() {
+    console.log("initialize &lt;details&gt;&#x2026;");
+  }
+});
+</code></pre>
+<p>As you can see, we are trying to detect native support by checking for the <code>open</code> property, which obviously only exists in browsers that recognize <code>&lt;details&gt;</code>.</p>
+<p>What sets <a href="http://chemerisuk.github.io/better-dom/DOM.html#extend"><code>DOM.extend</code></a><sup class="po" id="note-11"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#11">11</a></sup> apart from a simple call like <code>document.querySelectorAll</code> is that the <code>constructor</code> function executes for future content, too. And, yes, it works with any library for manipulating the DOM:</p>
+<pre><code class="language-javascript">// You can use better-dom&#x2026;
+DOM.find("body").append(
+  "&lt;details&gt;&lt;summary&gt;TITLE&lt;/summary&gt;&lt;p&gt;TEXT&lt;/p&gt;&lt;/details&gt;");
+// =&gt; logs "initialize &lt;details&gt;&#x2026;"
+
+// or any other DOM library, like jQuery&#x2026;
+$("body").append(
+  "&lt;details&gt;&lt;summary&gt;TITLE&lt;/summary&gt;&lt;p&gt;TEXT&lt;/p&gt;&lt;/details&gt;");
+// =&gt; logs "initialize &lt;details&gt;&#x2026;"
+
+// or even vanilla DOM.
+document.body.insertAdjacentElement("beforeend",
+  "&lt;details&gt;&lt;summary&gt;TITLE&lt;/summary&gt;&lt;p&gt;TEXT&lt;/p&gt;&lt;/details&gt;");
+// =&gt; logs "initialize &lt;details&gt;&#x2026;"
+</code></pre>
+<p>In the following sections, we&#x2019;ll replace the <code>console.log</code> call with a real implementation.</p>
+<h3>Implementation Of <code>&lt;summary&gt;</code> Behavior</h3>
+<p>The <code>&lt;details&gt;</code> element may take <code>&lt;summary&gt;</code> as a child element.</p>
+<blockquote>
+<p>The first summary element child of details, if one is present, represents an overview of details. If no child summary element is present, then the user agent should provide its own legend (for example, &#x201C;Details&#x201D;).</p>
+</blockquote>
+<p>Let&#x2019;s add mouse support. A click on the <code>&lt;summary&gt;</code> element should toggle the <code>open</code> attribute on the parent <code>&lt;details&gt;</code> element. This is what it looks like using better-dom:</p>
+<pre><code class="language-javascript">DOM.extend("details", typeof open !== "boolean", {
+  constructor: function() {
+    this
+      .children("summary:first-child")
+      .forEach(this.doInitSummary);
+  },
+  doInitSummary: function(summary) {
+    summary.on("click", this.doToggleOpen);
+  },
+  doToggleOpen: function() {
+    // We&#x2019;ll cover the open property value later.
+    this.set("open", !this.get("open"));
+  }
+});
+</code></pre>
+<p>The <code>children</code> method returns a JavaScript array of elements (not an array-like object as in vanilla DOM). Therefore, if no <code>&lt;summary&gt;</code> is found, then the <code>doInitSummary</code> function is not executed. Also, <code>doInitSummary</code> and <code>doToggleOpen</code> are <a href="https://github.com/chemerisuk/better-dom/wiki/Live-extensions#public-members-and-private-functions">private functions</a><sup class="po" id="note-12"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#12">12</a></sup>, they always are invoked for the current element. So, we can pass <code>this.doInitSummary</code> to <code>Array#forEach</code> without extra closures, and everything will execute correctly there.</p>
+<p>Having keyboard support in addition to mouse support is good as well. But first, let&#x2019;s make <code>&lt;summary&gt;</code> a focusable element. A typical solution is to set the <code>tabindex</code> attribute to <code>0</code>:</p>
+<pre><code class="language-javascript">doInitSummary: function(summary) {
+  // Makes summary focusable
+  summary.set("tabindex", 0);
+  &#x2026;
+}
+</code></pre>
+<p>Now, the user hitting the space bar or the &#x201C;Enter&#x201D; key should toggle the state of <code>&lt;details&gt;</code>. In better-dom, there is no direct access to the event object. Instead, we need to declare which properties to grab using an extra array argument:</p>
+<pre><code class="language-javascript">doInitSummary: function(summary) {
+  &#x2026;
+  summary.on("keydown", ["which"], this.onKeyDown);
+}
+</code></pre>
+<p>Note that we can reuse the existing <code>doToggleOpen</code> function; for a <code>keydown</code> event, it just makes an extra check on the first argument. For the click event handler, its value is always equal to <code>undefined</code>, and the result will be this:</p>
+<pre><code class="language-javascript">doInitSummary: function(summary) {
+  summary
+    .set("tabindex", 0)
+    .on("click", this.doToggleOpen)
+    .on("keydown", ["which"], this.doToggleOpen);
+},
+doToggleOpen: function(key) {
+  if (!key || key === 13 || key === 32) {
+    this.set("open", !this.get("open"));
+    // Cancel form submission on the ENTER key.
+    return false;
+  }
+}
+</code></pre>
+<p>Now we have a mouse- and keyboard-accessible <code>&lt;details&gt;</code> element.</p>
+<h3><code>&lt;summary&gt;</code> Element Edge Cases</h3>
+<p>The <code>&lt;summary&gt;</code> element introduces several edge cases that we should take into consideration:</p>
+<h4>1. When <code>&lt;summary&gt;</code> Is a Child But Not the First Child</h4>
+<figure><a href="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/2-summary-element-is-not-the-first-child-large-opt.jpg"><img src="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/2-summary-element-is-not-the-first-child-opt.jpg" alt="2-summary-element-is-not-the-first-child-opt" width="500"></a><sup class="po" id="note-13"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#13">13</a></sup><br>
+<figcaption>What the Chrome browser outputs when the <code>summary</code> element is not the first child. (<a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/">View large version</a><sup class="po" id="note-18"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#18">18</a></sup><sup class="po" id="note-14"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#14">14</a></sup><sup class="po" id="note-9"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#9">9</a></sup>)</figcaption></figure>
+<p>Browser vendors have tried to fix such <em>invalid markup</em> by moving <code>&lt;summary&gt;</code> to the position of the first child visually, even when the element is not in that position in the flow of the DOM. I was confused by such behavior, so I <a href="http://lists.w3.org/Archives/Public/public-html/2014Nov/0043.html">asked the W3C for clarification</a><sup class="po" id="note-15"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#15">15</a></sup>. The W3C confirmed that <code>&lt;summary&gt;</code> must be the first child of <code>&lt;details&gt;</code>. If you check the markup in the screenshot above on <a href="http://validator.w3.org/nu/">Nu Markup Checker</a><sup class="po" id="note-16"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#16">16</a></sup>, it will fail with the following error message:</p>
+<blockquote><p>Error: Element summary not allowed as child of element details in this context. [&#x2026;] Contexts in which element summary may be used: As the first child of a details element.</p></blockquote>
+<p>My approach is to move the <code>&lt;summary&gt;</code> element to the position of the first child. In other words, the polyfill fixes the invalid markup for you:</p>
+<pre><code class="language-javascript">doInitSummary: function(summary) {
+  // Make sure that summary is the first child
+  if (this.child(0) !== summary) {
+    this.prepend(summary);
+  }
+  &#x2026;
+}
+</code></pre>
+<h4>2. When the <code>&lt;summary&gt;</code> Element Is Not Present</h4>
+<figure><a href="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/3-summary-element-does-not-exist-large-opt.jpg"><img src="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/3-summary-element-does-not-exist-opt.jpg" alt="3-summary-element-does-not-exist-opt" width="500"></a><sup class="po" id="note-17"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#17">17</a></sup><br>
+<figcaption>What the Chrome browser outputs when the <code>summary</code> element is not present (<a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/">View large version</a><sup class="po" id="note-18"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#18">18</a></sup><sup class="po" id="note-14"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#14">14</a></sup><sup class="po" id="note-9"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#9">9</a></sup>)</figcaption></figure>
+<p>As you can see in the screenshot above, browser vendors insert &#x201C;Details&#x201D; as a legend into <code>&lt;summary&gt;</code> in this case. The markup stays untouched. Unfortunately, we can&#x2019;t achieve the same without accessing the <a href="http://www.w3.org/TR/shadow-dom/">shadow DOM</a><sup class="po" id="note-19"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#19">19</a></sup>, which unfortunately has <a href="http://caniuse.com/#feat=shadowdom">weak support</a><sup class="po" id="note-20"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#20">20</a></sup> at present. Still, we can set up <code>&lt;summary&gt;</code> manually to comply with standards:</p>
+<pre><code class="language-javascript">constructor: function() {
+  &#x2026;
+  var summaries = this.children("summary");
+  // If no child summary element is present, then the
+  // user agent should provide its own legend (e.g. "Details").
+  this.doInitSummary(
+    summaries[0] || DOM.create("summary&gt;`Details`"));
+}
+</code></pre>
+<h3>Support For <code>open</code> Property</h3>
+<p>If you try the code below in browsers that support <code>&lt;details&gt;</code> natively and in others that don&#x2019;t, you&#x2019;ll get different results:</p>
+<pre><code class="language-javascript">details.open = true;
+// &lt;details&gt; changes state in Chrome and Safari
+details.open = false;
+// &lt;details&gt; state changes back in Chrome and Safari
+</code></pre>
+<p>In Chrome and Safari, changing the value of <code>open</code> triggers the addition or removal of the attribute. Other browsers do not respond to this because they do not support the <code>open</code> property on the <code>&lt;details&gt;</code> element.</p>
+<p>Properties are different from simple values. They have a pair of getter and setter functions that are invoked every time you read or assign a new value to the field. And JavaScript has had an API to declare properties since version 1.5.</p>
+<p>The good news is that one old browser we are going to use with our polyfill, Internet Explorer (IE) 8, has <em>partial</em> support for the <code>Object.defineProperty</code> function. The limitation is that the function works only on DOM elements. But that is exactly what we need, right?</p>
+<p>There is a problem, though. If you try to set an attribute with the same name in the setter function in IE 8, then the browser will stack with infinite recursion and crashes. In old versions of IE, changing an attribute will trigger the change of an appropriate property and vice versa:</p>
+<pre><code class="language-javascript">Object.defineProperty(element, "foo", {
+  &#x2026;
+  set: function(value) {
+    // The line below triggers infinite recursion in IE 8.
+    this.setAttribute("foo", value);
+  }
+});
+</code></pre>
+<p>So you can&#x2019;t modify the property without changing an attribute there. This limitation has prevented developers from using the <code>Object.defineProperty</code> for quite a long time.</p>
+<p>The good news is that I&#x2019;ve found a solution.</p>
+<h3>Fix For Infinite Recursion In IE 8</h3>
+<p>Before describing the solution, I&#x2019;d like to give some background on one feature of the HTML and CSS parser in browsers. In case you weren&#x2019;t aware, these <strong>parsers are case-insensitive</strong>. For example, the rules below will produce the same result (i.e. a base red for the text on the page):</p>
+<pre><code class="language-css">body { color: red; }
+/* The rule below will produce the same result. */
+BODY { color: red; }
+</code></pre>
+<p>The same goes for attributes:</p>
+<pre><code class="language-javascript">el.setAttribute("foo", "1");
+el.setAttribute("FOO", "2");
+el.getAttribute("foo"); // =&gt; "2"
+el.getAttribute("FOO"); // =&gt; "2"
+</code></pre>
+<p>Moreover, you can&#x2019;t have uppercased and lowercased attributes with the same name. But you can have both on a JavaScript object, because <strong>JavaScript is case-sensitive</strong>:</p>
+<pre><code class="language-javascript">var obj = {foo: "1", FOO: "2"};
+obj.foo; // =&gt; "1"
+obj.FOO; // =&gt; "2"
+</code></pre>
+<p>Some time ago, I found that IE 8 supports the deprecated <a href="http://msdn.microsoft.com/en-us/library/ie/ms536739(v=vs.85).aspx">legacy argument <code>lFlags</code></a><sup class="po" id="note-21"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#21">21</a></sup> for attribute methods, which allows you to change attributes in a case-sensitive manner:</p>
+<blockquote>
+<ul>
+<li><code>lFlags</code> [in, optional]
+<ul>
+<li>Type: Integer</li>
+<li>Integer that specifies whether to use a case-sensitive search to locate the attribute.</li>
+</ul>
+</li>
+</ul></blockquote>
+<p>Remember that the infinite recursion happens in IE 8 because the browser is trying to update the attribute with the same name and therefore triggers the setter function over and over again. What if we use the <code>lFlags</code> argument to get and set the <strong>uppercased attribute value</strong>:</p>
+<pre><code class="language-javascript">// Defining the "foo" property but using the "FOO" attribute
+Object.defineProperty(element, "foo", {
+  get: function() {
+	return this.getAttribute("FOO", 1);
+  },
+  set: function(value) {
+    // No infinite recursion!
+    this.setAttribute("FOO", value, 1);
+  }
+});
+</code></pre>
+<p>As you might expect, IE 8 updates the uppercased field <code>FOO</code> on the JavaScript object, and the setter function does not trigger a recursion. Moreover, the uppercased attributes work with CSS too &#x2014; as we stated in the beginning, that parser is case-insensitive.</p>
+<h3>Polyfill For The <code>open</code> Attribute</h3>
+<p>Now we can define an <code>open</code> property that <strong>works in every browser:</strong></p>
+<pre><code class="language-javascript">var attrName = document.addEventListener ? "open" : "OPEN";
+
+Object.defineProperty(details, "open", {
+  get: function() {
+    var attrValue = this.getAttribute(attrName, 1);
+    attrValue = String(attrValue).toLowerCase();
+    // Handle boolean attribute value
+    return attrValue === "" || attrValue === "open";
+  }
+  set: function(value) {
+    if (this.open !== value) {
+      console.log("firing toggle event");
+    }
+
+    if (value) {
+      this.setAttribute(attrName, "", 1);
+    } else {
+      this.removeAttribute(attrName, 1);
+    }
+  }
+});
+</code></pre>
+<p>Check how it works:</p>
+<pre><code class="language-javascript">details.open = true;
+// =&gt; logs "firing toggle event"
+details.hasAttribute("open"); // =&gt; true
+details.open = false;
+// =&gt; logs "firing toggle event"
+details.hasAttribute("open"); // =&gt; false
+</code></pre>
+<p>Excellent! Now let&#x2019;s do similar calls, but this time using <code>*Attribute</code> methods:</p>
+<pre><code class="language-javascript">details.setAttribute("open", "");
+// =&gt; silence, but fires toggle event in Chrome and Safari
+details.removeAttribute("open");
+// =&gt; silence, but fires toggle event in Chrome and Safari
+</code></pre>
+<p>The reason for such behavior is that the <strong>relationship between the <code>open</code> property and the attribute should be bidirectional</strong>. Every time the attribute is modified, the <code>open</code> property should reflect the change, and vice versa.</p>
+<p>The simplest cross-browser solution I&#x2019;ve found for this issue is to override the attribute methods on the target element and invoke the setters manually. This avoids bugs and the performance penalty of legacy <a href="http://msdn.microsoft.com/en-us/library/ie/ms536956(v=vs.85).aspx"><code>propertychange</code></a><sup class="po" id="note-22"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#22">22</a></sup> and <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Mutation_events"><code>DOMAttrModified</code></a><sup class="po" id="note-23"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#23">23</a></sup> events. Modern browsers <a href="https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver">support <code>MutationObservers</code></a><sup class="po" id="note-24"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#24">24</a></sup>, but that doesn&#x2019;t cover our browser scope.</p>
+<h3>Final Implementation</h3>
+<p>Obviously, walking through all of the steps above when defining a new attribute for a DOM element wouldn&#x2019;t make sense. We need a utility function for that which hides cross-browser quirks and complexity. I&#x2019;ve added such a function, named <a href="http://chemerisuk.github.io/better-dom/%24Element.html#defineAttribute"><code>defineAttribute</code></a><sup class="po" id="note-25"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#25">25</a></sup>, in better-dom.</p>
+<p>The first argument is the name of the property or attribute, and the second is the <code>get</code> and <code>set</code> object. The getter function takes the attribute&#x2019;s value as the first argument. The setter function accepts the property&#x2019;s value, and the returned statement is used to update the attribute. Such a syntax allows us to hide the trick for IE 8 where an uppercased attribute name is used behind the scenes:</p>
+<pre><code class="language-javascript">constructor: function() {
+  &#x2026;
+  this.defineAttribute("open", {
+    get: this.doGetOpen,
+    set: this.doSetOpen
+  });
+},
+doGetOpen: function(attrValue) {
+  attrValue = String(attrValue).toLowerCase();
+  return attrValue === "" || attrValue === "open";
+},
+doSetOpen: function(propValue) {
+  if (this.get("open") !== propValue) {
+    this.fire("toggle");
+  }
+  // Adding or removing boolean attribute "open"
+  return propValue ? "" : null;
+}
+</code></pre>
+<p>Having a true polyfill for the <code>open</code> attribute simplifies our manipulation of the <code>&lt;details&gt;</code> element&#x2019;s state. Again, this <strong>API is framework-agnostic</strong>:</p>
+<pre><code class="language-javascript">// You can use better-dom&#x2026;
+DOM.find("details").set("open", false);
+
+// or any other DOM library, like jQuery&#x2026;
+$("details").prop("open", true);
+
+// or even vanilla DOM.
+document.querySelector("details").open = false;
+</code></pre>
+<h3>Notes On Styling</h3>
+<p>The CSS part of the polyfill is simpler. It has some basic style rules:</p>
+<pre><code class="language-css">summary:first-child ~ * {
+  display: none;
+}
+
+details[open] &gt; * {
+  display: block;
+}
+
+/*  Hide native indicator and use pseudo-element instead */
+summary::-webkit-details-marker {
+  display: none;
+}
+</code></pre>
+<p>I didn&#x2019;t want to introduce any extra elements in the markup, so obvious choice is to style the <code>::before</code> pseudo-element. This pseudo-element is used to indicate the current state of <code>&lt;details&gt;</code> (according to whether it is open or not). But IE 8 has some quirks, as usual &#x2014; namely, with updating the pseudo-element state. I got it to work properly only by changing the <code>content</code> property&#x2019;s value itself:</p>
+<pre><code class="language-css">details:before {
+  content: '\25BA';
+  &#x2026;
+}
+
+details[open]:before {
+  content: '\25BC';
+}
+</code></pre>
+<p>For other browsers, the zero-border trick will draw a font-independent CSS triangle. With a double-colon syntax for the <code>::before</code> pseudo-element, we can apply rules to IE 9 and above:</p>
+<pre><code class="language-css">details::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border: solid transparent;
+  border-left-color: inherit;
+  border-width: 0.25em 0.5em;
+  &#x2026;
+  transform: rotate(0deg) scale(1.5);
+}
+
+details[open]::before {
+  content: '';
+  transform: rotate(90deg) scale(1.5);
+}
+</code></pre>
+<p>The final enhancement is a small transition on the triangle. Unfortunately, Safari does not apply it for some reason (perhaps a bug), but it degrades well by ignoring the transition completely:</p>
+<pre><code class="language-css">details::before {
+  &#x2026;
+  transition: transform 0.15s ease-out;
+}
+</code></pre>
+<figure><a href="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/4-details-element-animation.gif"><img src="http://media.mediatemple.netdna-cdn.com/wp-content/uploads/2014/11/4-details-element-animation.gif" alt="4-details-element-animation" width="357"></a><sup class="po" id="note-26"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#26">26</a></sup><br>
+<figcaption>A sample animation for the toggle triangle</figcaption></figure>
+<p>You can find the <a href="https://github.com/chemerisuk/better-details-polyfill/blob/master/src/better-details-polyfill.css">full source code on Github</a><sup class="po" id="note-27"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#27">27</a></sup>.</p>
+<h3>Putting It All Together</h3>
+<p>Some time ago, I started using transpilers in my projects, and they are great. Transpilers enhance source files. You can even code in a completely different language, like CoffeeScript instead of JavaScript or LESS instead of CSS etc. However, my intention in using them is to decrease unnecessary noise in the source code and to learn new features in the near future. That&#x2019;s why transpilers do not go against any standards in my projects &#x2014; I&#x2019;m just using some extra ECMAScript 6 (ES6) stuff and CSS post-processors (<a href="https://github.com/postcss/autoprefixer">Autoprefixer</a><sup class="po" id="note-28"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#28">28</a></sup> being the main one).</p>
+<p>Also, to speak about bundling, I quickly found that distributing <code>*.css</code> files along with <code>*.js</code> is slightly annoying. In searching for a solution, I found <a href="http://www.html5rocks.com/en/tutorials/webcomponents/imports/">HTML Imports</a><sup class="po" id="note-29"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#29">29</a></sup>, which aims to solve this kind of problem in the future. At present, the feature has relatively <a href="http://caniuse.com/#feat=imports">weak browser support</a><sup class="po" id="note-30"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#30">30</a></sup>. And, frankly, bundling all of that stuff into a single HTML file is not ideal.</p>
+<p>So, I built my own approach for bundling: better-dom has a function, <a href="http://chemerisuk.github.io/better-dom/DOM.html#importStyles"><code>DOM.importStyles</code></a><sup class="po" id="note-31"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#31">31</a></sup>, that allows you to import CSS rules on a web page. This function has been in the library since the beginning because <code>DOM.extend</code> uses it internally. Since I use better-dom and transpilers in my code anyway, I created a simple gulp task:</p>
+<pre><code class="language-javascript">gulp.task("compile", ["lint"], function() {
+  var jsFilter = filter("*.js");
+  var cssFilter = filter("*.css");
+
+  return gulp.src(["src/*.js", "src/*.css"])
+    .pipe(cssFilter)
+    .pipe(postcss([autoprefixer, csswring, &#x2026;]))
+     // need to escape some symbols
+    .pipe(replace(/\\|"/g, "\\$&amp;"))
+     // and convert CSS rules into JavaScript function calls
+    .pipe(replace(/([^{]+)\{([^}]+)\}/g,
+      "DOM.importStyles(\"$1\", \"$2\");\n"))
+    .pipe(cssFilter.restore())
+    .pipe(jsFilter)
+    .pipe(es6transpiler())
+    .pipe(jsFilter.restore())
+    .pipe(concat(pkg.name + ".js"))
+    .pipe(gulp.dest("build/"));
+});
+</code></pre>
+<p>To keep it simple, I didn&#x2019;t put in any optional steps or dependency declarations (see the <a href="https://github.com/chemerisuk/better-dom-boilerplate/blob/master/gulpfile.js#L34">full source code</a><sup class="po" id="note-32"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#32">32</a></sup>). In general, the compilation task contains the following steps:</p>
+<ol>
+<li>Apply Autoprefixer to the CSS.</li>
+<li>Optimize the CSS, and transform it into the sequence of <code>DOM.importStyles</code> calls.</li>
+<li>Apply ES6 transpilers to JavaScript.</li>
+<li>Concatenate both outputs to a <code>*.js</code> file.</li>
+</ol>
+<p>And it works! I have transpilers that make my code clearer, and the only output is a <strong>single JavaScript file</strong>. Another advantage is that, when JavaScript is disabled, those style rules are completely ignored. For a polyfill like this, such behavior is desirable.</p>
+<h3>Closing Thoughts</h3>
+<p>As you can see, developing a polyfill is not the easiest challenge. On the other hand, the solution can be used for a relatively long time: standards do not change often and have been discussed at length behind the scenes. Also everyone is using the same language and is connecting with the same APIs which is a great thing.</p>
+<p>With the common logic moved into utility functions, the source code is <a href="https://github.com/chemerisuk/better-details-polyfill/blob/master/src/better-details-polyfill.js">not very complex</a><sup class="po" id="note-33"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#33">33</a></sup>. This means that, at present, we really lack advanced tools to make robust polyfills that work close to native implementations (or better!). And I don&#x2019;t see good libraries for this yet, unfortunately.</p>
+<p>Libraries such as jQuery, Prototype and MooTools are all about providing extra sugar for working with the DOM. While sugar is great, we also need more utility functions to build more robust and unobtrusive polyfills. Without them, we might end up with a ton of plugins that are hard to integrate in our projects. May be it&#x2019;s time to move into this direction?</p>
+<p>Another technique that has arisen recently is <a href="http://webcomponents.org">Web Components</a><sup class="po" id="note-34"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#34">34</a></sup>. I&#x2019;m really excited by tools like the shadow DOM, but I&#x2019;m not sure if <a href="http://w3c.github.io/webcomponents/spec/custom/">custom elements</a><sup class="po" id="note-35"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#35">35</a></sup> are the future of web development. Moreover, custom elements can introduce new problems if everyone starts creating their own custom tags for common uses. My point is that <strong>we need to learn (and try to improve) the standards first before introducing a new HTML element</strong>. Fortunately, I&#x2019;m not alone in this; <a href="https://adactio.com/journal/7431">Jeremy Keith, for one, shares a similar view</a><sup class="po" id="note-36"><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#36">36</a></sup>.</p>
+<p>Don&#x2019;t get me wrong. Custom elements are a nice feature, and they definitely have use cases in some areas. I look forward to them being implemented in all browsers. I&#x2019;m just not sure if they&#x2019;re a silver bullet for all of our problems.</p>
+<p>To reiterate, I&#x2019;d encourage creating more robust and unobtrusive polyfills. And we need to build more advanced tools to make that happen more easily. The example with <code>&lt;details&gt;</code> shows that achieving such a goal today is possible. And I believe this direction is future-proof and the one we need to move in.</p>
+<p><em>(al)</em></p>
+<h4 class="po">Footnotes</h4>           	                            
+	                    
+        <p><a href="http://www.smashingmagazine.com/2014/11/28/complete-polyfill-html5-details-element/#top" class="top single" title="Jump to the top of the page">&#x2191; Back to top</a><a class="sot single" href="https://twitter.com/intent/tweet?original_referer=http%3A%2F%2Fwww.smashingmagazine.com%2F2014%2F11%2F28%2Fcomplete-polyfill-html5-details-element%2F&amp;source=tweetbutton&amp;text=Making%20A%20Complete%20Polyfill%20For%20The%20HTML5%20Details%20Element&amp;url=http%3A%2F%2Fwww.smashingmagazine.com%2F2014%2F11%2F28%2Fcomplete-polyfill-html5-details-element%2F&amp;via=smashingmag" title="Share on Twitter!">Share on Twitter</a></p>
+    </article>
+    </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>

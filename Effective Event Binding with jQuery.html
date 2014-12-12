@@ -1,0 +1,171 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Effective Event Binding with jQuery</title><h1>Effective Event Binding with jQuery</h1><p><a href="http://www.sitepoint.com/effective-event-binding-jquery/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><section class="article_body">
+
+            <p>If you've used jQuery much at all, then you're probably already familiar with event binding. It's fairly basic stuff, but dig a little deeper and you'll find opportunities to make your event-driven code less brittle and more manageable.</p>
+<h2 id="a-better-selector-strategy">A Better Selector Strategy</h2>
+<p>Let's start with a basic example. Here's the HTML for a nav menu that can be toggled on or off:</p>
+<pre class="brush: xml; title: ; notranslate" title="">
+&lt;button class="nav-menu-toggle"&gt;Toggle Nav Menu&lt;/button&gt;
+&lt;nav&gt;
+    &lt;ul&gt;
+        &lt;li&gt;&lt;a href="/"&gt;West Philadelphia&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="/cab"&gt;Cab Whistling&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="/throne"&gt;Throne Sitting&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/nav&gt;
+</pre>
+<p>And here's some JavaScript to toggle the nav menu when the button is clicked:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$('.nav-menu-toggle').on('click', function() {
+    $('nav').toggle();
+});
+</pre>
+<p>This is probably the most common approach. It works, but it's brittle. The JavaScript depends on the button element having the <code>nav-menu-toggle</code> class. It would be very easy for another developer, or even a forgetful you in the future, to not realize this and remove or rename the class while refactoring.</p>
+<p>The heart of the problem is that we're using CSS classes for both presentation and interaction. This violates the <a href="http://en.wikipedia.org/wiki/Separation_of_concerns#HTML.2C_CSS.2C_JavaScript">separation of concerns</a> principle, making maintenance more error-prone.</p>
+<p>Let's try a different approach:</p>
+<pre class="brush: xml; title: ; notranslate" title="">
+&lt;button data-hook="nav-menu-toggle"&gt;Toggle Nav Menu&lt;/button&gt;
+&lt;nav data-hook="nav-menu"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;&lt;a href="/"&gt;West Philadelphia&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="/cab"&gt;Cab Whistling&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="/throne"&gt;Throne Sitting&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/nav&gt;
+</pre>
+<p>This time we're using a data attribute (<code>data-hook</code>) to identify elements. Any changes involving CSS classes will no longer affect the JavaScript, giving us better separation of concerns and sturdier code.</p>
+<p>We just need to update the jQuery selectors to use <code>data-hook</code> instead:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$('[data-hook="nav-menu-toggle"]').on('click', function() {
+    $('[data-hook="nav-menu"]').toggle();
+});
+</pre>
+<p>Notice I opted to use <code>data-hook</code> for the <code>nav</code> element as well. You don't have to, but I like the insight it provides: anytime you see <code>data-hook</code>, you know that element is referenced in JavaScript.</p>
+<h2 id="some-syntactic-sugar">Some Syntactic Sugar</h2>
+<p>I'll admit that the <code>data-hook</code> selectors aren't the prettiest. Let's fix that by extending jQuery with a custom function:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.extend({
+    hook: function(hookName) {
+        var selector;
+        if(!hookName || hookName === '*') {
+            // select all data-hooks
+            selector = '[data-hook]';
+        } else {
+            // select specific data-hook
+            selector = '[data-hook~="' + hookName + '"]';
+        }
+        return $(selector);
+    }
+});
+</pre>
+<p>With that in place, we can rewrite the JavaScript:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.hook('nav-menu-toggle').on('click', function() {
+    $.hook('nav-menu').toggle();
+});
+</pre>
+<p>Much better. We can even have a list of space-separated hook names on an element:</p>
+<pre class="brush: xml; title: ; notranslate" title="">
+&lt;button data-hook="nav-menu-toggle video-pause click-track"&gt;Toggle Nav Menu&lt;/button&gt;
+</pre>
+<p>And find any hook name within:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.hook('click-track'); // returns the button as expected
+</pre>
+<p>We can also select all hook elements on the page:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// both are equivalent
+$.hook();
+$.hook('*');
+</pre>
+<h2 id="avoid-anonymous-function-expressions">Avoid Anonymous Function Expressions</h2>
+<p>The examples so far have been using an anonymous function expression as the event handler. Let's rewrite the code to use a declared function instead:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+function toggleNavMenu() {
+    $.hook('nav-menu').toggle();
+}
+
+$.hook('nav-menu-toggle').on('click', toggleNavMenu);
+</pre>
+<p>This makes the line of code that does the event binding much easier to read. The <code>toggleNavMenu</code> function name conveys intent and is a good example of self-documenting code.</p>
+<p>We also gain reusability, since other areas of code can use <code>toggleNavMenu</code> as well, should the need arise.</p>
+<p>Lastly, this is a big win for automated testing, since declared functions are much easier to unit test than anonymous function expressions.</p>
+<h2 id="working-with-multiple-events">Working with Multiple Events</h2>
+<p>jQuery offers convenient syntax for handling multiple events. For example, you can specify a space-separated list of events to be handled by a single event handler:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.hook('nav-menu-toggle').on('click keydown mouseenter', trackAction);
+</pre>
+<p>If you need to handle multiple events with different event handlers, you can use object notation:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.hook('nav-menu-toggle').on({
+    'click': trackClick,
+    'keydown': trackKeyDown,
+    'mouseenter': trackMouseEnter
+});
+</pre>
+<p>On the flip side, you can also unbind multiple events at the same time:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// unbinds keydown and mouseenter
+$.hook('nav-menu-toggle').off('keydown mouseenter');
+
+// nuclear option: unbinds everything
+$.hook('nav-menu-toggle').off();
+</pre>
+<p>As you can imagine, careless unbinding has the potential for tremendous unwanted side effects. Read on for techniques to mitigate this.</p>
+<h2 id="unbinding-with-care">Unbinding with Care</h2>
+<p>It's not unusual to bind multiple event handlers for the same event on an element. Let's revisit that button from earlier:</p>
+<pre class="brush: xml; title: ; notranslate" title="">
+&lt;button data-hook="nav-menu-toggle video-pause click-track"&gt;Toggle Nav Menu&lt;/button&gt;
+</pre>
+<p>Different areas of code could have a stake in what happens when the button is clicked:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// somewhere in the nav code
+$.hook('nav-menu-toggle').on('click', toggleNavMenu);
+
+// somewhere in the video playback code
+$.hook('video-pause').on('click', pauseCarltonDanceVideo);
+
+// somewhere in the analytics code
+$.hook('click-track').on('click', trackClick);
+</pre>
+<p>Regardless of the different selectors used, the button now has three click event handlers on it. Now imagine our analytics code is done caring about the button:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// no good
+$.hook('click-track').off('click');
+</pre>
+<p>Oops, that actually removes all click event handlers, not just <code>trackClick</code>. We should be more discerning and specify the particular event handler to remove:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+$.hook('click-track').off('click', trackClick);
+</pre>
+<p>Another option is to use namespaces. Any event can be qualified with a namespace while binding or unbinding, giving you finer control:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// binds a click event in the "analytics" namespace
+$.hook('click-track').on('click.analytics', trackClick);
+
+// unbinds only click events in the "analytics" namespace
+$.hook('click-track').off('click.analytics');
+</pre>
+<p>You can even use multiple namespaces:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// binds a click event in both the "analytics" and "usability" namespaces
+$.hook('click-track').on('click.analytics.usability', trackClick);
+
+// unbinds any events in either the "analytics" OR "usability" namespaces
+$.hook('click-track').off('.usability .analytics');
+
+// unbinds any events in both the "analytics" AND "usability" namespaces
+$.hook('click-track').off('.usability.analytics');
+</pre>
+<p>Note that the order of the namespaces doesn't matter. Namespaces are not hierarchial.</p>
+<p>If you have complex functionality that requires binding various events across multiple elements, then namespaces are an easy way to group them together for quick clean-up:</p>
+<pre class="brush: jscript; title: ; notranslate" title="">
+// free all elements on the page of any "analytics" event handling
+$('*').off('.analytics');
+</pre>
+<p>Namespaces are particularly useful when writing plug-ins, since you can ensure your plug-in is a good citizen that only unbinds its own event handlers.</p>
+<h2 id="parting-words">Parting Words</h2>
+<p>jQuery event binding is great because it's simple to start, but packs plenty of functionality when you need it. Hopefully I've shared a trick or two that helps you write event-driven JavaScript that is sturdier, clearer, and more manageable.</p>
+<p>Thanks for reading!</p>
+
+        </section>
+
+        </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>

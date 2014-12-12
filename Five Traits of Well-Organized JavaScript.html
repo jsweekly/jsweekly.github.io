@@ -1,0 +1,68 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Five Traits of Well-Organized JavaScript</title><h1>Five Traits of Well-Organized JavaScript</h1><p><a href="http://www.ifwe.co/blog/posts/five-traits-of-well-managed-javascript/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="column-6-span-5 blog-post-body">
+              <p>At if(we), we're committed to improving all aspects of our tech stack. This includes our client-side JavaScript, which consists of hundreds of thousands of lines of code across thousands of files.</p>
+              
+              <p>As JavaScript projects grow, they tend to become difficult to manage if you're not careful. We found ourselves running into common problems including code that was difficult to reuse or test, and code that broke when introduced in new pages.</p>
+              
+              <p>As we explored the problems in more detail, we found the root cause was most often due to ineffective dependency management. For example, script A relies on script B that relies on script C, and somehow the dependency chain would break on some pages because script C didn't get included properly.</p>
+              
+              <p>To help solve this problem, we've adopted the <a href="https://github.com/amdjs/amdjs-api/wiki/AMD">Asynchronous Module Definitions (AMD)</a> pattern and introduced <a href="http://requirejs.org/">require.js</a> to our tech stack. After exploring AMD further we've identified that well-organized javascript takes on the following five traits:</p>
+              
+              <ol><li>Dependencies are <strong>always</strong> declared.</li><li>3rd-party code is <strong>shimmed</strong>.</li><li>Definitions are <strong>separate</strong> from executions.</li><li>Dependency loading is <strong>async</strong>.</li><li>Modules do not depend on <strong>globals</strong>.</li></ol>
+              
+              <p>Let's go over these in detail:</p>
+              
+              <p><strong>Dependencies are always declared</strong></p>
+              
+              <p>One of the most common problems we ran into was a script would be written to assume that certain dependencies were already loaded. For example, if we built a jQuery plugin, it wasn't considered necessary to declare jQuery as a dependency because most pages already had it loaded. While this seemed to work on most pages, it quickly became a problem once we tried to unit test that plugin or load it in a fresh new page.</p>
+              
+              <p>By always declaring our dependencies, we eliminated about 90% of the reoccurring issues with our javascript. Reusable code became more reliable, and the number of unit tests increased by a factor of 4x.</p>
+              
+              <p><strong>3rd-party code is shimmed</strong></p>
+              
+              <p>One of the interesting problems with managing JavaScript dependencies is that older 3rd-party libraries may not be configured to work with your chosen dependency management solution. For example, let's say you pull in a cool plugin that internally uses jQuery, but it knows nothing about require.js. This can become a problem because trait #1 is violated by introducing this plugin.</p>
+              
+              <p>The solution is to <a href="http://requirejs.org/docs/api.html#config-shim">shim</a> the plugin by informing your dependency management tool of its dependencies. In require.js, this can easily be done via config:</p>
+              
+              <img src="https://d3gqbr1mr54afg.cloudfront.net/ifwe/9e556f2d03e6e414e25a7baba8dcea3283272486_screen-shot-2014-12-09-at-5.43.26-pm.png" alt="" width="724">
+              
+              <p>With this simple config change, each time a script loads lib/cool-plugin.js, <strong><em>require.js</em></strong> will automatically load jquery. The helps to ensure that all dependencies are met without requiring the developer to figure out the depencies on her own each time she needs to use it.</p>
+              
+              <p>The end result is code that is easier to test and reuse because you're always just one <strong><em>require()</em></strong><strong> </strong>call away from the needed functionality.</p>
+              
+              <p><strong>Definitions are separate from executions</strong></p>
+              
+              <p>This is a problem we saw often in our JavaScript that limited both reusability and testability. The problem manifests when a single file both defines a class/function <strong>and</strong> invokes it. Consider the following code:</p>
+              
+              <img src="https://d3gqbr1mr54afg.cloudfront.net/ifwe/1b006ab93ea283e67b338ab2e8dc1c57b383590b_screen-shot-2014-12-09-at-5.52.16-pm.png" alt="" width="725">
+              
+              <p>In this example, a single file both defines the <strong><em>User</em></strong> class as well as invokes it. This would make it very difficult to reuse this code, because simply loading the script would cause an alert to appear for <strong><em>Alice</em></strong>. Similarly, this code would be difficult to test because there's no opportunity to stub out the <strong><em>greeter</em></strong>.</p>
+              
+              <p>The solution is to keep definitions <strong>separate</strong> from executions as much as possible. This helps ensure reusability as well as testability:</p>
+              
+              <img src="https://d3gqbr1mr54afg.cloudfront.net/ifwe/75e85f178c787810c5d06b266e7c8626b2053ef8_screen-shot-2014-12-09-at-5.54.14-pm.png" alt="" width="725">
+              
+              <p>With this change, the <em><strong>User</strong></em> class can safely be reused in many scripts.</p>
+              
+              <p><strong>Dependency loading is async</strong></p>
+              
+              <p>Since attempting to load a script synchronously would cause the browser to lock up, it is important that your scripts -- and therefore your modules -- are loaded asynchronously. Require.js does this by default by allowing you to place your module code in a function. The function does not get invoked until all the dependencies are met:</p>
+              
+              <img src="https://d3gqbr1mr54afg.cloudfront.net/ifwe/041128d71b9bd7e8de9ce272ed99e19d80389986_screen-shot-2014-12-09-at-5.55.18-pm.png" alt="" width="724">
+              
+              <p>By using a closure, we can further benefit by using <strong><em>"use strict"</em></strong> within the module.</p>
+              
+              <p><strong>Modules do not depend on globals</strong></p>
+              
+              <p>To further strengthen our JavaScript code base, we've (almost) entirely eliminated the use of global variables (with the exception of the globals provided by require.js, e.g. <em><strong>require() and define()</strong></em>). Global variables are notorious for sneaking their way into modules as "hidden dependencies" and can make code difficult to reuse or test.</p>
+              
+              <p>By eliminating global variables, we've found it is much easier to build JavaScript that correctly adheres to the various traits above.</p>
+              
+              <p>Require.js also allows us to convert 3rd-party global variables to <em><strong>require()</strong></em>-able modules via the shimming functionality. In this example, <strong><em>lib/calculator</em></strong> creates a global <strong><em>Calc</em></strong> object, but we can configure require.js to take that global and export it as a local variable when this library is <strong><em>require()</em></strong>'ed.</p>
+              
+              <img src="https://d3gqbr1mr54afg.cloudfront.net/ifwe/a284e8092b8556a2f3ca92691f28e61027d692dd_screen-shot-2014-12-09-at-5.58.05-pm.png" alt="" width="723">
+              
+              <p><strong>Conclusion</strong></p>
+              
+              <p>Managing dependencies is hard, but it doesn't have to be difficult. By using a dependency management solution that allows your code to contain the traits above, you'll find that your JavaScript is much more dependable.</p>
+            </div>
+          </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>

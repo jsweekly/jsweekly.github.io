@@ -1,0 +1,92 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>thaw.js: Synthetic Asynchronous Processing</title><h1>thaw.js: Synthetic Asynchronous Processing</h1><p><a href="http://robertleeplummerjr.github.io/thaw.js/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><body>
+	
+	<p class="catchphrase">
+		<em class="text-primary">synthetic asynchronous processing in javascript<br>
+			(Now with extra anti-freeze!)</em>
+	</p>
+	<p>
+		Browsers are synchronous. They have limits &amp; can be slow.  thaw.js defers processes
+		until the browser is ready for them.<br>
+		thaw.js makes frozen browsers thaw(.js).
+	</p>
+
+	<blockquote class="text-info">Thaw.js is like the idea of javascript promises only tied to time.</blockquote>
+
+	<h2>Shouldn't I just use a web worker?</h2>
+	<p>
+		You could, if you don't care about the DOM.  Unfortunately the DOM does exist, and it is synchronous.  Web
+		workers do not have access to anything synchronous, including the DOM.
+	</p>
+
+	<h2>Demo</h2>
+	<p>
+		<b>You are in one right now!  Scroll to bottom to see.</b><br>
+		There are 2 million div elements being appended to this very document from
+		three separate thaw calls happening right now, 6 million total.  Does your browser seem slow or sluggish?  Of
+		course not!  It is thaw(.js)ing.
+	</p>
+
+	
+	<pre><code id="code-1"></code></pre><br>
+
+	
+	<pre><code id="code-2"></code></pre><br>
+
+	
+	<pre><code id="code-3"></code></pre>
+
+	<h2>Usage</h2>
+	<p><b>With Functions:</b></p>
+	<pre><code>new Thaw([
+	function() {},
+	function() {}
+]);</code></pre>
+
+	<p><b>With Arrays:</b></p>
+		<pre><code>new Thaw([], {
+	each:function(i) {
+		//this = item of array
+	},
+	done: function() {
+		//this = item of array
+	}
+});
+</code></pre>
+
+	<h2>Methods</h2>
+	<ul>
+		<li><pre><code>add({*}item)</code></pre><br>
+			Adds an item to the end of this instance of Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>insert({*}item)</code></pre><br>
+			Inserts an item just after the current item being processed in Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>addArray({Array}items)</code></pre><br>
+			Adds an Array to the end of this instance of Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>insertArray({Array}items)</code></pre><br>
+			Inserts an Array just after the current item being processed in Thaw and readies Thaw to process them, returns Thaw
+		</li>
+		<li><pre><code>stop()</code></pre><br>
+			Stops this instance of Thaw, returns Thaw
+		</li>
+	</ul>
+
+	<h2>Written by</h2>
+	<p>
+		<a href="https://github.com/robertleeplummerjr">Robert Lee Plummer Jr.</a>
+	</p>
+
+	<h2>License</h2>
+	<p>
+		MIT
+	</p>
+
+	
+
+	<a href="https://github.com/robertleeplummerjr/thaw.js"><img src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub"></a>
+</body>
+
+
+
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./Meta Programming with ECMAScript 6 Proxies.html">Meta Programming with ECMAScript 6 Proxies</a></li><li><a href="./AngularJS Performance in Large Applications.html">AngularJS Performance in Large Applications</a></li><li><a href="./What Is The Flux Application Architecture?.html">What Is The Flux Application Architecture?</a></li><li><a href="./An easier way to deploy &amp; host your Rails app – for free..html">An easier way to deploy &amp; host your Rails app – for free.</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-24793-i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/24793/i.png" style="border: 0px solid #bbbbbb" width="" height="" alt="Ninefold"></a></li><li><a href="./16 Steps for Planning A Front-End JavaScript Application.html">16 Steps for Planning A Front-End JavaScript Application</a></li><li><a href="./Node.js Is Forked, Not F***ed.html">Node.js Is Forked, Not F***ed</a></li><li><a href="./Programmer Extraordinaire..html">Programmer Extraordinaire.</a></li><li><a href="./JavaScript Developers, AngularJS-Node.js (Berlin).html">JavaScript Developers, AngularJS/Node.js (Berlin)</a></li><li><a href="./President Obama Writes His First Line of JavaScript.html">President Obama Writes His First Line of JavaScript</a></li><li><a href="./ES6 Template Strings Working in Chrome.html">ES6 Template Strings Working in Chrome</a></li><li><a href="./Ember.js 1.9.0 and 1.10 Beta Released.html">Ember.js 1.9.0 and 1.10 Beta Released</a></li><li><a href="./'JavaScript for Kids' Book Released.html">'JavaScript for Kids' Book Released</a></li><li><a href="./Making A Complete Polyfill For The HTML5 'details' Element.html">Making A Complete Polyfill For The HTML5 'details' Element</a></li><li><a href="./Techniques for Building Web Apps using Future Friendly ES6 Module Syntax.html">Techniques for Building Web Apps using Future Friendly ES6 Module Syntax</a></li><li><a href="./Effective Event Binding with jQuery.html">Effective Event Binding with jQuery</a></li><li><a href="./Five Traits of Well-Organized JavaScript.html">Five Traits of Well-Organized JavaScript</a></li><li><a href="./Porting An Entire Desktop Toolchain to The Browser with Emscripten.html">Porting An Entire Desktop Toolchain to The Browser with Emscripten</a></li><li><a href="./The State of Desktop Applications in Node.js.html">The State of Desktop Applications in Node.js</a></li><li><a href="./thaw.js: Synthetic Asynchronous Processing.html">thaw.js: Synthetic Asynchronous Processing</a></li><li><a href="./FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler.html">FiltrES.js: A Simple, Safe, ElasticSearch Query Compiler</a></li><li><a href="./Angular 2.0 Hello World Example.html">Angular 2.0 Hello World Example</a></li><li><a href="./Purplecoat.js: Simple Labeled Overlays (jQuery Plugin).html">Purplecoat.js: Simple Labeled Overlays (jQuery Plugin)</a></li><li><a href="./dstore: A Client-Side Data Management Framework with Multiple Store Types.html">dstore: A Client-Side Data Management Framework with Multiple Store Types</a></li><li><a href="./bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming.html">bigpicture.js: A Library for Prezi-esque Infinite Panning and Infinite Zooming</a></li><li><a href="./decimal.js: An Arbitrary-Precision Decimal Type for JavaScript.html">decimal.js: An Arbitrary-Precision Decimal Type for JavaScript</a></li></ul></section></div>
