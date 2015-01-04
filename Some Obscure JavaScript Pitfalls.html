@@ -1,0 +1,71 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Some Obscure JavaScript Pitfalls</title><h1>Some Obscure JavaScript Pitfalls</h1><p><a href="http://jonathan.bergknoff.com/journal/some-obscure-javascript-pitfalls?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="body-block article">
+		<p class="title">Some Obscure JavaScript Pitfalls</p>
+		
+
+		<p class="content">These are some (relatively) obscure JavaScript quirks which have caused issues for me in the past. While JavaScript has plenty of common pitfalls that most users have encountered and overcome, I've tried to leave them off of this list. Next time you're scratching your head over your JavaScript code misbehaving, maybe one of these will come in handy!
+
+* **`Array::sort` sorts alphabetically by default.**
+
+	This is often what you want, but not if you need to sort a list of numbers:
+
+		&gt; [ "d", "a", "b" ].sort();
+		[ "a", "b", "d" ]
+		&gt; [ 2, 10, 1 ].sort();
+		[ 1, 10, 2 ]
+
+	In order to get around this, simply supply a comparator:
+
+		&gt; [ 2, 10, 1 ].sort(function(a, b) { return a - b; });
+		[ 1, 2, 10 ]
+
+* **The `Array` constructor is weird.**
+
+	Suppose you wanted to generate an array of the first 10 positive integers. You might try something like
+
+		&gt; (new Array(10)).map(function(_, index) { return index + 1; });
+
+	This won't work. `new Array(10)` creates an empty array and sets its `length` property to 10 but does not create any elements for `Array::map` to iterate over.
+
+	There are [ways to work around](http://stackoverflow.com/questions/3895478/does-javascript-have-a-range-equivalent) this particular example, but you may just want to avoid instantiating arrays with the `Array` constructor.
+
+* **Casting to integer can be subject to 32-bit overflow.**
+
+	It's often useful to cast a value `x` to integer, and some convenient ways of doing that include performing various bitwise (non-)operations on the variable, e.g. `~~x`, `x | 0`, or `x &gt;&gt; 0`. However, these will overflow for integers greater than or equal to 2^31. The overflow makes these casting tricks slightly less useful, particularly when dealing with dates or large file sizes:
+
+		&gt; var d = Date.now();
+		&gt; d
+		1417131147103
+		&gt; ~~d
+		-208060577
+
+	If you just want to coerce your variable `x` to a `Number` (but not necessarily an integer), you can use `+x`. Alternately,  you can use the clunky `parseInt` (but don't forget to supply a radix &#x2014; otherwise, one might be chosen for you that you don't expect).
+
+* **Object enumeration order is not well-defined.**
+
+	Fundamentally, an object in JavaScript is an *unordered* collection. When looping through the keys of an object, you cannot depend on the order. There is a [great thread on Stack Overflow](http://stackoverflow.com/questions/280713/elements-order-in-a-for-in-loop) with further discussion and some examples of how enumeration behavior differs among different JavaScript runtimes.
+
+	There's a good argument to be made that you can ignore this. On the server side, that may be the case, especially if you're not doing anything weird with your objects (i.e. giving them numeric-looking names, `delete`-ing keys from them). The node `async` library, for example, lets you pass in an object to the `async.series` method, to be executed (ostensibly) in the order written. This can be nice because you can give each step a descriptive name (I would personally use `async.auto` instead). If you understand the risks, feel free to throw caution to the wind.
+
+	However, in the browser, it would be a mistake. You shouldn't expect objects to enumerate in the same way for all of your users. Use an array instead.
+
+	Note that I use "well-defined" in the mathematical sense (equivalent inputs giving the same output); it's not a dig at any person or thing.
+
+* **`JSON.stringify` is not well-defined.**
+
+	Because an object has no specific order, you also shouldn't depend on always getting the same result from operating on it with `JSON.stringify`. This is typically a non-issue, but it's sometimes useful to have a consistent JSON output (e.g. when comparing two objects for equality). I have had occasion to use the [json-stable-stringify](https://github.com/substack/json-stable-stringify) node library to address this issue when writing the functional caching library [souvenir](https://github.com/MakerStudios/souvenir).
+
+	The [language specification](http://www.ecma-international.org/ecma-262/5.1/#sec-15.12.3) actually seems to stipulate that `JSON.stringify` must enumerate objects the same way a `for-in` loop does (cf. the reference to `Object.keys` in the linked section, 15.12.3), so this pitfall is a corollary of the one above.
+
+* **`Date::getHours`, etc., of limited usefulness.**
+
+	A date object exposes methods like `getDate` and `getHours`, but also `getUTCDate` and `getUTCHours`. The former return values in local time. System code (e.g. server-side or, generically, non-user-facing code) should use the UTC alternatives, so there isn't an implicit reference to the time zone of the computer executing the code. `getHours`, etc. are useful in the browser when displaying things to a user in his or her local time, but not for much else.
+
+	Next time your unit test suite inexplicably breaks on the morning after daylight savings, audit your codebase for local time methods! :)
+
+* **`Array::slice` vs. `Array::splice`.**
+
+	The array prototype has these two separate functions, `slice` and `splice`, that perform similar tasks (returning a sub-array). The key difference is that `splice` modifies the array, while `slice` does not. Because the names are so similar, it's easy to get them mixed up. I end up using `slice` a lot more often than `splice` because I try to treat my data as immutable whenever possible.
+</p>
+	</div>
+
+	</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

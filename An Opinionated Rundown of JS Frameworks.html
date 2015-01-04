@@ -1,0 +1,239 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>An Opinionated Rundown of JS Frameworks</title><h1>An Opinionated Rundown of JS Frameworks</h1><p><a href="http://blog.andyet.com/2014/08/13/opinionated-rundown-of-js-frameworks?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><h2 class="postTitle">Opinionated rundown of JS frameworks</h2><div class="postContent"><p>As a portion of <a href="http://andyet.com/training/human-javascript-live">our elaborate training events</a> I give a short talk about JS frameworks. I&#x2019;ve shied away from posting many of my opinions about frameworks online because it tends to stir the pot, hurt people&#x2019;s feelings, and unlike talking face to face, there&#x2019;s no really great, bi-directional channel for rebuttals.</p>
+<p><em>But</em>, I&#x2019;ve been told that it was very useful and helped provide a nice, quick overview of some of the most popular JS tools and frameworks for building single page apps. So, I decided to flesh it out and publish it as A Thing&#x2122; but <strong>please remember that you&#x2019;re just reading opinions, I&#x2019;m not telling you what to do and you should do what works for you and your team</strong>.  Feel free to disagree with me <a href="http://twitter.com/henrikjoreteg">on twitter</a> or even better, write a post explaining your position.</p>
+<h2 id="angular-js">Angular.js</h2>
+<h3 id="pros">pros</h3>
+<ol>
+<li><p>Super easy to start. You just drop in a script tag into your document add some <code>ng-</code> attributes to your app and you magically get behavior. </p>
+</li>
+<li><p>It&#x2019;s well-supported by a core team, many of whom are full time Google employees.</p>
+</li>
+<li><p>Big userbase / community.</p>
+</li>
+</ol>
+<h3 id="cons">cons</h3>
+<ol>
+<li><p>Picking Angular means you&#x2019;re learning Angular the framework instead of how to solve problems in JavaScript. If I were to encourage our team to build apps using Angular, what happens when {insert hot new JS framework} comes along? Or we discover that for a certain need, Angular can&#x2019;t quite do the thing we want it to and we want to build it with something else? At that point how well will those angular skills translate to something else? Instead, I&#x2019;ve got developers who&#x2019;s primary skill is Angular, not necessarily JavaScript.</p>
+</li>
+<li><p>Violates separation of concerns. Call me old school, but I still believe CSS is for style, HTML is for structure, and JavaScript is for app logic. But, in Angular you spend a lot of time describing behavior in HTML instead of JS. For me personally, this is the deal breaker with Angular. I don&#x2019;t want to describe application logic in HTML, it&#x2019;s simply not expressive enough because it&#x2019;s a markup language for structuring documents, not describing application logic. To get around this, Angular has had to create what is arguably another language inside HTML and then also writing a bit of JS to describe additional details. Now, rather than learning how to build applications in JavaScript, you&#x2019;re learning Angular and things seem to have a tendency to get complex. That&#x2019;s why <a href="https://www.ng-book.com/">my friend Ari&#x2019;s Angular book</a> is 600 pages!</p>
+</li>
+<li><p>Too much magic. Magic comes at a cost. When you&#x2019;re working with something that&#x2019;s highly abstracted, it becomes a lot more difficult to figure out what&#x2019;s wrong when something goes awry. And of course, when you veer off the beaten path, you&#x2019;re on your own. I could be wrong, but I would guess most Angular users lack enough understanding of the framework itself to really feel confident modifying or debugging Angular itself.</p>
+</li>
+<li><p>Provides very little structure. I&#x2019;m not sure a canonical way to build a single page app in Angular exists. Don&#x2019;t get me wrong, I think that&#x2019;s fine, there&#x2019;s nothing wrong with non-prescriptive toolkits but it does mean that it&#x2019;s harder to jump into someone else&#x2019;s angular app, or add someone to yours, because styles are likely very different.</p>
+</li>
+</ol>
+<h3 id="my-fallible-conclusion">my fallible conclusion</h3>
+<p>There&#x2019;s simply too much logic described in a quasi-language in HTML rather than in JS and it all feels too abstract and too magical.</p>
+<p>I&#x2019;d rather our team get good at JS and DOM instead of learning a high-level abstraction.</p>
+<h2 id="ember-js">Ember.js</h2>
+<h3 id="pros">pros</h3>
+<ol>
+<li><p>Heavy emphasis on doing things &#x201C;The Ember Way&#x201D; (also note item #1 in the &#x201C;cons&#x201D; section). This is a double edged sword. If you have a huge team and expect lots of churn, having rigid structure can be the difference between having a transferrable codebase and every new developer wanting to throw it all away. If they are all Ember devs, they can probably jump in and help on an Ember project. </p>
+</li>
+<li><p>Outsource many of the hard problems of building single page apps to some incredibly smart people who will make a lot of the hard tradeoff decisions for you. (also note item #2 in the &#x201C;cons&#x201D; section.)</p>
+</li>
+<li><p>Big, helpful community.</p>
+</li>
+<li><p>Nice docs site.</p>
+</li>
+<li><p>A good amount of existing solved problems and components to use.</p>
+</li>
+</ol>
+<h3 id="cons">cons</h3>
+<ol>
+<li><p>Heavy emphasis on doing things &#x201C;The Ember Way&#x201D;. Note this is also in the &#x201C;pros&#x201D; section. It&#x2019;s very prescriptive. While you <em>can</em> veer from the standard path from the sound of it, many do not. For example, you don&#x2019;t <em>have</em> to use handlebars with Ember, but I would be surprised if there are many production Ember apps out there that don&#x2019;t. </p>
+</li>
+<li><p>Ember codifies a lot of opinions. If you don&#x2019;t agree with those opinions and decide to replace pieces of functionality with your own, you&#x2019;re still sending all the unused code to the browser. Byte counting isn&#x2019;t a core value of mine, but conceptually it&#x2019;s nicer to be able to only send what you use. In addition, when you&#x2019;re only sending what you&#x2019;re using, there&#x2019;s less code to sift through to locate the bug.</p>
+</li>
+<li><p>Memory usage can be a bit of an issue, which can be a problem, especially when <a href="http://discuss.emberjs.com/t/ember-memory-consumption/528/3">running Ember on mobile</a></p>
+</li>
+<li><p>Ember is intentionally, and structurally inflexible. Don&#x2019;t believe me? <a href="https://twitter.com/wycats/status/446520058848624640">Take Yehuda&#x2019;s word for it instead</a> (the surrounding conversation is interesting too).</p>
+</li>
+</ol>
+<h3 id="my-fallible-conclusion">my fallible conclusion</h3>
+<p>The lack of flexibility and feeling like in order to use Ember you have to go all or nothing is a deal breaker for me.</p>
+<h2 id="react">React</h2>
+<p>It&#x2019;s worth noting that it&#x2019;s not really fair to include React in this list. It&#x2019;s not a framework, it&#x2019;s a view layer. But there&#x2019;s so much discussion on this that I decided to add it here anyway. Arguably, when you mix in Facebook&#x2019;s flux dispatcher stuff, it&#x2019;s more of a framework.</p>
+<h3 id="pros">pros</h3>
+<ol>
+<li><p>Blindly re-render without worrying about DOM thrashing, it will &#x201C;diff&#x201D; the virtual DOM that you render to, against what it knows the DOM is and will perform minimal changes to get them in sync.</p>
+</li>
+<li><p>Their virtual DOM also resolves issues with eventing across browsers by abstracting it to a standards-compliant event-emitting/bubbling model. As a result, you get a consistent event model across any browser. </p>
+</li>
+<li><p>It&#x2019;s just a view layer, not a complete framework. This means you can use it with whatever application orchestration you&#x2019;d like to do. It does seem to pair nicely with Backbone, since Backbone doesn&#x2019;t give you a view binding solution out of the box and encourages you to simply re-render on model changes, which is exactly what React encourages and deals with.</p>
+</li>
+</ol>
+<h3 id="cons">cons</h3>
+<ol>
+<li><p>The template syntax and the way you create DOM (with JSX) is a bit odd for a JS developer because you put unquoted HTML right into your Javascript as if it were valid to do so. And yes, JSX is optional, but the alternative: <code>React.DOM.div(null, "Hello ", this.props.name);</code> isn&#x2019;t much better, IMO. </p>
+</li>
+<li><p>If you want really finite and explicit control over how things get applied to the DOM you don&#x2019;t really have it anymore. For example, if you want very specific control over how things are bound to style attributes, for creating touch draggable UIs. You can&#x2019;t easily time the order of how classes get applied, etc. (<em>please note</em> this is something I&#x2019;ve assumed would be an issue but have not run into myself, but this was confirmed by a dev I was talking to who was struggling with exactly this. But take it with a grain of salt).</p>
+</li>
+<li><p>While you can just re-render the entire react view, depending on the complexity of component, it sure seems like there can be a lot of diffing to do. I&#x2019;ve heard of React devs choosing to update only the known changed components, which to me, takes away from the whole idea of not having to care. Again, note that I&#x2019;m speaking from very limited experience.</p>
+</li>
+</ol>
+<h3 id="my-fallible-conclusion">my fallible conclusion</h3>
+<p>I think React is very cool. If I had to build a single page app that supported old browsers I&#x2019;d look closely at using Backbone + React. </p>
+<p>A note on the &#x201C;FLUX&#x201D; architecture: To me this is not new information or even a new idea, just a new name. Apparently <a href="https://twitter.com/jashkenas/status/497062452195250176">I&#x2019;m not alone in that opinion</a>. </p>
+<p>The way I understand it, conceptually FLUX is the same as having an intelligently evented model layer in something like Ampersand or Backbone and turning all user actions and server data updates into changes to that state. </p>
+<p>By ensuring that the user actions never result in directly manipulating the DOM you end up with the same unidirectional event propagation flow as FLUX + React. We intentionally didn&#x2019;t include any sort of two-way bindings in Ampersand for that reason. In my opinion two-way bindings are fraught with peril. Having a single layer deal with incoming events, be they from the server or user action is what we&#x2019;ve been doing for years.</p>
+<h2 id="polymer">Polymer</h2>
+<p>This one is a bit strange to me. There&#x2019;s a standard being developed for being able to define custom elements (<code>document.registerElement</code> for creating new HTML tags with built in behavior), doing HTML imports (<code>&lt;link type='html'&gt;</code> for being able to import those custom elements into other documents), and shadow DOM (for isolating CSS from the rest of the document). </p>
+<p>Those things are great (except HTML imports, IMO). </p>
+<p>But, judging by Polymer&#x2019;s introduction, it sounds like a panacea for making all web development easy and amazing and that it&#x2019;s good for everything. Here&#x2019;s what the opening line says: </p>
+<blockquote>
+<p>Web Components usher in a new era of web development based on encapsulated and interoperable custom elements that extend HTML itself. Built atop these new standards, Polymer makes it easier and faster to create anything from a button to a complete application across desktop, mobile, and beyond.</p>
+</blockquote>
+<p>While I think being able to create custom elements and encapsulating style and behavior is fantastic, I&#x2019;m frustrated with the way it&#x2019;s being positioned. It sounds like you should use this for everything now. </p>
+<p>Here&#x2019;s the kicker: I don&#x2019;t know of any significant Google app that uses polymer for anything.</p>
+<p>That&#x2019;s a red flag for me. Please don&#x2019;t misunderstand, <em>obviously</em> this is all new stuff and change takes time. My issue is just that the messaging on the site and from the Google engineers working on this don&#x2019;t convey that new-ness.</p>
+<p>In addition, even if you were to create custom elements for all the view code in your single page app, something has to manage the creation/destruction of those elements. You still have to manage state and orchestrate an app, which means your custom elements are really just another way to write the equivalent of a Backbone view. In the single page app world, I don&#x2019;t see what we would actually gain by switching those things to custom elements.</p>
+<h3 id="pros">pros</h3>
+<ol>
+<li><p>Being able to create things like custom form inputs without them being baked into the browser is awesome.</p>
+</li>
+<li><p>Polymer polyfills enough so you can start using and experimenting with this functionality now.</p>
+</li>
+<li><p>Proper isolation of styles when building widgets has been a problem on the web for <em>years</em>. The new standards solve that problem at the browser level, which is awesome.</p>
+</li>
+</ol>
+<h3 id="cons">cons</h3>
+<ol>
+<li><p>I personally feel like one of Google&#x2019;s main motivations for doing this is to make it dead simple to drop in Google services that include behavior, style and functionality into a web page without having to know <em>any</em> JS. I could be completely off base here, but I can&#x2019;t help but feel like the marketing push is largely a big hype push to help push the standards through.</p>
+</li>
+<li><p>HTML Imports seem like a bad idea to me. It&#x2019;s feels like the CSS @import problem all over again. If you import a thing, you have to wait to get it back before the browser notices that it imports another thing, etc. So if you actually take this fully componentized approach to building a page that is promoted, then you&#x2019;ll end up with a ton of back and forth network requests. They do have a tool called the &#x201C;vulcanizer&#x201D; for flattening these things out, however. But inlining it doesn&#x2019;t seem to be an option. There&#x2019;s was a whole post written yesterday about <a href="http://tjvantoll.com/2014/08/12/the-problem-with-using-html-imports-for-dependency-management/">the problems with HTML imports</a> that discusses this and other issues.</p>
+</li>
+<li><p>I simply don&#x2019;t understand why Google is pushing this stuff so hard as if it&#x2019;s some kind of panacea when the only example I can find of Google using it themselves is on the Polymer site itself. The site claims &#x201C;Polymer makes it easier and faster to create anything from a button to a complete application across desktop, mobile, and beyond.&#x201D; In my experimentation, that simply wasn&#x2019;t the case, I smell hype.</p>
+</li>
+</ol>
+<h3 id="my-fallible-conclusion">my fallible conclusion</h3>
+<p>Google doesn&#x2019;t seem to be eating their own dog food here. The <code>document.registerElement</code> spec is exciting, beyond poly-filling that, I see no use for Polymer, sorry.</p>
+<h2 id="backbone">Backbone</h2>
+<p>There is no more broadly production deployed single page app framework than Backbone that I&#x2019;m aware of. The <a href="http://backbonejs.org/#examples">examples section of the backbone docs</a> lists a lot of big names and that list is far from exhaustive.</p>
+<h3 id="pros">pros</h3>
+<ol>
+<li><p>It&#x2019;s a small and flexible set of well-tested building blocks.</p>
+<ol>
+<li>Models</li>
+<li>Collections</li>
+<li>Views</li>
+<li>Router</li>
+</ol>
+</li>
+<li><p>It solves a lot of the basic problems. </p>
+</li>
+<li><p>Its limited scope makes it easy to understand. As a result I always make new front end developer read the Backbone.js documentation as a first task when they join &amp;yet.</p>
+</li>
+</ol>
+<h3 id="cons">cons</h3>
+<ol>
+<li><p>It doesn&#x2019;t provide solutions for all the problems you&#x2019;ll encounter. This is why <em>every</em> major user of backbone that I&#x2019;m aware of has built their own &#x201C;framework&#x201D; on top of Backbone&#x2019;s base. </p>
+</li>
+<li><p>Most notably find yourself missing when using plain Backbone are:</p>
+<ol>
+<li>A way to create derived properties on models. </li>
+<li>A way to bind properties and derived properties to views.</li>
+<li>A way to render a collection of views within an element.</li>
+<li>A way to cleanly handle &#x201C;subviews&#x201D; and nested layouts, etc. </li>
+</ol>
+</li>
+<li><p>As much as backbone is minimalistic, it&#x2019;s pieces also arguably too coupled to each other. For example, until <a href="https://github.com/jashkenas/backbone/pull/3052">my merged pull request is released</a> you couldn&#x2019;t use any other type of Model within a Backbone Collection without monkey patching internal methods. This may not matter for some apps, but it does matter if I want to, for example, use a model to store some observable data in a library intended for use by other code that may or not be a backbone app. The only way to use Backbone Models is to include all of Backbone which feels odd and inefficient to me. </p>
+</li>
+</ol>
+<h3 id="my-fallible-conclusion">my fallible conclusion</h3>
+<p>Backbone pioneered a lot of amazing things. I&#x2019;ve been using it since 0.3 and I strongly agree with its minimalistic philosophy. </p>
+<p>It&#x2019;s helped spawn a new generation of applications that treat the browser as a runtime, not just a document rendering engine.  But, its narrow scope left people to invent solutions on top of Backbone. While this isn&#x2019;t a bad thing, per s&#xE9;, it just brings to light that there are more problems to be solved. </p>
+<h2 id="not-using-a-framework">Not using a framework</h2>
+<p>There&#x2019;s a subset of developers who think you shouldn&#x2019;t use frameworks, for anything ever. While I appreciate the sentiment and find myself very in line with many of them generally, to me it&#x2019;s simply not pragmatic, especially in a team scenario. </p>
+<p>I tend to agree with <a href="http://blog.ryanflorence.com/you-cant-not-have-a-framework.html">Ryan Florence&#x2019;s Post</a> on this topic. Which is best summed up by this one quote from his post:</p>
+<blockquote>
+<p>When you decide to not pick a public framework, you will end up with a framework anyway: your own.</p>
+</blockquote>
+<p>He goes on to say, that doing this is not inherently bad, just that you should be serious about it and maintain it, etc.  I highly recommend the post, it&#x2019;s excellent.</p>
+<h3 id="pros">pros</h3>
+<ul>
+<li><p>Ultimate flexibility</p>
+</li>
+<li><p>You&#x2019;ll tend to include <em>only</em> the exact code that you need in your app. </p>
+</li>
+</ul>
+<h3 id="cons">cons</h3>
+<ul>
+<li><p>Massive re-inventing of things, cost.</p>
+</li>
+<li><p>Knowing what modules to use and finding the right modules is hard</p>
+</li>
+<li><p>No clear documentation or conventions for new developers</p>
+</li>
+<li><p>Really hard to transfer and re-use code for your next project</p>
+</li>
+<li><p>You&#x2019;ll generally end up having learn from your own mistakes instead of benefiting from other&#x2019;s code.</p>
+</li>
+</ul>
+<h2 id="the-giant-gap">The GIANT gap</h2>
+<p>In doing <a href="http://andyet.com/training/human-javascript-live">our trainings</a> and in writing <a href="http://humanjavascript.com/">my book, Human JavaScript</a> and within our team itself we&#x2019;ve come to realize there is a huge gap between picking a tool, framework, or library and <em>actually building a complete application</em>. </p>
+<p>Not to mention, there are huge problems surrounding how to actually build an app as a team without stomping on each other. </p>
+<p>There are sooooo many options and patterns on how to structure, build, and deploy applications beyond just picking a framework. </p>
+<p>Few people seem to be talking about how to do all of that, which is just as big of a rabbit hole as picking a framework!</p>
+<h2 id="what-we-actually-want">What we actually want</h2>
+<ul>
+<li><p>Clear starting point</p>
+</li>
+<li><p>A clear, but not enforced, standard way to do things</p>
+</li>
+<li><p>Explicitly clear separation of concerns, so we can mix and match and replace as needed</p>
+</li>
+<li><p>Easy dependency management</p>
+</li>
+<li><p>A way to use existing solutions so we don&#x2019;t have to re-invent everything</p>
+</li>
+<li><p>A development workflow where we can switch from development mode to production with a simple boolean in a config.</p>
+</li>
+</ul>
+<h2 id="how-we-ve-addressed-all-of-these-things">How we&#x2019;ve addressed all of these things</h2>
+<p>So, in case you hadn&#x2019;t already heard, we did the unspeakable thing in JavaScript. We made a &#x201C;new&#x201D; framework: <a href="http://ampersandjs.com">Ampersand.js</a> It&#x2019;s a bit like a redux or derivation of Backbone. </p>
+<p>The response so far, has been overwhelmingly positive, we only announced it about a month ago and <a href="http://ampersandjs.com/contribute">all these folks</a> have jumped in to contribute. People have been giving talks about it <a href="https://www.youtube.com/watch?v=UzJCz1qAiHg">at meetups</a>, and <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a>, the creator of Backbone.js, Underscore.js, and CoffeeScript invited me to give a keynote at <a href="http://backboneconf.com/">BackboneConf 2014</a> about Ampersand.js.</p>
+<p>So how did we address all my critiques about the other tools?</p>
+<ol>
+<li><p>Flexible but cohesive</p>
+<ul>
+<li><p>It comes with a set of &#x201C;core&#x201D; modules (<a href="http://ampersandjs.com/docs">documented here</a>) that roughly line up with the components in Backbone. But they are all installed and used individually. No assumptions are made that you&#x2019;re using a RESTful or even Ajax powered API. If you don&#x2019;t want that stuff, you just use Ampersand-State instead of the decorated version of State we call Ampersand-Model that adds the restful methods.</p>
+</li>
+<li><p>It doesn&#x2019;t come with a templating language. Templates can be as simple as a string of HTML, a function that return a string of HTML, or a function that return DOM. The sample app includes some more advanced templating with templatizer, but it truly could be anything. One awesome approach for doing handlebars/htmlbars + Ember style in-template binding declarations is <a href="https://github.com/latentflip/domthing">domthing</a> by <a href="http://twitter.com/philip_roberts">Philip Roberts</a>. There are also people using React with Ampersand views.</p>
+</li>
+<li><p>Views have a way to declare bindings separate from the template engine. So if you want, you can use HTML strings for templates and still get full control of bindings. The nice thing about not bundling a templating engine means that you can write componentized/reusable views without needing to also include a templating system.</p>
+</li>
+</ul>
+</li>
+<li><p>There has to be a clear starting point and some idiomatic way to structure the app as a whole that can be used as a reference, but those standard approaches should not enforced. We did this by building a CLI that can help you spin up a new app, that follows all these conventions that can serve either as a starting point, or simply as a reference. See the <a href="http://ampersandjs.com/learn/quick-start-guide">quick start guide</a> for more. </p>
+</li>
+<li><p>We wanted to build on something proven not just start something new for the sake of doing it. This is why we built on Backbone as a base instead of starting from scratch entirely.</p>
+</li>
+<li><p>We wanted a more complete reference guide to fill that gap I mentioned that explains all the surrounding ideas, tools, and philosophies. We did this by writing a book on the topic: Human JavaScript. It&#x2019;s <a href="http://read.humanjavascript.com/">free to read online in its entirety</a> and available as an <a href="https://gum.co/humanjs?wanted=true">ebook</a>.</p>
+</li>
+<li><p>We wanted to make it easy to use &#x201C;solved problems&#x201D; so we don&#x2019;t have to re-invent the wheel all the time. We did this by using npm for all package management, and by creating a <a href="http://tools.ampersandjs.com/">quick-searchable directory of our favorite clientside modules</a>.</p>
+</li>
+<li><p>We wanted a painless development-to-production workflow. We did this with a tool called <a href="https://github.com/HenrikJoreteg/moonboots">moonboots</a> that adds some dev and deployment workflow functionality to browserify. Moonboots has a plugin for <a href="http://hapijs.com/">hapi.js</a> and <a href="http://expressjs.com/">express.js</a> where the only thing you have to do to go from production mode (minified, cached, uniquely named static assets) and dev mode (re-built on each request, not minified, not cached) is toggling a single boolean.</p>
+</li>
+<li><p>We didn&#x2019;t just want this to be an &amp;yet project, it has to be bigger than that. We&#x2019;ve already had over 40 contributors in the short time Ampersand.js has been public, and we just added the first of hopefully many non-&amp;yet contributors to core. Everything uses the very permissivie MIT license and its modular, loosely coupled structure lends itself quite well to extending or replacing any piece of it to fit your needs. For clarity we&#x2019;ve also set it up as <a href="http://github.com/AmpersandJS">its own organization</a> on GitHub. </p>
+</li>
+<li><p>We wanted additional training and support to be available if needed. For this we&#x2019;ve made the #&amp;yet IRC channel on freenode open to questions and support. In addition there are people and companies who want paid training opportunities to be available in order for them to even feel comortable adopting a technology. They want to know that more information and help is available, so in addition to the free resources, we&#x2019;ve also put together a <a href="http://learn.humanjavascript.com/">Human JavaScript code-along online training</a> and offer <a href="http://live.humanjavascript.com">in person training events</a> to provide hands-on training and support.</p>
+</li>
+</ol>
+<h2 id="so-are-you-saying-ampersand-is-the-best-choice-for-everyone-">So are you saying Ampersand is the best choice for everyone?</h2>
+<p>Nope. Not at all. It certainly has its own set of tradeoffs. Here are some I&#x2019;m aware of, there are probably others:</p>
+<ul>
+<li><p>Unsurprisingly, it is still a somewhat immature codebase compared to some of these other tools. Having said that, however, we use it for all our single page app projects at <a href="https://andyet.com">&amp;yet</a> and the core modules all have thorough test suites. It&#x2019;s also worth noting that if you <em>do</em> run into a problem, odds are it won&#x2019;t be as debilitating. Its open, hackable, pluggable nature makes it different than many frameworks in that you don&#x2019;t have to jump through a bunch of hoops to fix or overwrite something in your app. The small modules typically make it easier to isolate, patch, and quickly publish bugfixes. In fact, we often publish a patched version to npm as soon as a pull request is merged. Our strict adherance to <a href="http://semver.org/">semver</a> makes it possible to do that while mitigating odds of breaking any existing code. I think that&#x2019;s part of the reason it has gotten as many pull requests as it has already. Even still, if you have a different idea of how something should work, it&#x2019;s easy to use your own module instead. We&#x2019;re also trying to increase the number of core committers to make sure the patches are getting in even if other core devs are busy. </p>
+</li>
+<li><p>It doesn&#x2019;t have the rich tooling and giant communities built up around it yet. That stuff takes time, but as I said, we&#x2019;re encouraged by the level of participation we&#x2019;ve had thus far. Please file bugs and help create the things you wish existed.</p>
+</li>
+<li><p>Old browser support is a rough spot. We intentionally drew a line saying we won&#x2019;t support IE8. We&#x2019;re not the alone there, <a href="http://jquery.com/browser-support/">jQuery 2.0 doesn&#x2019;t either</a>, Google has said they&#x2019;ll only support the latest two versions of IE for Apps and <a href="http://googlesystem.blogspot.com/2013/11/google-drops-support-for-ie9.html">recently dropped IE9 too</a>,  and Microsoft themselves <a href="http://blogs.msdn.com/b/ie/archive/2014/08/07/stay-up-to-date-with-internet-explorer.aspx">just announced their plan to phase out support for all older browsers</a>. Why did we do this? It&#x2019;s because we&#x2019;re using [getters and setters] for the state management stuff. It was a hard decision but felt like enough of a win to make it worth it. Unfortunately, since that is a language-level feature, It&#x2019;s not easily shimmable (at least not that I&#x2019;m aware of). Sadly, for some companies not supporting IE8 is a dealbreaker. Perhaps someone has already written a transpiler in a browserify transform that can solve this problem, but I&#x2019;m not aware of that. If you are, please let me know. I would love it if Ampersand-State could support IE 7 and 8.</p>
+</li>
+</ul>
+<h2 id="final-thoughts">Final thoughts</h2>
+<p>Hopefully this explanation was useful. If you have any feedback, thoughts or if there&#x2019;s something I missed or got wrong I&#x2019;m <a href="http://twitter.com/henrikjoreteg">@HenrikJoreteg</a> on twitter, please let me know.</p>
+<p>Also please help us make these tools better. We love getting more people involved in the project. File bugs or grab one of the <a href="http://issues.ampersandjs.com">open issues</a> and help us patch &#x2018;em.</p>
+
+<p>Check the <a href="http://ampersandjs.com/learn">learning guides</a>, <a href="http://ampersandjs.com/docs">API reference</a>, or <a href="http://read.humanjavascript.com/">read Human JavaScript online for free</a>.</p>
+<p>For hands-on learning jump into the <a href="http://learn.humanjavascript.com/">Human JavaScript code-along online training</a>, or for the ultimate kickstart <a href="http://live.humanjavascript.com">come hang out in person at our training events</a> where you&#x2019;ll build an app from scratch together with us.</p>
+<p>See you on the Interwebz &lt;3</p>
+</div></div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

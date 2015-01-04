@@ -1,0 +1,338 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Exploring Facebook Flow: Facebook's Type Checker for JavaScript</title><h1>Exploring Facebook Flow: Facebook's Type Checker for JavaScript</h1><p><a href="http://www.crmarsh.com/flow/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="span9 offset1">
+          
+
+<p>At September's <a class="external" target="_blank" href="https://www.facebook.com/atscale2014">@Scale conference</a>, Facebook introduced <a class="external" target="_blank" href="http://flowtype.org/">Flow</a>, a static type checker for JavaScript.</p>
+
+<p>The stated goal of Flow is to "find errors in JavaScript code with little programmer effort". To paraphrase project lead <a class="external" target="_blank" href="http://www.cs.umd.edu/~avik/">Avik Chaudhuri</a>: Flow aims to enforce the benefits of a type system while maintaing the "feel" of JavaScript.</p>
+
+<p>Avik promised that Flow would be open-sourced by the end of the year and, true to his word, the project appeared on <a class="external" target="_blank" href="https://github.com/facebook/flow">GitHub</a> a few months later.</p>
+
+<p>I wanted to give Flow a whirl, so I decided to integrate it into a small project to which I've contributed: <a class="external" target="_blank" href="https://github.com/chenglou/RCSS">RCSS</a>. You can find my Flow-annotated fork on <a class="external" target="_blank" href="https://github.com/crm416/rcss">GitHub</a>.</p>
+
+<p>Working with Flow was, overall, a good experience. The benefits of Flow are immediately evident and integration isn't particularly difficult. However, the project feels raw and there's a lot of room for improvement&#x2014;it's a work-in-progress, and the docs <a class="external" target="_blank" href="http://flowtype.org/docs/about-flow.html">admit as much</a>. Given time, I'm confident that it will become even easier to use and even more useful.</p>
+
+<p><strong>This post will be part-commentary, part-resource</strong>. My goal is to give you, the reader, a better understanding of how to integrate Flow into your projects and avoid any undocumented pain points.</p>
+
+<p>If you have specific questions about <a href="http://www.crmarsh.com/flow/#Interfaces">interfaces</a>, <a href="http://www.crmarsh.com/flow/#Transforms">transforms</a>, <a href="http://www.crmarsh.com/flow/#Objects">object annotations</a>, or <a href="http://www.crmarsh.com/flow/#Globals">globals</a>, feel free to skip ahead.</p>
+
+<h2 id="My-Playground">My Playground<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#My-Playground" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>Briefly: <a class="external" target="_blank" href="https://github.com/chenglou/RCSS">RCSS</a> is an experiment in writing CSS with JavaScript, similar to how one might replace HTML with JSX. It's intended to be used with React or another front-end framework.</p>
+
+<p>The RCSS core comes in at around 200 lines of code. It's very small (which is, of course, a good thing). In the context of this experiment, it means that my observations mostly relate to surface-level usage and initial setup of Flow&#x2014;I tried to hit most of the features, but I certainly can't claim to have exercised Flow's most powerful muscles.</p>
+
+<p>With that covered, I'll start by discussing Flow's server model before getting into some of the intricacies of Flow interfaces.</p>
+
+<h2 id="Server-Architecture">Server Architecture<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Server-Architecture" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>Flow is centered around a server architecture, which allows for <a class="external" target="_blank" href="http://flowtype.org/docs/about-flow.html">online</a> type checking. So, to start, Flow scans your entire project&#x2014;or, at least, any files marked with the <a class="external" target="_blank" href="http://flowtype.org/docs/new-project.html#typechecking-your-files">pragma</a>, as Flow's type checking is opt-in. When you later change a file, Flow can intelligently type check the paths in the code that were affected by this change, rather than rescanning the entire project. This leads to big performance gains.</p>
+
+<p>To use Flow, you first spin up the Flow server with <code>flow start</code> and then type check your code with <code>flow</code>. Pretty simple.</p>
+
+<p>Even for a tiny project like RCSS, my (slow) machine takes over a minute to kick off the Flow server. But this time is made up in the incremental type checking: once the server is running, the <code>flow</code> command runs instantaneously.</p>
+
+<p>I really, really appreciated the ease that came with running Flow&#x2014;the feedback loop is incredibly tight. This was one of the major selling points to me coming in to the project and the hype was validated.</p>
+
+<h2 id="Interfaces">Interfaces<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Interfaces" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>Flow allows you to provide a folder of interface files to be used during type checking, identified with:</p>
+<div class="highlight"><pre><code class="language-text">flow start --lib path/to/interfaces/
+</code></pre></div>
+<p>Any file in path/to/interfaces will be included as an interface, as long as it ends in .js. The specific naming scheme is irrelevant.</p>
+
+<p>Interfaces should be filled with <a class="external" target="_blank" href="http://flowtype.org/docs/declarations.html">declarations</a> and are primarily intended for annotating third-party code. The declarations you include in an interface will be global to the type checker.</p>
+
+<p>As an example, say I installed the foo-bar module from npm. This module exports two properties, both functions: <code>reverse</code>, which reverses a string and <code>square</code>, which squares a number. Then, I could add the following declaration to my interface file:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">declare</span> <span class="nx">module</span> <span class="s1">'foo-bar'</span> <span class="p">{</span>
+  <span class="nx">declare</span> <span class="kd">function</span> <span class="nx">reverse</span><span class="p">(</span><span class="nx">s</span><span class="o">:</span> <span class="nx">string</span><span class="p">)</span><span class="o">:</span> <span class="nx">string</span><span class="p">;</span>
+  <span class="nx">declare</span> <span class="kd">function</span> <span class="nx">square</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">)</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Notice that I'm able to <a class="external" target="_blank" href="http://flowtype.org/docs/declarations.html#paths">identify the module by its require-path</a>, which is super elegant.</p>
+
+<p>However, there were a bunch of oddities that I encountered with interfaces that made them pretty hard to use:</p>
+
+<ol>
+<li><strong>Interfaces fail silently</strong> (<a class="external" target="_blank" href="https://github.com/facebook/flow/issues/89">#39</a>). If you have a syntax error in your interface file, Flow will simply ignore it and provide no indication of doing so. This is really, really annoying, especially when paired with the next point.</li>
+<li><p><strong>Interfaces do not auto-reload</strong> (<a class="external" target="_blank" href="https://github.com/facebook/flow/issues/87">#87</a>). In effect, if you change or add an interface, the only way to reflect that change in the type system is by running:</p>
+<div class="highlight"><pre><code class="language-text">flow stop
+flow start --lib path/to/interfaces/
+</code></pre></div>
+<p>As I mentioned before, this can be a lengthy process that really slows down your speed of development.</p></li>
+<li><p><strong>Module interfaces don't support non-object exports</strong> (<a class="external" target="_blank" href="https://github.com/facebook/flow/issues/73">#73</a>). In my initial example, notice that I annotated the object properties exported by the module. If my module, for example, exported <em>just</em> a function, there wouldn't be a good way to annotate it.</p>
+
+<p>Admittedly, there are a few alternatives. For one, I could annotate the module on import. Assume now that I have a module reverse that just exports the string reversal function. On import, I could do:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">reverse</span><span class="o">:</span> <span class="p">(</span><span class="nx">s</span><span class="o">:</span><span class="nx">string</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">string</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'reverse'</span><span class="p">);</span>
+</code></pre></div>
+<p>The downside: I need to include this annotation whenever I import the module.</p></li>
+<li><p><strong>Interfaces are shallow</strong> (<a class="external" target="_blank" href="https://github.com/facebook/flow/issues/93">#93</a>). If you specify an interface directory, only files in the immediate directory will be scanned and treated as interfaces. (There's an open <a class="external" target="_blank" href="https://github.com/facebook/flow/pull/193/files">pull request</a> to fix this.)</p></li>
+</ol>
+
+<p>I'm not trying to be overly critical of Flow&#x2014;all of these issues are fixable and there are indications that they <em>will</em> be fixed (as evidenced by the GitHub issues referenced above). But for those experimenting with Flow in the meantime, it's very, very good to be aware of them.</p>
+
+<h2 id="Globals">Globals<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Globals" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>There isn't a great way to deal with globals in Flow. Here, I'm specifically talking about anything that would be on <code>window</code> in the browser or <code>global</code> in Node.</p>
+
+<p>For example, let's say you're the type of rebellious JavaScripter that uses the <code>Function</code> function, like this:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">square</span> <span class="o">=</span> <span class="nb">Function</span><span class="p">(</span><span class="s1">'function(x) { return x * x; }'</span><span class="p">);</span>
+</code></pre></div>
+<p>Flow will throw an error here, claiming that it can't find a callable signature for <code>Function</code>.</p>
+
+<p>If you want your code to run in both Node and the browser, you obviously can't hardcode <code>global</code> or <code>window</code>, respectively. Instead, the <a class="external" target="_blank" href="http://flowtype.org/docs/underscore.html#global-objects">Flow docs</a> suggest you do this:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">root</span><span class="o">:</span> <span class="nx">any</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">square</span> <span class="o">=</span> <span class="nx">root</span><span class="p">.</span><span class="nb">Function</span><span class="p">(</span><span class="s1">'function(x) { return x * x; }'</span><span class="p">);</span>
+</code></pre></div>
+<p>I found this to be a reasonable but somewhat unsatisfying answer. It'd be a little annoying to have this <code>root</code> pattern scattered throughout my codebase. But I can't think of a much better solution.</p>
+
+<p>For example, one alternative would be to provide a declaration for <code>Function</code> in the same file it's used, e.g.:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">declare</span> <span class="kd">var</span> <span class="nb">Function</span><span class="o">:</span> <span class="nx">any</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">square</span> <span class="o">=</span> <span class="nb">Function</span><span class="p">(</span><span class="s1">'function(x) { return x * x; }'</span><span class="p">);</span>
+</code></pre></div>
+<p>I prefer the former. (Surprisingly, putting this declaration in my interface file didn't work.)</p>
+
+
+
+<p>Per the <a class="external" target="_blank" href="http://flowtype.org/docs/running.html#_">docs</a>, you need to use Facebook's <a class="external" target="_blank" href="https://www.npmjs.com/package/react-tools">JSX transformer</a> to strip away Flow's type annotations.</p>
+
+<p>Specifically, assuming you have react-tools installed globally, you strip types away with:</p>
+<div class="highlight"><pre><code class="language-text">jsx --strip-types index.js
+</code></pre></div>
+<p>The docs provide this more useful and more realistic example, which includes Harmony transpilation and watching:</p>
+<div class="highlight"><pre><code class="language-text">jsx --strip-types --harmony --watch src/ build/
+</code></pre></div>
+<p>I wanted to use this transform with <a class="external" target="_blank" href="https://www.npmjs.com/package/browserify">browserify</a>. Luckily, the <code>--strip-types</code> option is already built into <a class="external" target="_blank" href="https://www.npmjs.com/package/reactify">reactify</a>, the JSX browserify transform, so you can run:</p>
+<div class="highlight"><pre><code class="language-text">browserify -t [reactify --strip-types] index.js
+</code></pre></div>
+<p>There's also the <a class="external" target="_blank" href="https://www.npmjs.org/package/flow-typestrip">flow-typestrip</a> package, a standlone Flow annotation transformer, which works as a drop-in replacement:</p>
+<div class="highlight"><pre><code class="language-text">browserify -t flow-typestrip index.js
+</code></pre></div>
+<p>This transpilation step, while somewhat inconvenient, is now the status quo for a lot of JS tooling.</p>
+
+
+
+<p>That said, there's been some interesting <a class="external" target="_blank" href="https://github.com/facebook/flow/issues/3">discussion on GitHub</a> about removing this transpilation step for Flow through the use of formatted comments.</p>
+
+<p>Right now, Flow provides a means of generating annotations from docblock comments. For example, if you run <code>flow port</code> on the following:</p>
+<div class="highlight"><pre><code class="language-js"><span class="cm">/**</span>
+<span class="cm">  @param {number} x</span>
+<span class="cm">  @return {number}</span>
+<span class="cm"> */</span>
+<span class="kd">function</span> <span class="nx">square</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">x</span> <span class="o">*</span> <span class="nx">x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">square</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</code></pre></div>
+<p>It produces a type-annotated file:</p>
+<div class="highlight"><pre><code class="language-js"><span class="cm">/**</span>
+<span class="cm">  @param {number} x</span>
+<span class="cm">  @return {number}</span>
+<span class="cm"> */</span>
+<span class="kd">function</span> <span class="nx">square</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">)</span><span class="o">:</span> <span class="nx">number</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">x</span> <span class="o">*</span> <span class="nx">x</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">square</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</code></pre></div>
+<p>While the core team has noted that this should be considered <a class="external" target="_blank" href="https://github.com/facebook/flow/issues/3#issuecomment-63569368">experimental</a>, some commenters have suggested performing this transformation in-place and using the output annotations for type checking. There are good ideas in that thread and I'm excited to see what the Flow team produces.</p>
+
+<h2 id="Objects">Objects<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Objects" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>In Flow, there are a few ways to annotate an object. The most basic, as you might guess, is to add an annotation to the object literal at the time of creation:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span> <span class="nx">y</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Any property included in the annotation <em>must</em> be included in the object at time of creation, so we get an error here:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span> <span class="nx">y</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+<span class="p">};</span>
+<span class="c1">// Property not found in object literal</span>
+</code></pre></div>
+<p>If you want to reuse an object's type annotation, you can implement it as a type alias, which looks like this:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">type</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span> <span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span> <span class="nx">y</span><span class="o">:</span> <span class="nx">string</span> <span class="p">};</span>
+<span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Both of these approaches catch reads from and writes to undefined properties, like this:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">type</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span> <span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span> <span class="nx">y</span><span class="o">:</span> <span class="nx">string</span> <span class="p">};</span>
+<span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="c1">// Property not found in object type</span>
+</code></pre></div>
+<p>Types can also be <a class="external" target="_blank" href="http://flowtype.org/docs/typeof.html#_">inferred from existing objects</a> using the <code>typeof</code> operator. This is a really, really cool feature. For example, Flow would catch an error here, as the properties <code>x</code> and <code>y</code> have incorrect values in the second constructor:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">type</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span> <span class="nx">x</span><span class="o">:</span> <span class="nx">number</span><span class="p">;</span> <span class="nx">y</span><span class="o">:</span> <span class="nx">string</span> <span class="p">};</span>
+<span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="nx">FooType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="kd">var</span> <span class="nx">bar</span><span class="o">:</span> <span class="k">typeof</span> <span class="nx">foo</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="s1">'hello'</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="mi">5</span>
+<span class="p">};</span>
+</code></pre></div>
+<h3 id="Unannotated-Objects">Unannotated Objects<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Unannotated-Objects" title="Permalink to this headline">&#xB6;</a></h3>
+
+<p>Without annotations, the typing on objects becomes pretty loose, as you'd expect&#x2014;it's hard to enforce type safety on an object that you know nothing about.</p>
+
+<p>So, for example, if we omitted <code>FooType</code> in the previous snippets, things change a little bit. Flow <em>will</em> enforce type consistency on the properties defined at the time of object creation, so we get an error here:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="s1">'world'</span><span class="p">;</span>
+<span class="c1">// String is incompatible with number</span>
+</code></pre></div>
+<p>However, Flow has trouble tracking properties that are added to the object <em>after</em> creation. The docs make <a class="external" target="_blank" href="http://flowtype.org/docs/objects.html#adding-properties">some guarantees</a> about the extent of the type checking for such a scenario, but behavior is hard to predict. For example, we (rightfully) get an error here:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">s</span><span class="o">:</span> <span class="nx">string</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">.</span><span class="nx">z</span><span class="p">;</span>
+<span class="c1">// Number is incompatible with string</span>
+</code></pre></div>
+<p>We <em>also</em> get an error here, but for a surprising reason:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">x</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+  <span class="nx">y</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">z</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">s</span><span class="o">:</span> <span class="nx">string</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">.</span><span class="nx">z</span><span class="p">;</span>
+<span class="c1">// Number is incompatible with string</span>
+</code></pre></div>
+<p>Note that the error here comes on the final line, so Flow lets us overwrite <code>foo.z</code> with a string, but later enforces that its type should be <code>number</code>. Odd. I think this is a bug, but the general point is that I wouldn't rely on unannotated objects.</p>
+
+<h3 id="Maps">Maps<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Maps" title="Permalink to this headline">&#xB6;</a></h3>
+
+<p>Tucked away in the Flow docs is an <a class="external" target="_blank" href="http://flowtype.org/docs/objects.html#objects-as-maps">interesting note</a> about treating objects as key-value maps.</p>
+
+<p>Specifically, you can provide a blanket type for the keys and values of an object or type alias, e.g., if you wanted an object that mapped from strings to numbers:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">string</span><span class="p">]</span><span class="o">:</span> <span class="nx">number</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">'hello'</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s1">'world'</span><span class="o">:</span> <span class="mi">1</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>This is pretty useful: it feels like a lot of type safety for very little effort and allows for a fair amount of flexibility. For example, we can add new properties to <code>foo</code> after creation and get a good level of enforcement:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">string</span><span class="p">]</span><span class="o">:</span> <span class="nx">number</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">'hello'</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="s1">'world'</span><span class="o">:</span> <span class="mi">1</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">goodbye</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="c1">// success!</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">seeya</span> <span class="o">=</span> <span class="s1">'bump'</span><span class="p">;</span> <span class="c1">// error!</span>
+<span class="c1">// String is incompatible with number</span>
+</code></pre></div>
+<p>There are a few 'gotchas' here that aren't mentioned in the docs:</p>
+
+<ol>
+<li><p>The word <code>key</code> in the above snippet could really be replaced with any other word. There's nothing particularly special about it; it just acts as a placeholder. So this is just as good:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">abcdefg</span><span class="o">:</span><span class="nx">string</span><span class="p">]</span><span class="o">:</span> <span class="nx">number</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">...</span>
+<span class="p">};</span>
+</code></pre></div></li>
+<li><p>If you're using anything other than strings as your keys, your syntactic choices become very limited. For one thing, in general, non-string-literal keys aren't supported by Flow. So if you want to use numbers as your keys, this won't work:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">number</span><span class="p">]</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="mi">0</span><span class="o">:</span> <span class="s1">'hello'</span>
+<span class="p">};</span>
+<span class="c1">// Non-string literal property keys not supported</span>
+</code></pre></div>
+<p>Instead, you need to initialize an empty object and use bracket-syntax for assignment:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">number</span><span class="p">]</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="nx">foo</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'hello'</span><span class="p">;</span>
+</code></pre></div></li>
+<li><p>Flow lets you include string-literal keys in the object constructor even if you include one of these map annotations. However, reading from or writing to these keys in the future always throws an error:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">number</span><span class="p">]</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">hello</span><span class="o">:</span> <span class="kc">true</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">hello</span><span class="p">;</span>
+<span class="c1">// Number is incompatible with string</span>
+</code></pre></div>
+<p>This holds true even if you include the property in the type definition:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="nx">hello</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">;</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">number</span><span class="p">]</span><span class="o">:</span> <span class="nx">string</span> <span class="p">}</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">hello</span><span class="o">:</span> <span class="kc">true</span>
+<span class="p">};</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">hello</span><span class="p">;</span>
+<span class="c1">// Number is incompatible with string</span>
+</code></pre></div>
+<p>It's unclear to me what the expected behavior is here. Mixing these annotations <em>could</em> be a means of marking some keys as required, but if that's the intention, it would only work when both the property-specific keys and map keys are strings: if the property-specific key isn't a string, Flow won't accept it at time of construction, and if the map keys aren't the same as the property-specific keys, you'll get an error on read or write.</p>
+
+<p>(I've documented this behavior on <a class="external" target="_blank" href="https://github.com/facebook/flow/issues/187">GitHub</a>.)</p></li>
+</ol>
+
+<h2 id="Type-Reuse">Type Reuse<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Type-Reuse" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>Lastly, I want to talk a bit about type reuse (across files) in Flow.</p>
+
+<p>In RCSS, we have an object that pops up in a few different modules. It stores both a CSS class name (as a string) and a style object (i.e., a map from CSS properties to strings or numbers). You could implement a type alias for this object like so:</p>
+<div class="highlight"><pre><code class="language-js"><span class="nx">type</span> <span class="nx">StyleObjType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">className</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">string</span><span class="p">]</span><span class="o">:</span> <span class="nx">number</span> <span class="o">|</span> <span class="nx">string</span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Note that I'm using a <a class="external" target="_blank" href="http://flowtype.org/docs/union-intersection-types.html">union type</a> here.</p>
+
+<p>The fact that this object is used in multiple modules was problematic. I had a few choices:</p>
+
+<ol>
+<li>Redefine the type alias in every file.</li>
+<li>Define the type alias in an interface file, common to all files type checked by Flow.</li>
+<li><p>Export an object with this type from some other file and use <code>typeof</code> on that export. For example, I could create <code>style-obj-type.js</code> with:</p>
+<div class="highlight"><pre><code class="language-js"><span class="cm">/* @flow */</span>
+
+<span class="nx">type</span> <span class="nx">StyleObjType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">className</span><span class="o">:</span> <span class="nx">string</span><span class="p">;</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="p">{</span> <span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="nx">string</span><span class="p">]</span><span class="o">:</span> <span class="nx">number</span> <span class="o">|</span> <span class="nx">string</span> <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kd">var</span> <span class="nx">exemplarObject</span><span class="o">:</span> <span class="nx">StyleObjType</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">className</span><span class="o">:</span> <span class="s1">''</span><span class="p">,</span>
+  <span class="nx">style</span><span class="o">:</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">exemplarObject</span><span class="p">;</span>
+</code></pre></div>
+<p>Then, elsewhere, I could reuse the type with:</p>
+<div class="highlight"><pre><code class="language-js"><span class="kd">var</span> <span class="nx">exemplarObject</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./style-obj-type.js'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">styleObj</span><span class="o">:</span> <span class="k">typeof</span> <span class="nx">exemplarObject</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">...</span>
+<span class="p">};</span>
+</code></pre></div></li>
+</ol>
+
+<p>Clearly, each option is awkward in its own way. <a class="external" target="_blank" href="https://github.com/crm416/RCSS/blob/master/interfaces/objects.js">I went with option #2</a>, but was sort of unhappy to have a single interface file with global type aliases. In a larger project, I could see this becoming inconvenient or difficult to maintain.</p>
+
+<p>In general, it'd be nice if there was a better mechanism for sharing these kinds of type aliases across files. Option #3 would be neat if I could export the alias, rather than this dummy object satisfying it.</p>
+
+<p>Things improve when you use <a class="external" target="_blank" href="http://flowtype.org/docs/classes.html">ES6 Classes</a>, as the classes can be exported and their types reused with ease.</p>
+
+<h2 id="In-Conclusion">In Conclusion<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#In-Conclusion" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>I had a positive experience with Flow and look forward to using it again. Admittedly, though, the project felt raw, with a few 'gotchas' scattered throughout the codebase.</p>
+
+<p>Much of this could be solved with better documentation and, with any luck, I'll be sending over some pull requests in the near future (<a target="_blank" href="https://github.com/facebook/flow/pull/182">one down!</a>).</p>
+
+<p>Even better, many of the issues I described here have already been noted by the community, which seems to be growing and going strong. If Flow is run half as well as React, I'm sure it will continue to prosper as an open-source project.</p>
+
+<h2 id="Appendix-Other-Cool-Features">Appendix: Other Cool Features<a class="anchor-wrap" href="http://www.crmarsh.com/flow/#Appendix-Other-Cool-Features" title="Permalink to this headline">&#xB6;</a></h2>
+
+<p>If you're interested, here are some other cool features of Flow that I didn't spend much time on in this post:</p>
+
+
+
+          <p class="date">Posted on December 12, 2014.</p>
+
+&#xA9; 2014 Charles Marsh
+<a href="http://www.crmarsh.com/feed.xml">
+  <img class="icon" src="http://www.crmarsh.com/static/img/icon/rss.png">
+</a>
+
+        </div>
+      </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

@@ -1,0 +1,50 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>PleaseWait.js: A Loading/Splash Screen for your SPA</title><h1>PleaseWait.js: A Loading/Splash Screen for your SPA</h1><p><a href="http://pathgather.github.io/please-wait/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><section class="instructions">
+          
+          <section>
+            <h4>Step 1: Install</h4>
+            <code>bower install please-wait</code>
+          </section>
+          <section>
+            <h4>Step 2: Include in your HTML</h4>
+            <p>
+              Include the please-wait.css file in your <code>&lt;head&gt;</code> tag/in your normal workflow.
+            </p>
+            <p>
+              You can include the please-wait.js file at the end of your body, but above your other <code>&lt;script&gt;</code> tag(s) if you like. This allows you to use PleaseWait immediately and show a loading page while the browser downloads the rest of your Javascript. Of course, this is optional. Feel free to roll the PleaseWait library into your normal, minified JS file if you prefer.
+            </p>
+            
+          </section>
+          <section>
+            <h4>Step 3: Hide initial HTML flash</h4>
+            <p>
+              Optional: If your initial template has some styled HTML by default (like a toolbar), you'll probably want to hide that, or your users could see a quick flash of your normal template, followed by the loading screen. This is easy to do by wrapping the HTML in your body in a div, and hiding/showing that when things are ready. PleaseWait adds a class of 'pg-loaded' to your <code>&lt;body&gt;</code> when it's done.
+            </p>
+            
+          </section>
+          <section>
+            <h4>Step 4: Show the loading screen</h4>
+            <p>
+              As soon as possible in your app, call <code>pleaseWait</code> to trigger the loading screen. Right now, the API is quite simple. Valid options are:
+              </p><ul>
+                <li><code>backgroundColor</code> - Needs to be a valid CSS color.</li>
+                <li><code>logo</code> - The URL to a logo to display. The <code>src</code> attribute of an <code>img</code> tag will be set to this value.</li>
+                <li><code>loadingHtml</code> - HTML to display below the logo. Can be a message, spinner, or any HTML you want. See <a href="http://tobiasahlin.com/spinkit/" target="_blank">SpinKit</a> for some great HTML/CSS3 spinners.</li>
+              </ul>
+              pleaseWait returns the loading screen when called. You'll want to save this in order to close the loading screen later.
+            
+            
+          </section>
+          <section>
+            <h4>Step 5: Close the loading screen</h4>
+            <p>
+              Whenever you're app is ready for the user, call <code>finish()</code> on the returned object from the <code>pleaseWait</code> call. This will fade the screen out.
+            </p>
+          </section>
+          <section>
+            <h4>Bonus Section! Update the HTML</h4>
+            <p>
+              If you want to update the <code>loadingHtml</code> displayed, call <code>updateLoadingHtml(html)</code> on the returned object from <code>pleaseWait</code>. This, by default, will fade the current HTML out and the given HTML in. This is useful if you want to cycle through messages (in case your app takes a good bit of time to load), show a login form within the loading screen, etc.
+            </p>
+          </section>
+        </section>
+      </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

@@ -1,0 +1,219 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>Learning Much JavaScript From One Line of Code</title><h1>Learning Much JavaScript From One Line of Code</h1><p><a href="http://arqex.com/939/learning-much-javascript-one-line-code?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="entry">
+
+			<p>Since javascript is everywhere nowadays, it is really easy to learn new stuff everyday. Once you know the basics of the language, you can take bits of code from here and there that have&#xA0;a lot of&#xA0;knowledge in them. <strong>Bookmarklets</strong> are perfect examples of a bunch of packed functionality, whenever I discover a useful one, I enjoy studying their source, discovering how it can do so much. Also snippets to use external services, like the google analytics code, or facebook likebox, can teach us more than some books.</p>
+<p>Today I want to break in pieces a <a href="https://gist.github.com/addyosmani/fd3999ea7fce242756b1">one-liner code</a> that <a href="http://addyosmani.com/blog/" target="_blank"><strong>Addy Osmani</strong></a>&#xA0;shared a few days ago that can be used to debug your CSS layers. Here it is, in 3 lines to fit in the post:</p>
+
+		<div id="crayon-547f10255aad1745612546" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255aad1745612546-1"><span class="crayon-sy">[</span><span class="crayon-sy">]</span><span class="crayon-sy">.</span><span class="crayon-st">forEach</span><span class="crayon-sy">.</span><span class="crayon-e">call</span><span class="crayon-sy">(</span><span class="crayon-sy">$</span><span class="crayon-sy">$</span><span class="crayon-sy">(</span><span class="crayon-s">"*"</span><span class="crayon-sy">)</span><span class="crayon-sy">,</span><span class="crayon-t">function</span><span class="crayon-sy">(</span><span class="crayon-i">a</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line" id="crayon-547f10255aad1745612546-2"><span class="crayon-v">a</span><span class="crayon-sy">.</span><span class="crayon-v">style</span><span class="crayon-sy">.</span><span class="crayon-e ">outline</span><span class="crayon-o">=</span><span class="crayon-s">"1px solid #"</span><span class="crayon-o">+</span><span class="crayon-sy">(</span><span class="crayon-o">~</span><span class="crayon-o">~</span><span class="crayon-sy">(</span><span class="crayon-v">Math</span><span class="crayon-sy">.</span><span class="crayon-e">random</span><span class="crayon-sy">(</span><span class="crayon-sy">)</span><span class="crayon-o">*</span><span class="crayon-sy">(</span><span class="crayon-cn">1</span><span class="crayon-o">&lt;&lt;</span><span class="crayon-cn">24</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">16</span><span class="crayon-sy">)</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>Try to type it in your browser console, and&#xA0;the different layers of HTML that there are in the web page will be highlighted in different colors. Isn&#x2019;t it awesome? Basically, <strong>it gets all the elements of the page, and applies a 1 px outline to them with a random color</strong>. The idea is simple, but to create a code line like this you must master a lot of aspects of web development. Let&#x2019;s study them.</p>
+<h2>Selecting all the elements of a page</h2>
+<p>What it is needed the first is to get all the elements, and Addy uses the &#xA0;function <code>$$</code> that is only available in the console of browsers. Try it by yourself, open your browser&#x2019;s javascript console and type <code>$$('a')</code> and you will get a list with all the anchor elements of the current page.</p>
+<p><code>$$</code>&#xA0;function is part of the command line API of modern browsers, and it is equivalent to use the method <code>document.querySelectorAll</code>, you can pass a CSS selector as argument to get the matched elements in the current page. So if you would like to use the one-liner out the browser&#x2019;s console you could replace <code>$$('*')</code> by <code>document.querySelectorAll('*')</code>. More about the function <code>$$</code> can be found in <a href="http://stackoverflow.com/questions/8981211/what-is-the-source-of-the-double-dollar-sign-selector-query-function-in-chrome-f#answer-10308917" target="_blank">this stackoverflow answer</a>.</p>
+<p>It is great! For me, it was worthy to study the code just by meeting the function <code>$$</code>. But there are more about selecting everything in a page, if you have a look at the comments of the gist, there are people discussing this part of the code. One of them is <a href="https://mathiasbynens.be/" target="_blank"><strong>Mathias Bynens</strong></a>, ( a lot of clever people there! ) who suggests&#xA0;that we can also use&#xA0;<code>document.all</code> to select all the elements of a page, it is not standard, but&#xA0;it works ok in every browser <del>but firefox</del> (in FF too).</p>
+<h2>Iterating over the elements</h2>
+<p>So we have all the elements now as a <a href="https://developer.mozilla.org/en-US/docs/Web/API/NodeList"><code>NodeList</code></a>&#xA0;and we want to go through all of them applying the colorful outline. But wait, what the heck is used in our code?</p>
+
+		<div id="crayon-547f10255aae4898667320" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255aae4898667320-1"><span class="crayon-sy">[</span><span class="crayon-sy">]</span><span class="crayon-sy">.</span><span class="crayon-st">forEach</span><span class="crayon-sy">.</span><span class="crayon-e">call</span><span class="crayon-sy">(</span><span class="crayon-sy">$</span><span class="crayon-sy">$</span><span class="crayon-sy">(</span><span class="crayon-s">'*'</span><span class="crayon-sy">)</span><span class="crayon-sy">,</span><span class="crayon-t">function</span><span class="crayon-sy">(</span><span class="crayon-i">element</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span><span class="crayon-c">/* And the modification code here */</span><span class="crayon-sy">}</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/NodeList" target="_blank"><code>NodeLists</code></a>&#xA0;seems like <code>Arrays</code>, you can access to their nodes&#xA0;using brackets, and you can check how many elements it contains using the property length, but they doesn&#x2019;t implement all the methods of the <code>Array</code> interface, so using <code>$$('*').forEach</code> will fail. In Javascript there are several objects that&#xA0;look like arrays but they are not, like the arguments variable inside functions, and we have here a very useful pattern to handle with them: Calling array methods on no-array objects as <code>NodeLists</code> is possible using the Function&#x2019;s&#xA0;methods&#xA0;call and apply.<a title="Javascript function context: bind vs call &amp; apply" href="http://arqex.com/853/javascript-function-bind-vs-call-apply"> I wrote about those functions some months ago</a>, they execute a function using the first parameter as the object this inside of the function</p>
+
+		<div id="crayon-547f10255aaed658424744" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255aaed658424744-1"><span class="crayon-t">function</span><span class="crayon-e">say</span><span class="crayon-sy">(</span><span class="crayon-r">name</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255aaed658424744-2"><span class="crayon-v">console</span><span class="crayon-sy">.</span><span class="crayon-e">log</span><span class="crayon-sy">(</span><span class="crayon-r">this</span><span class="crayon-o">+</span><span class="crayon-s">' '</span><span class="crayon-o">+</span><span class="crayon-r">name</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span></p><p class="crayon-line" id="crayon-547f10255aaed658424744-5"><span class="crayon-v">say</span><span class="crayon-sy">.</span><span class="crayon-e">call</span><span class="crayon-sy">(</span><span class="crayon-s">'hola'</span><span class="crayon-sy">,</span><span class="crayon-s">'Mike'</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// Prints out 'hola Mike' in the console</span></p><p class="crayon-line" id="crayon-547f10255aaed658424744-7"><span class="crayon-c">// Also you can use it on the arguments object</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255aaed658424744-8"><span class="crayon-t">function</span><span class="crayon-e">example</span><span class="crayon-sy">(</span><span class="crayon-i">arg1</span><span class="crayon-sy">,</span><span class="crayon-i">arg2</span><span class="crayon-sy">,</span><span class="crayon-i">arg3</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span></p><p class="crayon-line" id="crayon-547f10255aaed658424744-9"><span class="crayon-st">return</span><span class="crayon-t">Array</span><span class="crayon-sy">.</span><span class="crayon-v">prototype</span><span class="crayon-sy">.</span><span class="crayon-v">slice</span><span class="crayon-sy">.</span><span class="crayon-e">call</span><span class="crayon-sy">(</span><span class="crayon-r">arguments</span><span class="crayon-sy">,</span><span class="crayon-cn">1</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// Returns [arg2, arg3]</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>The one-liner is using <code>[].forEach.call</code> instead of <code>Array.prototype.forEach.call</code> to save some bytes ( another nice trick yeah? ) calling the method in the <code>Array</code> object <code>[]</code>. This would be equivalent to <code>$$('*').forEach</code> if <code>$$('*')</code> value was an <code>Array</code>.</p>
+<p>If you have a look at the comments again, there are some people who use <code>for(i=0;A=$$('*');)</code> instead to make the code shorter. It works, but it is leaking global variables, so if you want to use the code out of the console, you better get&#xA0;a clean enviroment using</p>
+
+		<div id="crayon-547f10255aaf6293112371" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255aaf6293112371-1"><span class="crayon-st">for</span><span class="crayon-sy">(</span><span class="crayon-t">var</span><span class="crayon-v">i</span><span class="crayon-o">=</span><span class="crayon-cn">0</span><span class="crayon-sy">,</span><span class="crayon-v">B</span><span class="crayon-o">=</span><span class="crayon-v">document</span><span class="crayon-sy">.</span><span class="crayon-e">querySelectorAll</span><span class="crayon-sy">(</span><span class="crayon-s">'*'</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-v">A</span><span class="crayon-o">=</span><span class="crayon-v">B</span><span class="crayon-sy">[</span><span class="crayon-i">i</span><span class="crayon-o">++</span><span class="crayon-sy">]</span><span class="crayon-sy">;</span><span class="crayon-sy">)</span><span class="crayon-sy">{</span><span class="crayon-c">/* your code here */</span><span class="crayon-sy">}</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>If you use it in the browser&#x2019;s console it doesn&#x2019;t really matter, the variables <code>i</code> and <code>A</code> will be available there since you are declaring them there.</p>
+<h2>Assigning colors to the elements</h2>
+<p>To make the elements have that nice border, the code is using the CSS property <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/outline"><code>outline</code></a>. In case you don&#x2019;t know, the rendered outline is out of the CSS box model so <strong>it doesn&#x2019;t affect the size of the element or its position in the layout</strong>, so it is perfect for this purpose. It&#x2019;s syntax is like the one used for the <code>border</code> property, so it shouldn&#x2019;t be difficult to understand this part:</p>
+
+		<div id="crayon-547f10255aafe971456973" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255aafe971456973-1"><span class="crayon-v">a</span><span class="crayon-sy">.</span><span class="crayon-v">style</span><span class="crayon-sy">.</span><span class="crayon-e ">outline</span><span class="crayon-o">=</span><span class="crayon-s">"1px solid #"</span><span class="crayon-o">+</span><span class="crayon-i">color</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>What &#xA0;is interesting is how the color is defined:</p>
+
+		<div id="crayon-547f10255ab06430052542" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab06430052542-1"><span class="crayon-o">~</span><span class="crayon-o">~</span><span class="crayon-sy">(</span><span class="crayon-v">Math</span><span class="crayon-sy">.</span><span class="crayon-e">random</span><span class="crayon-sy">(</span><span class="crayon-sy">)</span><span class="crayon-o">*</span><span class="crayon-sy">(</span><span class="crayon-cn">1</span><span class="crayon-o">&lt;&lt;</span><span class="crayon-cn">24</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">16</span><span class="crayon-sy">)</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>Scary uh? Sure. I am not a bit-wise operations expert, so this is the part I liked the most, because it let me learn a lot of new stuff.</p>
+<p>What we want to achieve is a hexadecimal color like white <code>FFFFFF</code> or blue <code>0000FF</code> or&#x2026; who knows&#x2026; <code>37f9ac</code>. Non super-human people, like me, is used to work with decimal numbers, but our beloved code knows a lot about hexadecimal ones.</p>
+<p>First thing it can teach us&#xA0;is how to convert a decimal number to hex using the method <code>toString</code> for integers. The method accepts a parameter to convert a number to a string using a base number of characters. If the parameter is not used, 10 characters are used (0&#x2026;9, hence, decimal numbers), but you can use whatever other base:</p>
+
+		<div id="crayon-547f10255ab0e380338746" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab0e380338746-1"><span class="crayon-sy">(</span><span class="crayon-cn">30</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab0e380338746-2"><span class="crayon-sy">(</span><span class="crayon-cn">30</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">10</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line" id="crayon-547f10255ab0e380338746-3"><span class="crayon-sy">(</span><span class="crayon-cn">30</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">16</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "1e" Hexadecimal</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab0e380338746-4"><span class="crayon-sy">(</span><span class="crayon-cn">30</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">2</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "11110" Binary</span></p><p class="crayon-line" id="crayon-547f10255ab0e380338746-5"><span class="crayon-sy">(</span><span class="crayon-cn">30</span><span class="crayon-sy">)</span><span class="crayon-sy">.</span><span class="crayon-e">toString</span><span class="crayon-sy">(</span><span class="crayon-cn">36</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "u" 36 is the maximum base allowed</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>The other way around, you can convert hexadecimal string to decimal numbers using the second parameter of the <code>parseInt</code> method:</p>
+
+		<div id="crayon-547f10255ab15616050192" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab15616050192-1"><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-s">"30"</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab15616050192-2"><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-s">"30"</span><span class="crayon-sy">,</span><span class="crayon-cn">10</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line" id="crayon-547f10255ab15616050192-3"><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-s">"1e"</span><span class="crayon-sy">,</span><span class="crayon-cn">16</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab15616050192-4"><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-s">"11110"</span><span class="crayon-sy">,</span><span class="crayon-cn">2</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p><p class="crayon-line" id="crayon-547f10255ab15616050192-5"><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-s">"u"</span><span class="crayon-sy">,</span><span class="crayon-cn">36</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// "30"</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>So we need a random number between <code>0</code> and <code>ffffff</code> in hexadecimal, that is <code>parseInt("ffffff", 16) ==&#xA0;16777215</code> and&#xA0;16777215 is exactly <code>2^24 - 1</code>.</p>
+<p>Do you like binary maths? If not, you will be ok knowing that <code>1&lt;&lt;24 ==&#xA0;16777216</code> (try it in the console).</p>
+<p>If you like them, you need to know that every time that you add a 0 to the right of a 1 you are doing performing the <code>2^n</code> operation, being <code>n</code> the number of 0s you add.</p>
+
+		<div id="crayon-547f10255ab1d719812217" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab1d719812217-1"><span class="crayon-cn">1</span><span class="crayon-c">// 1 == 2^0</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab1d719812217-2"><span class="crayon-cn">100</span><span class="crayon-c">// 4 == 2^2</span></p><p class="crayon-line" id="crayon-547f10255ab1d719812217-3"><span class="crayon-cn">10000</span><span class="crayon-c">// 16 == 2^4</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab1d719812217-4"><span class="crayon-cn">1000000000000000000000000</span><span class="crayon-c">// 16777216 == 2^24</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>The left shift operation <code>x &lt;&lt; n</code> adds&#xA0;<code>n</code> <code>0</code>s to the binary representation of the number <code>x</code>, so <code>1&lt;&lt;24</code> is a short way of saying&#xA0;<code>16777216</code>, and doing <code>Math.random()*(1&lt;&lt;24)</code> we get a number between <code>0</code> and&#xA0;<code>16777216</code>.</p>
+<p>We are not ready yet, because <code>Math.random</code> return a float number, and we need only the whole part. Our code use the<strong> tilde operator</strong> to get so. Tilde operator is used to negate a variable bit by bit. If you don&#x2019;t know about what I am talking about, here it is a good explanation:<a href="http://www.javascriptturnsmeon.com/the-tilde-operator-in-javascript/" target="_blank"> Javascript&#x2019;s tilde operator</a>.</p>
+<p>But the code doesn&#x2019;t care about bitwise negation, it&#xA0;uses the tilde&#xA0;because the bitwise operations discard the decimal part of a float number, so bitwise-negation applied twice is a short way of writing&#xA0;<code>parseInt</code>:</p>
+
+		<div id="crayon-547f10255ab26092655162" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab26092655162-1"><span class="crayon-t">var</span><span class="crayon-v">a</span><span class="crayon-o">=</span><span class="crayon-cn">12.34</span><span class="crayon-sy">,</span><span class="crayon-c">// ~~a = 12</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab26092655162-2"><span class="crayon-v">b</span><span class="crayon-o">=</span><span class="crayon-o">-</span><span class="crayon-cn">1231.8754</span><span class="crayon-sy">,</span><span class="crayon-c">// ~~b = -1231</span></p><p class="crayon-line" id="crayon-547f10255ab26092655162-3"><span class="crayon-v">c</span><span class="crayon-o">=</span><span class="crayon-cn">3213.000001</span><span class="crayon-c">// ~~c = 3213</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab26092655162-6"><span class="crayon-o">~</span><span class="crayon-o">~</span><span class="crayon-v">a</span><span class="crayon-o">==</span><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-i">a</span><span class="crayon-sy">,</span><span class="crayon-cn">10</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// true</span></p><p class="crayon-line" id="crayon-547f10255ab26092655162-7"><span class="crayon-o">~</span><span class="crayon-o">~</span><span class="crayon-v">b</span><span class="crayon-o">==</span><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-i">b</span><span class="crayon-sy">,</span><span class="crayon-cn">10</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// true</span></p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab26092655162-8"><span class="crayon-o">~</span><span class="crayon-o">~</span><span class="crayon-v">c</span><span class="crayon-o">==</span><span class="crayon-r">parseInt</span><span class="crayon-sy">(</span><span class="crayon-i">c</span><span class="crayon-sy">,</span><span class="crayon-cn">10</span><span class="crayon-sy">)</span><span class="crayon-sy">;</span><span class="crayon-c">// true</span></p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>Again, if you go to the <a href="https://gist.github.com/addyosmani/fd3999ea7fce242756b1" target="_blank">gist</a>&#xA0;and have a look at the comments you will realize that people there is using a shorter version to get the parseInt result. Using the bitwise <strong>OR operator</strong> you can get rid of the decimal part of our random number</p>
+
+		<div id="crayon-547f10255ab2e266171020" class="crayon-syntax crayon-theme-feeldesign crayon-font-droid-sans-mono crayon-os-pc print-yes notranslate">
+		
+			
+			<div class="crayon-main">
+				<table class="crayon-table">
+					<tr class="crayon-row">
+				<td class="crayon-nums ">
+					
+				</td>
+						<td class="crayon-code"><div class="crayon-pre"><p class="crayon-line" id="crayon-547f10255ab2e266171020-1">~~a == 0|a == parseInt(a, 10)</p><p class="crayon-line crayon-striped-line" id="crayon-547f10255ab2e266171020-2">~~b == 0|b == parseInt(b, 10)</p><p class="crayon-line" id="crayon-547f10255ab2e266171020-3">~~c == 0|c == parseInt(c, 10)</p></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+<p>Or operator is the last to be used in a operation so the parenthesis are not needed anymore. Here it is the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence" target="_blank">precedence of javascript operator</a>s in case you are interested in having a look.</p>
+<p>Finally we have our random number <code>0</code> and&#xA0;<code>16777216</code>, our random color. We just need to turn it to a hexadecimal string using <code>toString(16)</code>&#xA0;to make it work.</p>
+<h2>Last thoughts</h2>
+<p>Being a programmer is not easy. We are used to code like crazy and sometimes we don&#x2019;t realize about how much knowledge is needed to do what we do. It takes a long long time to learn and internalize all the concepts that we use in our job.</p>
+<p>I wanted to&#xA0;highlight the complexity of our job because I know that programmers are usually underestimated, ( especially in my country, Spain ) and it is nice to say ocassionally that we are really worthy and a key part of most of companies nowadays.</p>
+<p>If you understood the one-liner code at first sight you can feel proud of yourself.</p>
+<p>If not, but you have reach this point of the article, don&#x2019;t worry man, you will be able to write lines like that soon, you are a learner!</p>
+<p>If you thought <em>tl;dr</em> at the second line of the article but you are reading this, you are really weird, but your thoughts are also welcome in the comments section below : )</p>
+			
+						
+		</div>
+		
+				
+	</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

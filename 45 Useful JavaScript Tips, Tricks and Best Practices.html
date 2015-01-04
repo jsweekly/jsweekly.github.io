@@ -1,0 +1,341 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>45 Useful JavaScript Tips, Tricks and Best Practices</title><h1>45 Useful JavaScript Tips, Tricks and Best Practices</h1><p><a href="http://modernweb.com/2013/12/23/45-useful-javascript-tips-tricks-and-best-practices/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div id="article">
+
+														<p><em>By <a href="http://modernweb.com/authors/saad-mousliki">Saad Mousliki</a></em></p>
+<p>As you know, JavaScript is the number one programming language in the world, the language of the web, of mobile hybrid apps (like <a href="http://phonegap.com/">PhoneGap</a> or <a href="http://www.appcelerator.com/">Appcelerator</a>), of the server side (like <a href="http://nodejs.org">NodeJS</a> or <a href="http://wakanda.org">Wakanda</a>) and has many other implementations. It&#x2019;s also the starting point for many new developers to the world of programming, as it can be used to display a simple alert in the web browser but also to control a robot (using <a href="http://nodebots.io/">nodebot</a>, or <a href="http://semu.github.io/noduino/">nodruino</a>). The developers who master JavaScript and write organized and performant code have become the most sought after in the job market.</p>
+<p>In this article, I&#x2019;ll share a set of JavaScript tips, tricks and best practices that should be known by all JavaScript developers regardless of their browser/engine or the SSJS (Server Side JavaScript) interpreter.</p>
+<p>Note that the code snippets in this article have been tested in the latest Google Chrome version 30, which uses the V8 JavaScript Engine (V8 3.20.17.15).</p>
+<p><strong>1 &#x2013; Don&#x2019;t forget <code>var</code> keyword when assigning a variable&#x2019;s value for the first time.</strong></p>
+<p>Assignment to an undeclared variable automatically results in a global variable being created. Avoid global variables.</p>
+<p><strong>2 &#x2013; use <code>===</code> instead of <code>==</code></strong></p>
+<p>The <code>==</code> (or <code>!=</code>) operator performs an automatic type conversion if needed. The <code>===</code> (or <code>!==</code>) operator will not perform any conversion. It compares the value and the type, which could be considered faster than <code>==</code>.</p>
+<pre><code>[10] === 10    // is false
+[10]  == 10    // is true
+'10' == 10     // is true
+'10' === 10    // is false
+ []   == 0     // is true
+ [] ===  0     // is false
+ '' == false   // is true but true == "a" is false
+ '' ===   false // is false </code></pre>
+<p><strong>3 &#x2013; <code>undefined</code>, <code>null</code>, 0, <code>false</code>, <code>NaN</code>, <code>''</code> (empty string) are all falsy.</strong><br>
+<strong>4 &#x2013; Use Semicolons for line termination</strong></p>
+<p>The use of semi-colons for line termination is a good practice. You won&#x2019;t be warned if you forget it, because in most cases it will be inserted by the JavaScript parser. For more details about why you should use semi-colons, take a look to this artice:&#xA0;<a href="http://davidwalsh.name/javascript-semicolons">http://davidwalsh.name/javascript-semicolons</a>.</p>
+<p><strong>5 &#x2013; Create an object constructor</strong></p>
+<pre><code>function Person(firstName, lastName){
+    this.firstName =  firstName;
+    this.lastName = lastName;        
+}  
+
+var Saad = new Person("Saad", "Mousliki");</code></pre>
+<p><strong>6 &#x2013; Be careful when using <code>typeof</code>, <code>instanceof</code> and <code>constructor</code>.</strong></p>
+<ul>
+<li><em>typeof</em> : a JavaScript unary operator used to &#xA0;return a string that represents the primitive type of a variable, &#xA0;don&#x2019;t forget that <code>typeof null</code> will return &#x201C;object&#x201D;, and for the majority of object types (Array, Date, and others) will return also &#x201C;object&#x201D;.</li>
+<li><em>constructor</em> : is a property of the internal prototype property, which could be overridden by code.</li>
+<li><em>instanceof</em> : is another JavaScript operator that check in all the prototypes chain the constructor it returns true if it&#x2019;s found and false if not.</li>
+</ul>
+<pre><code>var arr = ["a", "b", "c"];
+typeof arr;   // return "object" 
+arr  instanceof Array // true
+arr.constructor();  //[]
+</code></pre>
+<p><strong>7 &#x2013; Create a Self-calling Function</strong></p>
+<p>This is often called a Self-Invoked Anonymous Function or Immediately Invoked Function Expression (IIFE). It is a function that executes automatically when you create it, and has the following form:</p>
+<pre><code>(function(){
+    // some private code that will be executed automatically
+})();  
+(function(a,b){
+    var result = a+b;
+    return result;
+})(10,20)</code></pre>
+<p><strong>8 &#x2013; Get a random item from an array</strong></p>
+<pre><code>var items = [12, 548 , 'a' , 2 , 5478 , 'foo' , 8852, , 'Doe' , 2145 , 119];
+
+var  randomItem = items[Math.floor(Math.random() * items.length)];</code></pre>
+<p><strong>9 &#x2013; Get a random number in a specific range</strong></p>
+<p>This code snippet can be useful when trying to generate fake data for testing purposes, such as a salary between min and max.</p>
+<pre><code>var x = Math.floor(Math.random() * (max - min + 1)) + min;</code></pre>
+<p><strong>10 &#x2013; Generate an array of numbers with numbers from 0 to max</strong></p>
+<pre><code>var numbersArray = [] , max = 100;
+
+for( var i=1; numbersArray.push(i++) &lt; max;);  // numbers = [1,2,3 ... 100] </code></pre>
+<p><strong>11 &#x2013; Generate a random set of alphanumeric characters</strong></p>
+<pre><code>function generateRandomAlphaNum(len) {
+    var rdmString = "";
+    for( ; rdmString.length &lt; len; rdmString  += Math.random().toString(36).substr(2));
+    return  rdmString.substr(0, len);
+
+}
+</code></pre>
+<p><strong>12 &#x2013; Shuffle an array of numbers</strong></p>
+<pre><code>var numbers = [5, 458 , 120 , -215 , 228 , 400 , 122205, -85411];
+numbers = numbers.sort(function(){ return Math.random() - 0.5});
+/* the array numbers will be equal for example to [120, 5, 228, -215, 400, 458, -85411, 122205]  */</code></pre>
+<p>A better option could be to implement a random sort order by code (e.g. : Fisher-Yates shuffle), than using the native sort JavaScript function. For more details take a look to <a href="http://stackoverflow.com/questions/962802/is-it-correct-to-use-javascript-array-sort-method-for-shuffling/962890#962890">this discussion</a>.</p>
+<p><strong>13 &#x2013; A string trim function</strong></p>
+<p>The classic trim function of Java, C#, PHP and many other language that remove whitespace from a string doesn&#x2019;t exist in JavaScript, so we could add it to the <code>String</code> object.</p>
+<pre><code>String.prototype.trim = function(){return this.replace(/^\s+|\s+$/g, "");};  </code></pre>
+<p>A native implementation of the trim() function is available in the recent JavaScript engines.</p>
+<p><strong>14 &#x2013; Append an array to another array</strong></p>
+<pre><code>var array1 = [12 , "foo" , {name "Joe"} , -2458];
+
+var array2 = ["Doe" , 555 , 100];
+Array.prototype.push.apply(array1, array2);
+/* array1 will be equal to  [12 , "foo" , {name "Joe"} , -2458 , "Doe" , 555 , 100] */</code></pre>
+<p><strong>15 &#x2013; Transform the <code>arguments</code> object into an array</strong></p>
+<pre><code>var argArray = Array.prototype.slice.call(arguments);</code></pre>
+<p><strong>16 &#x2013; Verify that a given argument is a number</strong></p>
+<pre><code>function isNumber(n){
+    return !isNaN(parseFloat(n)) &amp;&amp; isFinite(n);
+}</code></pre>
+<p><strong>17 &#x2013; Verify that a given argument is an array</strong></p>
+<pre><code>function isArray(obj){
+    return Object.prototype.toString.call(obj) === '[object Array]' ;
+}</code></pre>
+<p>Note that if the toString() method is overridden, you will not get the expected result using this trick.</p>
+<p>Or use&#x2026;</p>
+<pre><code>Array.isArray(obj); // its a new Array method</code></pre>
+<p>You could also use <code>instanceof</code> if you are not working with multiple frames. However, if you have many contexts, you will get a wrong result.</p>
+<pre><code>var myFrame = document.createElement('iframe');
+document.body.appendChild(myFrame);
+
+var myArray = window.frames[window.frames.length-1].Array;
+var arr = new myArray(a,b,10); // [a,b,10]  
+
+// instanceof will not work correctly, myArray loses his constructor 
+// constructor is not shared between frames
+arr instanceof Array; // false</code></pre>
+<p><strong>18 &#x2013; Get the max or the min in an array of numbers</strong></p>
+<pre><code>var  numbers = [5, 458 , 120 , -215 , 228 , 400 , 122205, -85411]; 
+var maxInNumbers = Math.max.apply(Math, numbers); 
+var minInNumbers = Math.min.apply(Math, numbers);</code></pre>
+<p><strong>19 &#x2013; Empty an array</strong></p>
+<pre><code>var myArray = [12 , 222 , 1000 ];  
+myArray.length = 0; // myArray will be equal to [].</code></pre>
+<p><strong>20 &#x2013; Don&#x2019;t use delete to remove an item from array</strong></p>
+<p>Use <code>splice</code>&#xA0;instead of using <code>delete</code> to delete an item from an array. Using <code>delete</code> replaces the item with <code>undefined</code> instead of the removing it from the array.</p>
+<p>Instead of&#x2026;</p>
+<pre><code>var items = [12, 548 ,'a' , 2 , 5478 , 'foo' , 8852, , 'Doe' ,2154 , 119 ]; 
+items.length; // return 11 
+delete items[3]; // return true 
+items.length; // return 11 
+/* items will be equal to [12, 548, "a", undefined &#xD7; 1, 5478, "foo", 8852, undefined &#xD7; 1, "Doe", 2154,       119]   */</code></pre>
+<p>Use&#x2026;</p>
+<pre><code>var items = [12, 548 ,'a' , 2 , 5478 , 'foo' , 8852, , 'Doe' ,2154 , 119 ]; 
+items.length; // return 11 
+items.splice(3,1) ; 
+items.length; // return 10 
+/* items will be equal to [12, 548, "a", 5478, "foo", 8852, undefined &#xD7; 1, "Doe", 2154,       119]   */</code></pre>
+<p>The delete method should be used to delete an object property.</p>
+<p><strong>21 &#x2013; Truncate an array using length</strong></p>
+<p>Like the previous example of emptying an array, we truncate it using the <code>length</code> property.</p>
+<pre><code>var myArray = [12 , 222 , 1000 , 124 , 98 , 10 ];  
+myArray.length = 4; // myArray will be equal to [12 , 222 , 1000 , 124].</code></pre>
+<p>As a bonus, if you set the array length to a higher value, the length will be changed and new items will be added with <code>undefined</code> as a value. The array length is not a read only property.</p>
+<pre><code>myArray.length = 10; // the new array length is 10 
+myArray[myArray.length - 1] ; // undefined</code></pre>
+<p><strong>22 &#x2013; Use logical AND/ OR for conditions</strong></p>
+<pre><code>var foo = 10;  
+foo == 10 &amp;&amp; doSomething(); // is the same thing as if (foo == 10) doSomething(); 
+foo == 5 || doSomething(); // is the same thing as if (foo != 5) doSomething();</code></pre>
+<p>The logical OR could also be used to set a default value for function argument.</p>
+<pre><code>function doSomething(arg1){ 
+    arg1 = arg1 || 10; // arg1 will have 10 as a default value if it&#x2019;s not already set
+}</code></pre>
+<p><strong>23 &#x2013; Use the map() function method to loop through an array&#x2019;s items</strong></p>
+<pre><code>var squares = [1,2,3,4].map(function (val) {  
+    return val * val;  
+}); 
+// squares will be equal to [1, 4, 9, 16] </code></pre>
+<p><strong>24 &#x2013; Rounding number to N decimal place</strong></p>
+<pre><code>var num =2.443242342;
+num = num.toFixed(4);  // num will be equal to 2.4432</code></pre>
+<p>NOTE : the <code>toFixed()</code> function returns a string and not a number.</p>
+<p><strong>25 &#x2013; Floating point problems</strong></p>
+<pre><code>0.1 + 0.2 === 0.3 // is false 
+9007199254740992 + 1 // is equal to 9007199254740992  
+9007199254740992 + 2 // is equal to 9007199254740994</code></pre>
+<p>Why does this happen? 0.1 +0.2 is equal to 0.30000000000000004. What you need to know is that all JavaScript numbers are floating points represented internally in 64 bit binary according to the IEEE 754 standard. For more explanation, take a look to <a href="http://www.2ality.com/2012/04/number-encoding.html">this blog post</a>.</p>
+<p>You can use <code>toFixed()</code> and <code>toPrecision()</code> to resolve this problem.</p>
+<p><strong>26 &#x2013; Check the properties of an object when using a for-in loop</strong></p>
+<p>This code snippet could be useful in order to avoid iterating through the properties from the object&#x2019;s prototype.</p>
+<pre><code>for (var name in object) {  
+    if (object.hasOwnProperty(name)) { 
+        // do something with name                    
+    }  
+}</code></pre>
+<p><strong>27 &#x2013; Comma operator</strong></p>
+<pre><code>var a = 0; 
+var b = ( a++, 99 ); 
+console.log(a);  // a will be equal to 1 
+console.log(b);  // b is equal to 99</code></pre>
+<p><strong>28 &#x2013; Cache variables that need calculation or querying</strong></p>
+<p>In the case of a jQuery selector, we could cache the DOM element.</p>
+<pre><code>var navright = document.querySelector('#right'); 
+var navleft = document.querySelector('#left'); 
+var navup = document.querySelector('#up'); 
+var navdown = document.querySelector('#down');</code></pre>
+<p><strong>29 &#x2013; Verify the argument before passing it to <code>isFinite()</code></strong></p>
+<pre><code>isFinite(0/0) ; // false 
+isFinite("foo"); // false 
+isFinite("10"); // true 
+isFinite(10);   // true 
+isFinite(undefined);  // false 
+isFinite();   // false 
+isFinite(null);  // true  !!! </code></pre>
+<p><strong>30 &#x2013; Avoid negative indexes in arrays</strong></p>
+<pre><code>var numbersArray = [1,2,3,4,5]; 
+var from = numbersArray.indexOf("foo") ;  // from is equal to -1 
+numbersArray.splice(from,2);    // will return [5]</code></pre>
+<p>Make sure that the arguments passed to <code>splice</code> are not negative.</p>
+<p><strong>31 &#x2013; Serialization and deserialization (working with JSON)</strong></p>
+<pre><code>var person = {name :'Saad', age : 26, department : {ID : 15, name : "R&amp;D"} }; 
+var stringFromPerson = JSON.stringify(person); 
+/* stringFromPerson is equal to "{"name":"Saad","age":26,"department":{"ID":15,"name":"R&amp;D"}}"   */ 
+var personFromString = JSON.parse(stringFromPerson);  
+/* personFromString is equal to person object  */</code></pre>
+<p><strong>32 &#x2013; Avoid the use of <code>eval()</code> or the <code>Function</code> constructor</strong></p>
+<p>Use of <code>eval</code> or the <code>Function</code> constructor are expensive operations as each time they are called script engine must convert source code to executable code.</p>
+<pre><code>var func1 = new Function(functionCode);
+var func2 = eval(functionCode);</code></pre>
+<p><strong>33 &#x2013; Avoid using <code>with()</code> (The good part)</strong></p>
+<p>Using <code>with()</code> inserts a variable at the global scope. Thus, if another variable has the same name it could cause confusion and overwrite the value.</p>
+<p><strong>34 &#x2013; Avoid using for-in loop for arrays</strong></p>
+<p>Instead of using&#x2026;</p>
+<pre><code>var sum = 0;  
+for (var i in arrayNumbers) {  
+    sum += arrayNumbers[i];  
+}</code></pre>
+<p>&#x2026;it&#x2019;s better to use&#x2026;</p>
+<pre><code>var sum = 0;  
+for (var i = 0, len = arrayNumbers.length; i &lt; len; i++) {  
+    sum += arrayNumbers[i];  
+}</code></pre>
+<p>As a bonus, the instantiation of <code>i</code> and <code>len</code> is executed once because it&#x2019;s in the first statement of the for loop. Thsi is faster than using&#x2026;</p>
+<pre><code>for (var i = 0; i &lt; arrayNumbers.length; i++)</code></pre>
+<p>Why? The length of the array <code>arrayNumbers</code> is recalculated every time the loop iterates.</p>
+<p>NOTE : the issue of recalculating the length in each iteration was fixed in the latest JavaScript engines.</p>
+<p><strong>35 &#x2013; Pass functions, not strings, to <code>setTimeout()</code> and <code>setInterval()</code></strong></p>
+<p>If you pass a string into <code>setTimeout()</code> or <code>setInterval()</code>, the string will be evaluated the same way as with <code>eval</code>, which is slow. Instead of using&#x2026;</p>
+<pre><code>setInterval('doSomethingPeriodically()', 1000);  
+setTimeout('doSomethingAfterFiveSeconds()', 5000);</code></pre>
+<p>&#x2026;use&#x2026;</p>
+<pre><code>setInterval(doSomethingPeriodically, 1000);  
+setTimeout(doSomethingAfterFiveSeconds, 5000);</code></pre>
+<p><strong>36 &#x2013; Use a switch/case statement instead of a series of if/else</strong></p>
+<p>Using switch/case is faster when there are more than 2 cases, and it is more elegant (better organized code). Avoid using it when you have more than 10 cases.</p>
+<p><strong>37 &#x2013; Use switch/case statement with numeric ranges</strong></p>
+<p>Using a switch/case statement with numeric ranges is possible with this trick.</p>
+<pre><code>function getCategory(age) {  
+    var category = "";  
+    switch (true) {  
+        case isNaN(age):  
+            category = "not an age";  
+            break;  
+        case (age &gt;= 50):  
+            category = "Old";  
+            break;  
+        case (age &lt;= 20):  
+            category = "Baby";  
+            break;  
+        default:  
+            category = "Young";  
+            break;  
+    };  
+    return category;  
+}  
+getCategory(5);  // will return "Baby"</code></pre>
+<p><strong>38 &#x2013; Create an object whose prototype is a given object</strong></p>
+<p>It&#x2019;s possible to write a function that creates an object whose prototype is the given argument like this&#x2026;</p>
+<pre><code>function clone(object) {  
+    function OneShotConstructor(){}; 
+    OneShotConstructor.prototype= object;  
+    return new OneShotConstructor(); 
+} 
+clone(Array).prototype ;  // []</code></pre>
+<p><strong>39 &#x2013; An HTML escaper function</strong></p>
+<pre><code>function escapeHTML(text) {  
+    var replacements= {"&lt;": "&amp;lt;", "&gt;": "&amp;gt;","&amp;": "&amp;amp;", "\"": "&amp;quot;"};                      
+    return text.replace(/[&lt;&gt;&amp;"]/g, function(character) {  
+        return replacements[character];  
+    }); 
+}</code></pre>
+<p><strong>40 &#x2013; Avoid using try-catch-finally inside a loop</strong></p>
+<p>The try-catch-finally construct creates a new variable in the current scope at runtime each time the catch clause is executed where the caught exception object is assigned to a variable.</p>
+<p>Instead of using&#x2026;</p>
+<pre><code>var object = ['foo', 'bar'], i;  
+for (i = 0, len = object.length; i &lt;len; i++) {  
+    try {  
+        // do something that throws an exception 
+    }  
+    catch (e) {   
+        // handle exception  
+    } 
+}</code></pre>
+<p>&#x2026;use&#x2026;</p>
+<pre><code>var object = ['foo', 'bar'], i;  
+try { 
+    for (i = 0, len = object.length; i &lt;len; i++) {  
+        // do something that throws an exception 
+    } 
+} 
+catch (e) {   
+    // handle exception  
+} </code></pre>
+<p><strong>41 &#x2013; Set timeouts to <code>XMLHttpRequests</code></strong></p>
+<p>You could abort the connection if an XHR takes a long time (for example, due to a network issue), by using <code>setTimeout()</code> with the XHR call.</p>
+<pre><code>var xhr = new XMLHttpRequest (); 
+xhr.onreadystatechange = function () {  
+    if (this.readyState == 4) {  
+        clearTimeout(timeout);  
+        // do something with response data 
+    }  
+}  
+var timeout = setTimeout( function () {  
+    xhr.abort(); // call error callback  
+}, 60*1000 /* timeout after a minute */ ); 
+xhr.open('GET', url, true);  
+
+xhr.send();</code></pre>
+<p>As a bonus, you should generally avoid synchronous XHR calls completely.</p>
+<p><strong>42 &#x2013; Deal with WebSocket timeout</strong></p>
+<p>Generally when a WebSocket connection is established, a server could time out your connection after 30 seconds of inactivity. The firewall could also time out the connection after a period of inactivity.</p>
+<p>To deal with the timeout issue you could send an empty message to the server periodically. To do this, add these two functions to your code: one to keep alive the connection and the other one to cancel the keep alive. Using this trick, you&#x2019;ll control the timeout.</p>
+<p>Add a <code>timerID</code>&#x2026;</p>
+<pre><code>var timerID = 0; 
+function keepAlive() { 
+    var timeout = 15000;  
+    if (webSocket.readyState == webSocket.OPEN) {  
+        webSocket.send('');  
+    }  
+    timerId = setTimeout(keepAlive, timeout);  
+}  
+function cancelKeepAlive() {  
+    if (timerId) {  
+        cancelTimeout(timerId);  
+    }  
+}</code></pre>
+<p>The <code>keepAlive()</code> function should be added at the end of the <code>onOpen()</code> method of the webSocket connection and the <code>cancelKeepAlive()</code> at the end of the <code>onClose()</code> method.</p>
+<p><strong>43 &#x2013; Keep in mind that <a href="http://dev.opera.com/articles/view/efficient-javascript/?page=2#primitiveoperator">primitive operations can be faster than function calls</a>. Use <a href="http://vanilla-js.com/">VanillaJS</a>.</strong></p>
+<p>For example, instead of using&#x2026;</p>
+<pre><code>var min = Math.min(a,b); 
+A.push(v);</code></pre>
+<p>&#x2026;use&#x2026;</p>
+<pre><code>var min = a &lt; b ? a : b; 
+A[A.length] = v;</code></pre>
+<p><strong>44 &#x2013; Don&#x2019;t forget to use a code beautifier when coding. Use JSLint and minification (JSMin, for example) before going live.</strong></p>
+<p><strong>45 &#x2013; JavaScript is awesome: <a href="http://stackoverflow.com/questions/11246/best-resources-to-learn-javascript">Best Resources To Learn JavaScript</a></strong></p>
+
+<h2>Conclusion</h2>
+<p>I know that there are many other tips, tricks and best practices, so if you have any ones to add or if you have any feedback or corrections to the ones that I have shared, please adda comment.</p>
+<h2>References</h2>
+<p>In this article I have used my own code snippets. Some of the snippets are inspired from other articles and forums:</p>
+
+<p class="none"><time class="date updated" datetime="2013-12-23">Dec 23, 2013</time><span class="author vcard"><span class="fn">saad.mousliki</span></span></p>
+
+<p id="jp-relatedposts" class="jp-relatedposts">
+	<h3 class="jp-relatedposts-headline"><em>Related</em></h3>
+</p>
+														
+
+													</div>
+
+													</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

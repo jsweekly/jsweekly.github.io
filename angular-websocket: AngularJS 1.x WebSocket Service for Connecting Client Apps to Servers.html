@@ -1,0 +1,304 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</title><h1>angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</h1><p><a href="https://github.com/gdi2290/angular-websocket?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><article class="markdown-body entry-content">
+
+<p><a href="https://travis-ci.org/gdi2290/angular-websocket"><img src="https://camo.githubusercontent.com/2084e05b8e7d526d4dc14f72b8e5a7fa3d7e6c8a/68747470733a2f2f696d672e736869656c64732e696f2f7472617669732f676469323239302f616e67756c61722d776562736f636b65742e7376673f7374796c653d666c6174" alt="Travis"></a>
+<a href="https://github.com/gdi2290/angular-websocket"><img src="https://camo.githubusercontent.com/d9a341e4900bb4e5bc7a989a2c8185fa8fcdcaeb/68747470733a2f2f696d672e736869656c64732e696f2f626f7765722f762f616e67756c61722d776562736f636b65742e7376673f7374796c653d666c6174" alt="Bower"></a>
+<a href="https://www.npmjs.com/package/angular-websocket"><img src="https://camo.githubusercontent.com/9e79ba65c76cc3e52a0ac88a4316c2a3f55aad36/68747470733a2f2f696d672e736869656c64732e696f2f6e706d2f762f616e67756c61722d776562736f636b65742e7376673f7374796c653d666c6174" alt="npm"></a>
+<a href="https://david-dm.org/gdi2290/angular-websocket"><img src="https://camo.githubusercontent.com/f2f729ba89cd31a5e9d3fbe40c2ccf0ddee1e70b/68747470733a2f2f64617669642d646d2e6f72672f676469323239302f616e67756c61722d776562736f636b65742e737667" alt="Dependency Status"></a>
+<a href="https://david-dm.org/gdi2290/angular-websocket#info=devDependencies"><img src="https://camo.githubusercontent.com/9b4179e3b1fa241ae58bb78b12115e48a7c0738b/68747470733a2f2f64617669642d646d2e6f72672f676469323239302f616e67756c61722d776562736f636b65742f6465762d7374617475732e737667" alt="devDependency Status"></a></p>
+
+<h3>
+<a id="user-content-status-looking-for-feedback-about-new-api-changes" class="anchor" href="https://github.com/gdi2290/angular-websocket#status-looking-for-feedback-about-new-api-changes"></a>Status: Looking for feedback about new API changes</h3>
+
+<p>An AngularJS 1.x WebSocket service for connecting client applications to servers.</p>
+
+<h2>
+<a id="user-content-how-do-i-add-this-to-my-project" class="anchor" href="https://github.com/gdi2290/angular-websocket#how-do-i-add-this-to-my-project"></a>How do I add this to my project?</h2>
+
+<p>You can download angular-websocket by:</p>
+
+
+
+<h2>
+<a id="user-content-usage" class="anchor" href="https://github.com/gdi2290/angular-websocket#usage"></a>Usage</h2>
+
+<div class="highlight highlight-html"><pre><span class="pl-s2">  &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s1"><span class="pl-pds">"</span>http://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</span>
+<span class="pl-s2">  &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s1"><span class="pl-pds">"</span>bower_components/angular-websocket/angular-websocket.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</span>
+  &lt;<span class="pl-ent">section</span> <span class="pl-e">ng-controller</span>=<span class="pl-s1"><span class="pl-pds">"</span>SomeController<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">ul</span>&gt;
+      &lt;<span class="pl-ent">li</span> <span class="pl-e">ng-repeat</span>=<span class="pl-s1"><span class="pl-pds">"</span>data in MyData.collection track by $index<span class="pl-pds">"</span></span>&gt;
+        {{ data }}
+      &lt;/<span class="pl-ent">li</span>&gt;
+    &lt;/<span class="pl-ent">ul</span>&gt;
+  &lt;/<span class="pl-ent">section</span>&gt;
+<span class="pl-s2">  &lt;<span class="pl-ent">script</span>&gt;</span>
+<span class="pl-s2">    angular.module(<span class="pl-s1"><span class="pl-pds">'</span>YOUR_APP<span class="pl-pds">'</span></span>, [</span>
+<span class="pl-s2">      <span class="pl-s1"><span class="pl-pds">'</span>ngWebSocket<span class="pl-pds">'</span></span> <span class="pl-c">// you may also use 'angular-websocket' if you prefer</span></span>
+<span class="pl-s2">    ])</span>
+<span class="pl-s2">    <span class="pl-c">//                          WebSocket works as well</span></span>
+<span class="pl-s2">    .factory(<span class="pl-s1"><span class="pl-pds">'</span>MyData<span class="pl-pds">'</span></span>, <span class="pl-st">function</span>(<span class="pl-vpf">$websocket</span>) {</span>
+<span class="pl-s2">      <span class="pl-c">// Open a WebSocket connection</span></span>
+<span class="pl-s2">      <span class="pl-s">var</span> dataStream <span class="pl-k">=</span> $websocket(<span class="pl-s1"><span class="pl-pds">'</span>wss://website.com/data<span class="pl-pds">'</span></span>);</span>
+
+<span class="pl-s2">      <span class="pl-s">var</span> collection <span class="pl-k">=</span> [];</span>
+
+<span class="pl-s2">      dataStream.onMessage(<span class="pl-st">function</span>(<span class="pl-vpf">message</span>.data) {</span>
+<span class="pl-s2">        collection.<span class="pl-s3">push</span>(JSON.<span class="pl-s3">parse</span>(message.<span class="pl-sc">data</span>));</span>
+<span class="pl-s2">      });</span>
+
+<span class="pl-s2">      <span class="pl-s">var</span> methods <span class="pl-k">=</span> {</span>
+<span class="pl-s2">        collection<span class="pl-k">:</span> collection,</span>
+<span class="pl-s2">        <span class="pl-en">get</span>: <span class="pl-st">function</span>() {</span>
+<span class="pl-s2">          dataStream.<span class="pl-s3">send</span>(JSON.stringify({ action<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>get<span class="pl-pds">'</span></span> }));</span>
+<span class="pl-s2">        }</span>
+<span class="pl-s2">      };</span>
+
+<span class="pl-s2">      <span class="pl-k">return</span> methods;</span>
+<span class="pl-s2">    })</span>
+<span class="pl-s2">    .controller(<span class="pl-s1"><span class="pl-pds">'</span>SomeController<span class="pl-pds">'</span></span>, <span class="pl-st">function</span> (<span class="pl-vpf">MyData</span>) {</span>
+
+<span class="pl-s2">      $scope.MyData <span class="pl-k">=</span> MyData;</span>
+<span class="pl-s2">    });</span>
+<span class="pl-s2">  &lt;/<span class="pl-ent">script</span>&gt;</span></pre></div>
+
+<h2>
+<a id="user-content-api" class="anchor" href="https://github.com/gdi2290/angular-websocket#api"></a>API</h2>
+
+<h3>
+<a id="user-content-factory-websocket-in-module-ngwebsocket" class="anchor" href="https://github.com/gdi2290/angular-websocket#factory-websocket-in-module-ngwebsocket"></a>Factory: <code>$websocket</code> (in module <code>ngWebSocket</code>)</h3>
+
+<p>returns instance of $Websocket</p>
+
+<h3>
+<a id="user-content-methods" class="anchor" href="https://github.com/gdi2290/angular-websocket#methods"></a>Methods</h3>
+
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>arguments</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$websocket <br><em>constructor</em>
+</td>
+<td>url:String</td>
+<td>Creates and opens a <a href="http://mdn.io/API/WebSocket">WebSocket</a> instance. <br><code>var ws = $websocket('ws://foo');</code>
+</td>
+</tr>
+<tr>
+<td>send</td>
+<td>data:String,Object returns</td>
+<td>Adds data to a queue, and attempts to send if socket is ready. Accepts string or object, and will stringify objects before sending to socket.</td>
+</tr>
+<tr>
+<td>onMessage</td>
+<td>callback:Function <br>options{filter:String,RegExp, autoApply:Boolean=true}</td>
+<td>Register a callback to be fired on every message received from the websocket, or optionally just when the message's <code>data</code> property matches the filter provided in the options object. Each message handled will safely call <code>$rootScope.$digest()</code> unless <code>autoApply</code> is set to `false in the options. Callback gets called with a <a href="https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent?redirectlocale=en-US&amp;redirectslug=WebSockets%2FWebSockets_reference%2FMessageEvent">MessageEvent</a> object.</td>
+</tr>
+<tr>
+<td>onOpen</td>
+<td>callback:Function</td>
+<td>Function to be executed each time a socket connection is opened for this instance.</td>
+</tr>
+<tr>
+<td>onClose</td>
+<td>callback:Function</td>
+<td>Function to be executed each time a socket connection is closed for this instance.</td>
+</tr>
+<tr>
+<td>onError</td>
+<td>callback:Function</td>
+<td>Function to be executed each time a socket connection has an Error for this instance.</td>
+</tr>
+<tr>
+<td>close</td>
+<td>force:Boolean:<em>optional</em>
+</td>
+<td>Close the underlying socket, as long as no data is still being sent from the client. Optionally force close, even if data is still being sent, by passing <code>true</code> as the <code>force</code> parameter. To check if data is being sent, read the value of <code>socket.bufferedAmount</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>
+<a id="user-content-properties" class="anchor" href="https://github.com/gdi2290/angular-websocket#properties"></a>Properties</h3>
+
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>socket</td>
+<td>window.WebSocket</td>
+<td>
+<a href="http://mdn.io/API/WebSocket">WebSocket</a> instance.</td>
+</tr>
+<tr>
+<td>sendQueue</td>
+<td>Array</td>
+<td>Queue of <code>send</code> calls to be made on socket when socket is able to receive data. List is populated by calls to the <code>send</code> method, but this array can be spliced if data needs to be manually removed before it's been sent to a socket. Data is removed from the array after it's been sent to the socket.</td>
+</tr>
+<tr>
+<td>onOpenCallbacks</td>
+<td>Array</td>
+<td>List of callbacks to be executed when the socket is opened, initially or on re-connection after broken connection. Callbacks should be added to this list through the <code>onOpen</code> method.</td>
+</tr>
+<tr>
+<td>onMessageCallbacks</td>
+<td>Array</td>
+<td>List of callbacks to be executed when a message is received from the socket. Callbacks should be added via the <code>onMessage</code> method.</td>
+</tr>
+<tr>
+<td>readyState</td>
+<td>Number:readonly</td>
+<td>Returns either the readyState value from the underlying WebSocket instance, or a proprietary value representing the internal state of the lib, e.g. if the lib is in a state of re-connecting.</td>
+</tr>
+<tr>
+<td>initialTimeout</td>
+<td>Number</td>
+<td>The initial timeout, should be set at the outer limits of expected response time for the service. For example, if your service responds in 1ms on average but in 10ms for 99% of requests, then set to 10ms.</td>
+</tr>
+<tr>
+<td>maxTimeout</td>
+<td>Number</td>
+<td>Should be as low as possible to keep your customers happy, but high enough that the system can definitely handle requests from all clients at that sustained rate.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>
+<a id="user-content-cancelablepromise" class="anchor" href="https://github.com/gdi2290/angular-websocket#cancelablepromise"></a>CancelablePromise</h3>
+
+<p>This type is returned from the <code>send()</code> instance method of $websocket, inherits from <a href="https://ng-click.com/%24q">$q.defer().promise</a>.</p>
+
+<h3>
+<a id="user-content-methods-1" class="anchor" href="https://github.com/gdi2290/angular-websocket#methods-1"></a>Methods</h3>
+
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>arguments</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancel</td>
+<td></td>
+<td>Alias to <code>deferred.reject()</code>, allows preventing an unsent message from being sent to socket for any arbitrary reason.</td>
+</tr>
+<tr>
+<td>then</td>
+<td>resolve:Function, reject:Function</td>
+<td>Resolves when message has been passed to socket, presuming the socket has a <code>readyState</code> of 1. Rejects if the socket is hopelessly disconnected now or in the future (i.e. the library is no longer attempting to reconnect). All messages are immediately rejected when the library has determined that re-establishing a connection is unlikely.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>
+<a id="user-content-service-websocketbackend-in-module-ngwebsocketmock" class="anchor" href="https://github.com/gdi2290/angular-websocket#service-websocketbackend-in-module-ngwebsocketmock"></a>Service: <code>$websocketBackend</code> (in module <code>ngWebSocketMock</code>)</h3>
+
+<p>Similar to <a href="https://ng-click.com/%24httpBackend"><code>httpBackend</code></a> mock in AngularJS's <code>ngMock</code> module</p>
+
+<h3>
+<a id="user-content-methods-2" class="anchor" href="https://github.com/gdi2290/angular-websocket#methods-2"></a>Methods</h3>
+
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>arguments</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flush</td>
+<td></td>
+<td>Executes all pending requests</td>
+</tr>
+<tr>
+<td>expectConnect</td>
+<td>url:String</td>
+<td>Specify the url of an expected WebSocket connection</td>
+</tr>
+<tr>
+<td>expectClose</td>
+<td></td>
+<td>Expect "close" to be called on the WebSocket</td>
+</tr>
+<tr>
+<td>expectSend</td>
+<td>msg:String</td>
+<td>Expectation of send to be called, with required message</td>
+</tr>
+<tr>
+<td>verifyNoOutstandingExpectation</td>
+<td></td>
+<td>Makes sure all expectations have been satisfied, should be called in afterEach</td>
+</tr>
+<tr>
+<td>verifyNoOutstandingRequest</td>
+<td></td>
+<td>Makes sure no requests are pending, should be called in afterEach</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="user-content-frequently-asked-questions" class="anchor" href="https://github.com/gdi2290/angular-websocket#frequently-asked-questions"></a>Frequently asked questions</h2>
+
+<ul class="task-list">
+<li>
+<em>Q.</em>: What if the browser doesn't support WebSockets?</li>
+<li>
+<em>A.</em>: This module will not help; it does not have a fallback story for browsers that do not support WebSockets. Please check your browser target support <a href="http://caniuse.com/#feat=websockets">here</a> and to include fallback support.</li>
+</ul>
+
+<h2>
+<a id="user-content-development" class="anchor" href="https://github.com/gdi2290/angular-websocket#development"></a>Development</h2>
+
+<div class="highlight highlight-shell"><pre>$ npm install
+$ bower install</pre></div>
+
+<h2>
+<a id="user-content-changelog" class="anchor" href="https://github.com/gdi2290/angular-websocket#changelog"></a>Changelog</h2>
+
+<p><a href="https://github.com/gdi2290/angular-websocket/blob/master/CHANGELOG.md">Changelog</a></p>
+
+<h3>
+<a id="user-content-unit-tests" class="anchor" href="https://github.com/gdi2290/angular-websocket#unit-tests"></a>Unit Tests</h3>
+
+<p><code>$ npm test</code> Run karma in Chrome, Firefox, and Safari</p>
+
+<h3>
+<a id="user-content-manual-tests" class="anchor" href="https://github.com/gdi2290/angular-websocket#manual-tests"></a>Manual Tests</h3>
+
+<p>In the project root directory open <code>index.html</code> in the example folder</p>
+
+<h3>
+<a id="user-content-distribute" class="anchor" href="https://github.com/gdi2290/angular-websocket#distribute"></a>Distribute</h3>
+
+<p><code>$ npm run dist</code> Builds files with uglifyjs</p>
+
+<h2>
+<a id="user-content-todo" class="anchor" href="https://github.com/gdi2290/angular-websocket#todo"></a>TODO</h2>
+
+<ul class="task-list">
+<li>Allow JSON if object is sent</li>
+<li>Allow more control over $digest cycle per WebSocket instance</li>
+</ul>
+
+<h2>
+<a id="user-content-license" class="anchor" href="https://github.com/gdi2290/angular-websocket#license"></a>License</h2>
+
+<p><a href="https://github.com/gdi2290/angular-websocket/blob/master/LICENSE">MIT</a></p>
+</article>
+  </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

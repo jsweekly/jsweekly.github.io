@@ -1,0 +1,555 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>All About Angular 2.0</title><h1>All About Angular 2.0</h1><p><a href="http://eisenbergeffect.bluespire.com/all-about-angular-2-0/?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><section class="postbody">
+            <p>Have questions about the strategy for Angular 2.0? This is the place. In the following article I'll explain the major feature areas of Angular 2.0 along with the motivations behind any changes. Following each section, I'll provide you with my own opinions and insights into the design process including important areas where I think the design still needs improvements.</p>
+
+<blockquote>
+  <p><strong>Note:</strong> This article represents the current state of affairs as of November 6, 2014. If you are reading this a significant time after that, please check to see if I have any updates on design changes.</p>
+</blockquote>
+
+<h2 id="angularjs13">AngularJS 1.3</h2>
+
+<p>Before we get started talking about the future of Angular, let's take a moment to look at the current version. AngularJS 1.3 is by far the best version of Angular available today. It was just released a few weeks ago. It's chock full of bug fixes, feature enhancements and performance improvements. If you're currently using Angular, you'll want to upgrade. If you're starting a new project with Angular, this is the version you'll want to be using. It's a strong, mature framework and it's here today.</p>
+
+
+
+<p>You probably have a bunch of questions about the future of AngularJS right now. When is 2.0 coming out? What's going to happen to 1.x? Is there a migration path from 1.x to 2.0? The AngularJS team can do a much better job of answering these questions and you should urge them to do so. I can tell you that there are over 1600 apps inside of Google being built with Angular 1.2 or 1.3. So, it would seem that Google is heavily invested in the current version and will need to support it for a while. In <a href="https://www.youtube.com/watch?v=g-x1QKriY90&amp;list=UUEGUP3TJJfMsEM_1y8iviSQ">a Q&amp;A session at ngEurope</a> Brad Green said that you can expect at least 1.5 - 2 years of support for Angular 1.3 <em>after</em> the RTM of Angular 2.0 becomes available. We've also just made some team structure and leadership changes geared towards supporting Angular 1.3. Even though we're working hard on Angular 2.0, there's a dedicated team working full-time on Angular 1.3. That team is being led by Pete Bacon Darwin, whom I'm sure you know from his extensive history with AngularJS. I want to encourage you to ask the Angular leadership for more of these strong movements and to come up with an official support story.</p>
+
+<p>There also haven't been any plans made available regarding a migration story for those who wish to move their Angular 1.x apps over to 2.0 when it becomes available. I think we can and should do work in this area. If that's important to you as well, please make your voice heard. Be nice of course, but let the Angular team know that this is important to you and that they should be thinking about it and planning for it along the way.</p>
+
+<h2 id="motivationsforangular20">Motivations for Angular 2.0</h2>
+
+<p>So, you might be wondering: Why make Angular 2.0 at all? Why make such a big jump to 2.0 and why so many breaking changes? Is this all arbitrary? I can deal with a few changes, but from what I've been hearing, there are lots of big changes in 2.0. Are they really justified? Is it worth it?</p>
+
+<p>I'd like to take a few moments to talk about some of the high level motivations for the changes that are coming in 2.0 before I dig into the details of features. I hope this will provide a foundation of understanding upon which those later details can sit and provide a basis for meaningful criticism (some of which I intend to offer up myself).</p>
+
+
+
+<p>When AngularJS was first created, almost five years ago, it was not originally intended for developers. It was a tool targeted more at designers who needed to quickly build persistent HTML forms. Over time it has changed to accommodate a variety of scenarios and developers have picked it up and used it to build more and more complex applications. The Angular 1.x team has worked hard over the years to make incremental changes to the design, allowing it to continue to be relevant as the needs of modern web applications have changed. However, there are hard limits on the improvements that can be made, due to assumptions that were made as part of the original design. A number of these limits relate to performance problems resulting from the current binding and templating infrastructure. In order to fix those problems, new strategies are needed.</p>
+
+<h2 id="thechangingweb">The Changing Web</h2>
+
+<p>In the five years since Angular was first conceived, the web has changed significantly. For example, five years ago it was almost impossible to build a proper cross-browser site without help from something like jQuery. However, today's browsers are not only more consistent in their DOM implementations, but these implementations are faster and offer new features particularly pertinent to application frameworks.</p>
+
+<p><em>And the web continues to change...</em></p>
+
+<p>While massive changes have happened in the last couple of years, they pale in comparison to what's coming in the next 1-3 years. In a few months the ES6 spec will be finalized. It's not unreasonable to think that we'll see a browser in 2015 that implements the full spec. Today's browsers already support some of these features and are working on implementations of the rest right now. This means browser support for things like modules, classes, lambdas, generators, etc. These features fundamentally transform the JavaScript programming experience. But big changes aren't constrained merely to JavaScript. Web Components are on the horizon. The term Web Components usually refers to a collection of four related W3C specifications:</p>
+
+<ul>
+<li>Custom Elements - Enables the extension of HTML through custom tags.</li>
+<li>HTML Imports - Enables packaging of various resources (HTML, CSS, JS, etc.).</li>
+<li>Template Element - Enables the inclusion of inert HTML in a document. </li>
+<li>Shadow DOM - Enables encapsulation of DOM and CSS.</li>
+</ul>
+
+<p>By combining these four capabilities web developers can create declarative components (Custom Elements) which are fully encapsulated (Shadow DOM). These components can describe their own views (Template Element) and can be easily packaged for distribution to other developers (HTML Imports). When these specifications become available in all major browsers, we are likely to see developer creativity explode as many endeavor to create reusable components to solve common problems or address deficiencies in the standard HTML toolkit (from <a href="https://docs.google.com/document/d/1kpuR512G1b0D8egl9245OHaG0cFh0ST0ekhD_g8sxtI/edit?usp=sharing">Databinding With Web Components</a>). It's already possible today in Chrome and the other browsers have some of these specs implemented and are working on others. The future sounds awesome right? There's just one problem: most of today's databinding frameworks aren't prepared for this. Most frameworks, Angular 1.x included, have a databinding system that works based on the assumption of a small number of known HTML elements with well-known events and behaviors. In order for Angular developers to take advantage of Web Components, a new implementation of databinding is needed.</p>
+
+<h2 id="mobile">Mobile</h2>
+
+<p>Speaking of five years ago...me oh my how the computing landscape has changed! Phones and tablets are everywhere! While Angular can be used to build mobile apps, it wasn't designed with them in mind. This includes everything from the fundamental performance issues I've already mentioned to missing capabilities of its router, the inability to cache pre-compiled views and even lackluster touch support. Some of these things can be bolted on to Angular 1.3 (like the router for example) but others require fundamental changes to fix. </p>
+
+<h2 id="easeofuse">Ease of Use</h2>
+
+<p>Let's be honest...AngularJS isn't exactly the easiest thing to learn. Yeah, you pick it up and you think to yourself "This is awesome. It's really easy and magical!!!" Then you start building your app and find yourself going "holy...what!!?? I don't understand!!!" I've heard this story over and over again. <a href="http://www.bennadel.com/blog/2439-my-experience-with-angularjs-the-super-heroic-javascript-mvw-framework.htm">There's even a handy graphic to illustrate the point</a>. A lot of this, once again, stems back to the original design and intent of the library. Originally, there were no custom directives, for example. They were all hardcoded. Then, an API to add them was made available. Originally there were no controllers, then.... You get the picture. This bolting on of features, many which are today considered core ideas, has resulted in a less than elegant API. If Angular is to be truly easy to learn and use, then it has to have a clear understanding of its own core features from the outset. A framework where directives and controllers are part of the initial design, rather than bolted on after the fact is going to be better on many counts.</p>
+
+
+
+<p>Given Angular's design origins in combination with the changing web and general computing landscape, it's pretty clear that some  changes are needed. In fact, without starting to address these issues now, Angular runs the risk of being obsolete within a year's time. A framework that cannot work with Web Components, bogs down on mobile or continues to push its own module and class API against the standards, is not going to last long. The Angular team's answer to these problems is a new version: Angular 2.0. It is essentially a re-imagining of AngularJS for the modern web, taking into account everything that has been learned over the last five years.</p>
+
+
+
+<p>Even though I haven't got to the details yet, you can probably tell that AngularJS 2.0 is quite different from 1.x. One might ask if it's even the same framework. I think that's a good question. As I've mentioned earlier, I think the Angular team needs to shoulder the burden of providing a concrete timeline for 1.x support, a migration path to 2.0 and some guidance for companies making decisions today or who would like to plan in advance for 2.0. These are not particularly exciting tasks for the technically-minded Angular team, but I think they are necessary, helpful and respectful to the community.</p>
+
+<h2 id="featuresanddesignofangular20">Features and Design of Angular 2.0</h2>
+
+<p>Now that you've got a bit of background regarding the motiviations for creating Angular 2.0, let's look at a few key feature areas.</p>
+
+<h2 id="atscript">AtScript</h2>
+
+<p><a href="http://atscript.org">AtScript</a> is a language that is a superset of ES6 and it's being used to author Angular 2.0. It uses TypeScript's type syntax to represent optional types which can be used to generate runtime type assertions, rather than compile-time checks. It also extends the language with metadata annotations. Here's an example of what some AtScript code looks like:</p>
+
+<pre><code class="javascript">import {Component} from 'angular';  
+import {Server} from './server';
+
+@Component({selector: 'foo'})
+export class MyComponent {  
+  constructor(server:Server) {
+      this.server = server;
+  }
+}
+</code></pre>
+
+<p>Here we have some baseline ES6 code with a couple of AtScript additions. The <code>import</code> statements at the top of the example and the <code>class</code> syntax come straight from ES6. There's nothing special there. But, take a look at the constructor function. Notice that the <code>server</code> parameter specifies a type. In AtScript, this type is used to generate a runtime type assertion. A reference is also stored in a known location so that a framework, such as a dependency injection framework, can locate the type information and use it. Notice also the <code>@Component</code> syntax above the class declaration. This is a metadata annotation. <code>Component</code> is actually a normal class like any other. When you decorate something with an annotation the compiler generates code that instantiates the annotation and stores it in a known location so that it can be accessed by a framework such as Angular. With that in mind, here's what the above code transpiles to in terms of straight ES6:</p>
+
+<pre><code class="javascript">import * as rtts from 'rtts';  
+import {Component} from 'angular';  
+import {Server} from './server';
+
+export class MyComponent {  
+  constructor(server) {
+      rtts.types(server, Server);
+      this.server = server;
+  }
+}
+
+MyComponent.parameters = [{is:Server}];  
+MyComponent.annotate = [  
+  new Component({selector: 'foo'})
+];
+</code></pre>
+
+<p>RTTS stands for RunTime Type System. This is a small assertion library geared around runtime type checking. Here the compiler injects some code that will assert that the <code>server</code> variable is of type <code>Server</code>. This is an instance of a nominal type check. You can also write custom type assertions in order to use structural typing or apply adhoc type rules. When you deploy to production, the compiler can leave out these assertions in order to improve performance.</p>
+
+<p>One nice thing is that independent of the type assertions, the type annotation and the metadata annotation can be tracked. Both of these annotations were translated to very simple ES5 compatible data structures stored on the <code>MyComponent</code> function itself. This makes it easy for any framework or library to discover this metadata and use it. Over the years this has proved to be quite a handy tool on platforms such as .NET and Java. It also bears some resemblance to Ruby's metaprogramming capabilities. Indeed, when combined with a library, annotations can be used to do metaprogramming, which is exactly how Angular 2.0 makes building directives easier. More on that later.</p>
+
+
+
+<p>Personally, I like AtScript, but I was already a fan of TypeScript, so you might say I was pre-conditioned. I know many developers are resistant to adding types to JavaScript. I can't blame them. I've had a pretty wide range of experience with type systems myself; some good, some bad. One interesting point about AtScript is that you can leverage the type syntax as a simple way to provide metadata to other libraries. You don't have to use it for type checking at all. I think one of the most powerful features of AtScript is having the type and metadata information available at runtime for frameworks to take advantage of, or to use in your own metaprogramming. I wouldn't be surprised if <a href="http://blogs.msdn.com/b/typescript/archive/2014/10/22/typescript-and-the-road-to-2-0.aspx">other transpiled languages</a> pick this feature up.</p>
+
+<p><em>That said, I do have a couple of reservations.</em></p>
+
+<p>I'd like to see AtScript made more official. By that I mean that I think it should be extracted from the Angular team itself. It should have its own life so to speak, with Angular as a significant customer. There should be at least a couple of developers whose full-time job is to work on AtScript by implementing features, fixing bugs, improving code generation, building tooling, etc. and there should be a long-term support plan. When a developer or team selects a language to write their app in, they make a significant investment. I'd like to see Google make the same level of investment in AtScript for the future.</p>
+
+<p>There's another issue related to AtScript and that has to do with Dart. Dart is another language developed by Google. It's different than a simple transpiled language though because it comes with its own runtime and base class library. As a result, Dart has its own API for DOM manipulation, collections, events, RegEx, etc. While these APIs are nice in their own right, they aren't compatible with existing JavaScript code. Because of this impedance mismatch any communication between Dart and the outside world has to happen through a special marshalling API. So, while it's technically possible to call existing JavaScript libraries, often times it isn't practical. In the case of AngularJS, the performance penalties would be unacceptable. So, Google created Angular Dart; a version of AngularJS re-imagined in Dart. </p>
+
+<p>Problem solved...well maybe not. </p>
+
+<p>Now there are two versions of Angular to fix bugs in, implement new features for, release, etc., written in different languages and maintained by different teams. So, one problem was solved but others were created. </p>
+
+<p>Now you are probably wondering: how does this relate to AtScript?</p>
+
+<p>For Angular 2.0 the idea was to unify Angular and Angular Dart. Instead of having two teams working on two codebases, it would be better to have one team working on the same codebase. AtScript helps out here because it's implemented on top of <a href="https://github.com/google/traceur-compiler">Traceur</a>, which is very extensible. So, the team was able to make AtScript compile to both JavaScript and to Dart.</p>
+
+<p>Awesome! So, where's the problem?</p>
+
+<p>Remember how I mentioned that Dart has a different object model for DOM, etc. That's not something that can be handled simply by transpiling code. As a result, the build process for Angular 2.0 is a bit more complicated in reality. When developing Angular, it's necessary to create various facades over APIs that are different between JavaScript and Dart. The compiler then uses the appropriate facade to compile each target language. It's technically impressive for sure. However, it significantly raises the barrier to entry for anyone who wants to contribute to Angular 2.0. It should be noted that this aspect of development is in a bit of a trial stage. There might be other solutions to this problem. I know that many of you have contributed to Angular and cherish that experience. The Angular team cherishes that as well and we're thinking deeply about how this can be improved. At the moment though, it is less than ideal.</p>
+
+<blockquote>
+  <p><strong>Note:</strong> Angular 2.0 is being written with AtScript, but that doesn't mean you have to write your application code with AtScript or know anything about AtScript to use Angular 2.0. You can easily write with TypeScript, ES6, ES5, CoffeeScript...whatever you like. At present, you'll get the best Angular experience by leveraging AtScript, due to its ability to automatically generate the metadata from language primitives, but it all translates to simple ES5 in the end. The resulting ES5 is similar conceptually in some ways to the DDO object from Angular 1.x, but in this case, rather than being a directive-specific technology, it has been generalized for use with any JavaScript function and doesn't require a special registration API to write it.</p>
+</blockquote>
+
+<h2 id="dependencyinjection">Dependency Injection</h2>
+
+<p>A core feature of Angular 1.x was Dependency Injection (DI). Through DI you can more easily follow a "divide and conquer" approach to software development. Complex problems can be conceptualized in terms of their roles and responsibilities. These can then be represented in objects which collaborate together to achieve the end goal. Large (or small) systems that are deconstructed in this way can be assembled at runtime through the use of a DI framework. Such systems are usually easier to test since the resulting design is more modular and allows for easier isolation of components. All this was possible in Angular 1.x of course. However, there were a few problems.</p>
+
+<p>The first problem that plagued the 1.x DI implementation was related to minification. Since the DI relied on parsing parameter names from functions, essentially treating them as string tokens, when these names were changed during minification, they no longer matched the registered services, controllers and other components. The result was a broken app. An API was added to allow a more minification-friendly approach to DI, but it lacked the elegance of the original. Other problems with the 1.x implementation center around missing features common to the more advanced server-side DI frameworks available in the .NET and Java worlds. Two big examples of missing features that put constraints on developers are lifetime/scope control and child injectors.</p>
+
+<h3 id="annotations">Annotations</h3>
+
+<p>Through AtScript we've introduced a generalized mechanism for associating metadata with any function. Also, the AtScript format for metadata is resilient in the face of minification and easy to write by hand with ES5. This makes it a fantastic candidate for supplying a DI library with the information it needs to construct object instances. I'm sure it's no surprise that that's exactly how the new DI works.</p>
+
+<p>When the DI needs to instance a class (or call a function) it examines it to see if it has any associated metadata. Recall this code from the AtScript transpiled output above:</p>
+
+<pre><code class="javascript">MyComponent.parameters = [{is:Server}];  
+</code></pre>
+
+<p>If the new DI finds the <code>parameters</code> value it will use it to determine the dependencies of the function it's trying to invoke. In this case, it can tell that there is exactly one parameter of type <code>Server</code>. So it will acquire an instance of <code>Server</code> and push that into the function before invoking it. You can also be explicit by providing a special <code>Inject</code> annotation for the DI to use. This will override the parameter data. It's also easy to supply if you're using a language that doesn't automatically generate the parameter metadata. Here's what that looks like in pure ES5 code:</p>
+
+<pre><code class="javascript">MyComponent.annotate = [new Inject(Server)];  
+</code></pre>
+
+<p>The runtime affect of this is the same as the parameter data. It should be noted that you can actually use anything as an injection token. So you could do this:</p>
+
+<pre><code class="javascript">MyComponent.annotate = [new Inject('my-string-token')];  
+</code></pre>
+
+<p>As long as you configure the DI with something that it can map to <code>'my-string-token'</code> it will work just fine. That said, the recommended usage is via constructor instances as I've shown in all previous examples.</p>
+
+<h3 id="instancescope">Instance Scope</h3>
+
+<p>In Angular 1.x, all instances in the DI container were singletons. This is the default for Angular 2.0 as well. In order to get different behavior you had to use Services, Providers, Constants, etc. That's some confusing stuff. Fortunately, the new DI has a new, more general and more powerful feature. It now has instance scope control. So, if you want the DI to always create a new instance of a class, every time you ask for one, you can just do this:</p>
+
+<pre><code class="javascript">@TransientScope
+export class MyClass { ... }  
+</code></pre>
+
+<p>This becomes even more powerful when you create your own scope identifiers for use in combination with child injectors...</p>
+
+<h3 id="childinjectors">Child Injectors</h3>
+
+<p>Child injectors are a major new feature. A child injector inherits from its parent all of its parent's services, but it has the ability to override them at the child level. When combining this with custom scope identifiers, you can easily call out certain types of objects in your system that should automatically be overridden in various scopes. It's pretty powerful. As an example of this, the new router has a "Child Routers" capability. Internally, each child router creates its own child injector. This allows for each part of the route to inherit services from parent routes or to override those services during different navigation scenarios.</p>
+
+<blockquote>
+  <p><strong>Note:</strong> Custom scopes and child injectors would be considered more intermediate to advanced usage of the injector. I don't expect much application code would use this. However, since it's being used internally by Angular, it's available to you should you need similar capabilities.</p>
+</blockquote>
+
+<h3 id="andmore">And More...</h3>
+
+<p>There are several other features in the new DI such as providers (custom functions that provide an injected value), lazy injection (specifying that you want something injected...but you won't need it until later) and promise-based async injection (injects a promise which you can access to get async dependencies.)</p>
+
+
+
+<p>Personally, I really like the new DI. Again, I'm a bit biased here because I've used DI for many years and it's been a central component in other UI frameworks I've built. The new DI plays an important role in Angular 2.0. Features like child injectors make a huge difference. Now that this feature is present, it can be leveraged by both the templating engine and the router. Both have a need to create scopes and to isolate various services.</p>
+
+<p>This bring me to an important feature that's being removed from Angular: $scope. However, while $scope itself is being removed, several of its features are being kept. These features are being relocated and improved as part of this design. You may be caught off guard by the missing $scope, but the new design simplifies things both inside Angular and for you, the developer. I'm bringing this up here because some of the new capabilities of DI, such as child injectors, overlaps with some previous capabilities from $scope. In this case, I think the new DI system brings a better solution to the table. It's more generalizable so it can solve not only Angular's internal needs, but opens up a lot of possibilities for you.</p>
+
+<p>Unfortunately, it's not all roses. Let's talk about some other issues. There's a related capability of Angular 1.x that I haven't mentioned yet: modules. You may be wondering where that fits in here. The plan for Angular 2.0 is to adopt the ES6 standard for modules. In past versions of Angular, there has been a very Angular-specific way of handling modules. Five years ago when Angular was first conceived, there was no standard way of accomplishing this. Today, things are different and there's a clear path. This is a breaking change for sure and will require some rework of code for anyone who wants to migrate. It's a bummer that such a breaking change has to be made but this is an instance of the Web changing underneath the framework and 2.0 will run the risk of irrelevance if it isn't addressed now.</p>
+
+<p>There's another sticking point with DI, particularly if you are writing in ES5. Angular 2.0 favors class-based designs with annotations as metadata. The syntax for classes and annotations isn't that nice in ES5. Actually, there is no syntax for those things. You can represent everything using prototypes, etc. but it's just not as clean as AtScript or even ES6 or TypeScript, which both support classes and static class members. I'm wondering if something can be done to improve this for developers that aren't ready to move to ES6. Perhaps a simple optional library you could drop in that would give you an easy way to create classes with metadata? Maybe it could be a bit similar to the DDO object of Angular 1.x, but more generalized in order to allow the creation of any class and its metadata. I'd love to hear your thoughts on this idea and any other ideas you might have that would smooth out development in ES5 or improve the migration story.</p>
+
+<h2 id="templatinganddatabinding">Templating and Databinding</h2>
+
+<p>If you've read this far, you must be very curious about Angular 2.0. Thanks for taking so much time. We've still got a way to go and we're about to get into the really interesting stuff: templating and binding. I'm going to discuss them in tandem here. While the databinding system is technically separate from the templating system, you experience them as a single unit when you write apps. So, I think addressing them side-by-side makes the most sense.</p>
+
+<p>Let's start by understanding how a view gets on screen, then break things down a bit. Essentially, you start with an HTML fragment. This will live inside a <code>&lt;template&gt;</code> element. That HTML fragment is handed to the template compiler. The compiler traverses the fragment, identifying any directives, binding expressions, event handlers, etc. All of this data is extracted from the DOM itself into data structures which can be used to eventually instantiate the template. As part of this phase, some processing is done on the data such as parsing the binding expressions, for example. Every node that contains one of these special instructions is then tagged with a special class. The result of this process is cached so that none of this work needs to be repeated. We call this result a ProtoView. Once you've got a ProtoView you can use it to create a View. When a ProtoView makes a View all the directives that were previously identified are instantiated and attached to their DOM nodes. Watches are set up on binding expressions. Event handlers are configured. You get the idea. The data structures that were previously processed in the compile phase allow us to do this very quickly. Once you've got a View, you can display it by adding it to a ViewPort. A ViewPort represents a region of the screen that you can display Views in. As a developer you won't see most of this, you'll just write templates and it will work. But I wanted to layout the process at a high level briefly before I dig into the details.</p>
+
+<h3 id="dynamicloading">Dynamic Loading</h3>
+
+<p>One of the huge missing features in Angular 1.x was dynamic loading of code. If you wanted to add new directives or controllers on the fly, that was very hard or impossible. It certainly wasn't supported. In 2.0 we've designed things from scratch with async in mind. So, when you go to compile a template, that's actually an async process.</p>
+
+<p>Now I need to mention a detail of template compilation I left out in my simplified explanation above. When you compile a template, you not only provide the compiler with a template, but you also provide a Component definition. We'll get into the details of that in a bit. For the sake of this explanation, the Component definition contains metadata about what directives, filters, etc. were used in the template. This ensures that the necessary dependencies are loaded before the template gets processed by the compiler. Because we are basing our code on the ES6 module spec, simply referencing the dependencies in the Component definition will cause the module loader to load them, if they haven't already been loaded. So, by integrating with ES6 modules in this way, we get dynamic loading of whatever we want for free.</p>
+
+<h3 id="directives">Directives</h3>
+
+<p>Before we dig into the syntax of templates, we need to look at directives, Angular's means of extending HTML itself. In Angular 1.x the Directive Definition Object (DDO) was used to create directives. This seems to be one of the great sources of suffering for many an Angular developer.</p>
+
+<p>What if we could make directives simpler?</p>
+
+<p>We've been talking about modules, classes and annotations. What if we could leverage those core constructs to build directives? Well, of course that's what we did.</p>
+
+<p>In Angular 2.0 there are three types of directives.</p>
+
+<ul>
+<li><strong>Component Directive</strong> - Creates a custom component composed of a View and a Controller. You can use it as a custom HTML element. Also, the router can map routes to Components.</li>
+<li><strong>Decorator Directive</strong> - Decorates an existing HTML element with additional behavior. A classic example is <code>ng-show</code>.</li>
+<li><strong>Template Directive</strong> - Transforms HTML into a reusable template. The directive author can control when and how the template is instantiated and inserted into the DOM. Examples include <code>ng-if</code> and <code>ng-repeat</code>.</li>
+</ul>
+
+<p>You may have heard that Controllers are dead in Angular 2.0. Well, that's not exactly true. In reality, Controllers are one part of what we are calling a Component. The Component has a View and a Controller. The View is your HTML template and the Controller has your JavaScript behavior. Rather than needing an explicit registration API for the controller or some non-standard APIs like 1.x, in 2.0 you can just create a plain class with some annotations. Here's an example of the controller half of a tab container component (we'll look at the view a bit later):</p>
+
+<pre><code class="javascript">@ComponentDirective({
+    selector:'tab-container',
+    directives:[NgRepeat]
+})
+export class TabContainer {  
+    constructor(panes:Query&lt;Pane&gt;) {
+        this.panes = panes;
+    }
+
+    select(selectedPane:Pane) { ... }
+}
+</code></pre>
+
+<p>There are several features to notice here.</p>
+
+<p>First, the controller for the component is just a class. Its constructor will have its dependencies injected automatically. Because child injectors are used, it can get access to any service up the DOM hierarchy, but also services local to its own element. For example, here it's having a Query<pane> injected. This is a special collection that automatically stays synchronized with the child Pane elements and lets you know when things are added or removed. You could also have the Element itself injected. This allows you to handle the same logic as the $link callback from Angular 1.x, but it's handled in a more consistent fashion through the class's constructor.</pane></p>
+
+<p>Now, take a look at the @ComponentDirective annotation. This identifies the class as a Component and provides metadata that the compiler needs to plug it in. For example <code>selector:'tab-container'</code> is a CSS selector that will be used to match HTML. Any element that matches this selector will be turned into a TabContainer. Also, <code>directives:[NgRepeat]</code> indicates the dependencies that the template for this component has. I haven't shown you that yet. We'll look at that in a minute when we talk about syntax.</p>
+
+<p>An important detail to note is that the template will bind directly to this class. That means any property or method of the class can be accessed directly in the template. This is similar to the "controller as" syntax from Angular 1.2. There's no $scope sitting between this class and the template. The result is a simplification of Angular's internals, a simpler syntax for the developer and less work marshaling things back and forth from the $scope object.</p>
+
+<p>Let's look at a Decorator Directive next. What about a simple NgShow?</p>
+
+<pre><code class="javascript">@DecoratorDirective({
+    selector:'[ng-show]',
+    bind: { 'ngShow': 'ngShow' },
+    observe: {'ngShow': 'ngShowChanged'}
+})
+export class NgShow {  
+    constructor(element:Element) {
+        this.element = element;
+    }
+
+    ngShowChanged(newValue){
+        if(newValue){
+            this.element.style.display = 'block';
+        }else{
+            this.element.style.display = 'none';
+        }
+    }
+}
+</code></pre>
+
+<p>Here we can see a few more aspects of directives. Again, we have a class with annotations. The constructor gets injected with the HTML Element that the decorator is attached to. The compiler knows this is a decorator because of the DecoratorDirective and knows to apply it to any element that matches the <code>selector:'[ng-show]'</code> CSS selector.</p>
+
+<p>There's a couple of other curious properties on this annotation though.</p>
+
+<p><code>bind: { 'ngShow': 'ngShow' }</code> is used to map class properties to HTML attributes. Not all your class's properties are surfaced to the HTML as attributes. If you want your property to be bindable in HTML, you specify it in the <code>bind</code> metadata. The <code>observe: {'ngShow': 'ngShowChanged'}</code> tells the binding system that you want to be notified whenever the <code>ngShow</code> property changes and that you want to be called back using the <code>ngShowChanged</code> method. Notice that the <code>ngShowChanged</code> callback responds to changes by altering the display of the HTML element that it's attached to. (Note that this is a very naive implementation, only for demonstration purposes.)</p>
+
+<p>Ok, so what does a Template Directive look like? Why don't we look at NgIf?</p>
+
+<pre><code class="javascript">@TemplateDirective({
+    selector: '[ng-if]',
+    bind: {'ngIf': 'ngIf'},
+    observe: {'ngIf': 'ngIfChanged'}
+})
+export class NgIf {  
+    constructor(viewFactory:BoundViewFactory, viewPort:ViewPort) {
+        this.viewFactory = viewFactory;
+        this.viewPort = viewPort;
+        this.view = null;
+    }
+
+    ngIfChanged(value) {
+        if (!value &amp;&amp; this.view) {
+            this.view.remove();
+            this.view = null;
+        }
+
+        if (value) {
+            this.view = this.viewFactory.createView();
+            this.view.appendTo(this.viewPort);
+        }
+    }
+}
+</code></pre>
+
+<p>Hopefully you can make sense of the TemplateDirective annotation. It registers this directive with the compiler and provides the necessary metadata to set up properties and observation, just as with the NgShow example. Being that this is a TemplateDirective, it has access to a couple of special services which can be injected into its constructor. The first is the ViewFactory. As I mentioned earlier, a Template Directive transform the HTML it is attached to into a template. The template is automatically compiled and you now have access to the view factory in your template directive. Calling the <code>createView</code> API on the factory instantiates the template itself. You also have access to a ViewPort. This represents the location in the DOM where the template was extracted from. You can use it to add or remove instances of the template from the DOM. Notice how the <code>ngIfChanged</code> callback responds to changes by instantiating the template and adding it to the view port, or removing it from the view port. If you were implementing something like NgRepeat instead, you could instantiate the template multiple times and even provide a specific data item to the <code>createView</code> API and then you could add multiple instance into the view port. That's the basics.</p>
+
+<p>Now you've seen some canonical examples of the three types of directives. I hope that clarifies things a bit in terms of how you'll be able to extend the HTML compiler with new behavior. </p>
+
+<p>However, there's an important thing I still haven't adequately explained: Controllers.</p>
+
+<p>How do you create a controller for your application? Let's say you want to set up the router so it navigates to a controller and displays its view. How do you do that? The simple answer is that you do it with a Component Directive.</p>
+
+<p>In Angular 1.x Directives and Controllers were two different things. There were different APIs and different capabilities. In Angular 2.0, since we've removed the DDO and made Directives class-based, we were able to unify Directives and Controllers into the Component model. So, now you have one way to accomplish both. So, when you are setting up your routes, you simply map the router to a ComponentDirective (which consists of a view and controller essentially, just like before).</p>
+
+<p>So, if you were creating a hypothetical customer edit controller, you might have something like this:</p>
+
+<pre><code class="javascript">@ComponentDirective
+export class CustomerEditController {  
+    constructor(server:Server) {
+        this.server = server;
+        this.customer = null;
+    }
+
+    activate(customerId) {
+        return this.server.loadCustomer(customerId)
+            .then(response =&gt; this.customer = response.customer);
+    }
+}
+</code></pre>
+
+<p>There's nothing new here really. We are just injecting our hypothetical <code>server</code> service and using it to load up the customer when we are activated by the router. What's interesting is that you don't need a selector or any of the other metadata. The reason is that this component is not being used as a custom element. It's being dynamically created by the router and rendered dynamically into the DOM. As a result, you get to leave off the unneeded details</p>
+
+<p>So, if you know how to make ComponentDirectives, you know how to build the equivalent of Angular 1.x controllers used by the router. This would have been very painful in Angular 1.x to unify, but since we have this nice class and metadata-driven system in Angular 2.0, directives are significantly simplified and it becomes very easy to create your "controllers" in this way.</p>
+
+<blockquote>
+  <p><strong>Note:</strong> I'd like to point out that the directive code samples shown above are based on a combination of early prototype code and newer design document specs. They should be interpreted as an explanatory tool, not the exact syntax for directives, which is still in flux. The template compiler and binding languages are the most volatile parts of Angular 2.0 right now, with design changes happening quite frequently.</p>
+</blockquote>
+
+<h3 id="templatesyntax">Template Syntax</h3>
+
+<p>So, you've got an understanding of the high level compilation process, that it can load code asynchronously, how to write directives and how they are plugged in and how controllers fit into the puzzle, but we still haven't looked at an actual template. Let's do that now by looking at the template for the hypothetical TabContainer I showed earlier. I'll include the directive code again here for convenience:</p>
+
+<pre><code class="javascript">@ComponentDirective({
+    selector:'tab-container',
+    directives:[NgRepeat]
+})
+export class TabContainer {  
+    constructor(panes:Query&lt;Pane&gt;) {
+        this.panes = panes;
+    }
+
+    select(selectedPane:Pane) { ... }
+}
+</code></pre>
+
+<pre><code class="html">&lt;template&gt;  
+    &lt;div class="border"&gt;
+        &lt;div class="tabs"&gt;
+            &lt;div [ng-repeat|pane]="panes" class="tab" (^click)="select(pane)"&gt;
+                &lt;img [src]="pane.icon"&gt;&lt;span&gt;${pane.name}&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;content&gt;&lt;/content&gt;
+    &lt;/div&gt;
+&lt;/template&gt;  
+</code></pre>
+
+<p>Please suspend any horror you have when looking at that syntax. Yes, that is valid HTML <a href="http://www.w3.org/TR/html5/syntax.html#attributes-0">according to the spec</a>. No it's not our final binding syntax. But let's use this as en example so we have a starting point for a richer discussion.</p>
+
+<p>The key to understanding the data binding syntax is in the left side of the attribute declaration. With this in mind, let's first look at the image tag.</p>
+
+<pre><code class="html">&lt;img [src]="pane.icon"&gt;&lt;span&gt;${pane.name}&lt;/span&gt;  
+</code></pre>
+
+<p>When you see an attribute name surrounded with <code>[]</code> that tells you that the right side, the value of the attribute, has a binding expression.</p>
+
+<p>When you see an expression surrounded with <code>${}</code> that tells you that there's an expression that should be interpolated into the content as a string. (This is the same syntax as ES6 uses for string interpolation.)</p>
+
+<p>Both of these bindings are unidirectional from model/controller to view.</p>
+
+<p>Now let's look at that scary div:</p>
+
+<pre><code class="html">&lt;div [ng-repeat|pane]="panes" class="tab" (^click)="select(pane)"&gt;  
+</code></pre>
+
+<p><code>ng-repeat</code> is a TemplateDirective. You can tell that we are binding it with an expression because it's surrounded by <code>[]</code>. However, it also has a <code>|</code> and the word "pane". This indicates the local variable name to be used inside the template is "pane".</p>
+
+<p>Now look over at <code>(^click)</code>. Parenthesis are used to indicate that we are attaching the expression as an event handler. If there's a <code>^</code> as well inside the parens, that means we don't attach the handler directly to the DOM node, rather we let it bubble and be handled at the document level.</p>
+
+<p>I'm holding off on expressing my own opinion on this and other things I've discussed in templating until the commentary section below. Let's ignore what you or I may think upon first sight of this and first talk about <em>why</em> a syntax like this was chosen.</p>
+
+<p>Web Components change everything. This is another instance of the Web changing underneath the framework. Most databinding-based frameworks assume a fixed set of HTML elements and understand certain special behaviors of elements like inputs, etc. However, in a world with Web Components, no assumptions can be made. A developer, not targeting Angular, can create a custom element with any number of properties and events which do whatever he/she wants. Unfortunately, there's no way to inspect the Web Component and gather some metadata about it that could be used to drive the binding system. There's no way to know what events it actually raises, for example. Look at this:</p>
+
+<pre><code class="html">&lt;x-foo bar="..." baz="..."&gt;&lt;/x-foo&gt;  
+</code></pre>
+
+<p>Looking at <code>bar</code> and <code>baz</code>, can you determine which is the event and which is the property? No....and unfortunately Angular can't tell either because the Web Components spec doesn't include the notion of self-describing components. That's unfortunate because it means that a databinding system can't tell whether or not it needs to connect up a binding expression or whether it needs to add an event handler to invoke expressions. In order to solve this problem, we need a generalized databinding system with syntax that allows the developer to tell it what is an event and what is a property binding.</p>
+
+<p>That's not the only difficulty though. Additionally, the information has to be provided in such a way that it will not break the Web Component itself. What I mean by this is that the Web Component cannot be allowed to <em>see</em> the <em>expression</em>. That could break the component. It can only be allowed to see the result of evaluating the expression. Actually this doesn't only apply to Web Components, but also to built-ins. Consider this:</p>
+
+<pre><code class="html">&lt;img src="{{some.expression}}"&gt;  
+</code></pre>
+
+<p>This code will cause a bad http request to be made to try to find the "some.expression" image. That's not what we want at all though. We never want <code>img</code> to see that expression, only the value of it. AngularJS 1.x solved this with <code>ng-src</code>, a custom directive. Now, back to Web Components....it would be a disaster if you had to create a custom directive for every attribute of any Web Component, wouldn't it? I don't think we want that, so we need to solve this problem more generally in the binding system.</p>
+
+<p>To accomplish this, you have two options. The first is to remove the attribute from the DOM during template compilation. That will prevent the Web Component from getting ahold of the expression text. However, doing this means that inspecting the DOM will show no trace of the binding expression that is operating on the attribute. This would make debugging more difficult. Another option is to actually encode the attribute name so that the Web Component doesn't "recognize" it. This would allow Angular to to see the expression, but prevent it from being seen by the Web Component. It would also allow us to leave the attribute on the element after compilation so that inspecting the DOM would allow you to see it. That's a better debugging story for sure.</p>
+
+<p>As you can see from above, the team currently favors the approach of encoding the attribute. Such encoding needs to also differentiate between properties and events. The syntax shown above is one of several options that do that.</p>
+
+<p>This area has been heavily debated for months by the team. The above syntax is not unanimously agreed upon but it was a recent majority decision. There are lots of considerations when working out a binding syntax. If this is an area that interests you, I would recommend that you read the rather extensive document on the subject located <a href="https://docs.google.com/document/d/1kpuR512G1b0D8egl9245OHaG0cFh0ST0ekhD_g8sxtI/edit?usp=sharing">here</a>. </p>
+
+<p>Well, now that you've had an introduction to how templating, binding and directives all come together...</p>
+
+
+
+<p>I have so much to say about what I've just shown you...it's hard to know exactly where to start...</p>
+
+<h5 id="letsstartwiththecompileritself">Let's start with the compiler itself.</h5>
+
+<p>We began with a high level explanation of the template compilation process. While there is still tons of implementation being done in this area, I'm pretty pleased with the compiler design overall. There's some pretty nice things going on in there to keep a small memory footprint, reduce garbage and enable super fast template instantiation. That's all great. There are improvements to be made for sure, but it's pretty solid. Though we didn't talk about dirty checking (the mechanism by which databinding expressions are updated), the implementation of that has some nice new ideas as well, which will likely result in performance improvements both in template instantiation and dirty checking itself. That's all good stuff. Of course, the ability to dynamically load just about anything is awesome. That's a sorely missed feature in Angular 1.x and it's critical for larger apps. So, I'm happy that that is a core requirement of the design.</p>
+
+<h5 id="nowletstalkaboutdirectives">Now, let's talk about directives.</h5>
+
+<p>The new mechanism for creating directives with classes, better dependency injection and annotations is pretty nice. It's way simpler than what  has been required in Angular 1.x. Unfortunately, that's a pretty big breaking change for 1.x developers. It's also a bit more difficult to write if you are confined to working with ES5 and can't or don't want to use ES6, TypeScript or AtScript. Earlier in this article I mentioned the possibility of providing a small library that made it easy to create annotated classes in ES5. Such an API might be made to look a bit like the DDO object. Perhaps this would ease the process of porting code from 1.x to 2.0. Perhaps we should try to build this now so you can use it with 1.3, then provide a different implementation for 2.0...a sort of migration abstraction layer. I'm not sure. I'd love to hear from you on this. I know this is a concern for many of you.</p>
+
+<p>There's another thing that bothers me about directives. The annotations are a bit verbose. Look back at the NgShow directive. Do you see how many times the text 'ngShow' or some variant of that is repeated? That just seems a bit silly to me. Also, have a look at the CustomerEditController. Why do we need that ComponentDirective annotation at all? Why can't we just have a plain class if the router already knows what it is?</p>
+
+<p>I've argued a lot internally for the inclusion of Convention over Configuration ideas. This is what made Rails popular and has influenced many modern frameworks in what I think is a positive way. I'd like to see some conventions for creating directives that would eliminate boilerplate. Without them I have the sense that the new directive system doesn't simplify directives as much as it should. It feels like some of the complexity of the DDO has just been pushed to another location, now inside an annotation. What do you think? Do you like conventions? Do you think that would make directives simpler (assuming you always had the option to be explicit and override the conventions with annotations)?</p>
+
+<p>Unfortunately, none of these are the real big problem. There's a serious problem in Component Directives. I wonder if you saw it. Did you notice that they break the Separated Presentation principle? Look again at my TabContainer example:</p>
+
+<pre><code class="javascript">@ComponentDirective({
+    selector:'tab-container',
+    directives:[NgRepeat]
+})
+export class TabContainer {  
+    constructor(panes:Query&lt;Pane&gt;) {
+        this.panes = panes;
+    }
+
+    select(selectedPane:Pane) { ... }
+}
+</code></pre>
+
+<p>Do you see how the TabContainer must, in its metadata, list all the directives that its template uses? This is a direct coupling of the TabContainer (controller) to the details of the View's implementation. Earlier on I mentioned that this was necessary for the compiler to know what needed to be loaded before compiling the template. But, this breaks one of the primary benefits that is usually gained by using MVC, MVVM or any separated presentation pattern. Lest you think this is just theoretical, let me point out some of the consequences:</p>
+
+<ul>
+<li>It is no longer possible to implement <code>ng-include</code>. The compiler requires a ComponentDirective in order to compile HTML. Therefor you cannot compile HTML on its own and include it into a View.</li>
+<li>It's painful if you want to have multiple <em>potential</em> views for the same component. Imagine that you have a component but you want to use a different view for phone than for desktop. You need to aggregate all the directives, filters, etc. that you use across all of your views and make sure they are all represented in the single component's metadata. This is a maintenance nightmare. You can no longer reliably remove anything from the dependency list without checking all views. It's also easier to forget adding something.</li>
+<li>It's not possible to have multiple <em>runtime</em> views for the same component. Imagine that you are configuring your router with a set of routes. Several of the routes can use the same "controller" but you need different views. You can't really do that. Sorry.</li>
+<li>It's completely impossible to enable ad hoc composition of screens. This makes data-driven UI construction more complicated in the least. You can't just render varying combinations of views and controllers (view models). This limits reusability by discouraging compositional approaches to UI. It forces you to subclass controllers in order to get different views.</li>
+</ul>
+
+<p>Fortunately, the design is still undergoing lots of changes and I have a recommendation to solve this problem which is quite simple. Allow templates to be completely self-contained by enabling them to specify their own imports. Move the metadata out of the directive and place it in the HTML template. You can use a custom element like this:</p>
+
+<pre><code class="html">&lt;ng-import src="ngRepeat"&gt;&lt;/ng-import&gt;  
+</code></pre>
+
+<p>The compiler can easily find these and make sure everything is loaded before it compiles the template content. That's it. All problems I mentioned above would be solved.</p>
+
+<p>Ok, now that we've covered the compiler and directives...</p>
+
+<h5 id="iguessthatleadsustothetemplatingsyntax">I guess that leads us to the Templating Syntax.</h5>
+
+<p>Let's be honest. When many of you saw the templating syntax you probably retched. Not everyone, but many of you. I personally was not in favor of this syntax, but it was the result of a majority vote. (To understand why it was even a candidate, <a href="https://docs.google.com/document/d/1kpuR512G1b0D8egl9245OHaG0cFh0ST0ekhD_g8sxtI/edit?usp=sharing">you need to read this document</a>.) Do not fear! There have been a few technical issues discovered which prevent the syntax described above from becoming the actual syntax, not to mention community uproar. The team is now back to its spirited debate on the best syntax. Many community members are joining in and <a href="https://github.com/angular/angular/issues/133">offering up their own ideas</a>, which is awesome. I'll present my own recommendation here in case anyone wants to comment on it.</p>
+
+<p>Here's the basic syntax I'm proposing:</p>
+
+<ul>
+<li>property="{{expression}}" - one way binding from a model to the property on the element, identified by {{}}</li>
+<li>on-event="{{expression}}" - adds an event handler to the event which executes the expression, identified by the on- prefix</li>
+<li>${expression} - string interpolation within HTML content and attributes (based on ES6 syntax)</li>
+</ul>
+
+<p>That's it. Then, under the hood, we need to remove the expressions from the DOM to prevent the various Web Component issues, etc. In debug mode only, we could add them back using a prefix such as <code>bind-</code> so they can be seen when inspecting the DOM without affecting Web Components. This makes the syntax you type and what you see in the DOM inspector a bit asymmetrical, but I think it's a reasonable tradeoff for the clean, more standard binding syntax. Not everyone agrees with me. What do you think?</p>
+
+<p>This proposal does solve the technical problems of binding and also helps with backwards compatibility. Perhaps we could do a bit more for backwards compatability though. We could allow the use of <code>{{expression}}</code> for string interpolation in HTML content, but you would have to opt-in to that. It would be planned for obsolescence in 20xx. The preferred method would always be <code>${expression}</code> but this could provide a more gradual migration path for templates. It might also be possible to create a set of optional directives that could be dropped in to enable <code>ng-click</code> etc. which are also planned for obsolescence in 20xx. Additionally, we could provide documentation that shows the old and new side-by-side and helps people gradually convert templates in time for the "cutoff date".</p>
+
+<p>That's the basics of my proposal. There are other proposals. I'm biased of course. I'd love to know what you think though. Does backwards compatibility matter to you? Would you prefer a syntax with {{}} or would you prefer a syntax that encodes the attribute names in some way? There are lots of options.</p>
+
+<p>Well, now all our problems are solved. Nope. There's an elephant in the room.</p>
+
+<h5 id="watchoutforbindingdirectionality">Watch out for Binding Directionality!</h5>
+
+<p>I don't know if you noticed it, but there isn't a single example of two-way databinding in this entire article. In fact, none of the syntaxes I've explained above include any way of specifying various binding options such as directionality, triggers, debounce, etc. So, how do you bind to an input element and push data back into your model? How do you bind to a custom Web Component that needs to update your model?</p>
+
+<p>There is intense debate within the Angular team as to whether Angular 2.0 needs two-way databinding or not. If you've read the public design documents (<a href="https://docs.google.com/document/d/1kpuR512G1b0D8egl9245OHaG0cFh0ST0ekhD_g8sxtI/edit?usp=sharing">including this one</a>) or watched <a href="https://www.youtube.com/watch?v=gNmWybAyBHI&amp;list=UUEGUP3TJJfMsEM_1y8iviSQ">the ngEurope presentation on Angular 2.0 Core</a> or the <a href="https://www.youtube.com/watch?v=g-x1QKriY90&amp;list=UUEGUP3TJJfMsEM_1y8iviSQ">Q&amp;A</a>, you may have picked this up. I strongly support keeping two-way databinding. To me it seems that it's part of the soul of Angular. I have yet to see a proposal that provides an elegant alternative and until I do I will continue to argue in favor of keeping two-way databinding.</p>
+
+<p>You may wonder why this is even being considered.</p>
+
+<p>I've heard some explanations related to enforcing <a href="http://en.wikipedia.org/wiki/Directed_acyclic_graph">DAG</a> for data flow. This idea has been recently made popular by <a href="http://facebook.github.io/react/">ReactJS</a>. But frankly, you can't completely enforce that. I can break it by simply using an <a href="http://martinfowler.com/eaaDev/EventAggregator.html">event aggregator</a>. This is a pattern that is very common in composite applications. I think you should teach people about DAG and help them to adhere to it when possible, but you can't force them. That makes it hard to do their job.</p>
+
+<p>I've heard another argument that centers around inadequate validation capabilities. But this isn't a reason to remove two-way binding. You can easily layer validation systems on top of the low level two-way binding capabilities.</p>
+
+<p>I think one of the big problems relates to the actual implementation of binding in Angular which uses dirty checking. Since dirty checking is used, every time you make a check, you have to check twice. The reason is that if the first check results in a change, then those changes might result in other changes as a side effect. So, you have to check a second time to be sure. Now, if there are changes after the second check, then you have to check a third time...and so on. This is what is referred to as model stabilization. Yeah, it's a pain for a dirty checked system. But removing two-way binding does not solve the problem. You also need to remove watches altogether so that no one can trigger arbitrary code based on a change in an expression. That's pretty obvious which is why removal of watches is also being considered. But that still doesn't solve the problem because an event aggregator can always get around that...and frankly sometimes you need to. Databinding is a powerful tool and people do make mistakes. But I think we can handle it. I know that's true for many of you.</p>
+
+<p>Maybe you disagree with me and you think "good riddance to two-way binding." There are definitely people who have that opinion. However, I suspect that most Angular, Durandal, Knockout, Ember, etc. users agree with me. Fortunately, the team hasn't made up their mind on any of this. They are just trying to consider all the possibilities. So, there's no need to worry. However, you need to help me if you love two-way binding. I think it would be great for the rest of the Angular team to hear how much you love two-way binding.</p>
+
+<p>On the other hand, if you think two-way binding is a bad idea, you are invited to help us investigate alternatives. So far I haven't seen an equally nice alternative, but maybe you've got some ideas. If that's the case, I invite you to share those with us. If we can work together to come up with something that's even better...that would be amazing.</p>
+
+<h2 id="therouter">The Router</h2>
+
+<p>Wow! You are really interested in Angular 2.0. I can't believe you've read this far. Thanks! Let's talk about the router now...</p>
+
+<blockquote>
+  <p><strong>Note:</strong> If you are tired of reading and would rather watch a video about the router, you can find <a href="https://www.youtube.com/watch?v=h1P_Vh4gSQY&amp;list=UUEGUP3TJJfMsEM_1y8iviSQ">my 25 minute ngEurope presentation on the subject</a>.</p>
+</blockquote>
+
+<h3 id="basics">Basics</h3>
+
+<p>In order for Angular 2.0 to be a capable framework it needs a strong routing solution. Earlier this year Brian Ford began a process of aggregating a massive amount of information around existing routing solutions both inside and outside the Angular community. We looked at a huge percentage of what is out there and combined those case studies with the requests we were hearing from the community. After that was put together the community provided feedback on the document and then I took a stab at implementing something. After a couple of short iterations we think we've got something cool.</p>
+
+<p>Naturally, the new router handles all the basic scenarios you would expect any router to handle. Here's a quick list of the basic features...</p>
+
+<ul>
+<li>Simple JSON-based Route Config</li>
+<li>Optional Convention over Configuration</li>
+<li>Static, Parameterized and Splat Route Patterns</li>
+<li>Query String Support</li>
+<li>Use Push State or Hashchange</li>
+<li>Navigation Model (For Generating a Navigation UI)</li>
+<li>Document Title Updates</li>
+<li>404 Route Handling</li>
+<li>History Manipulation</li>
+<li>More...</li>
+</ul>
+
+<h3 id="childrouters">Child Routers</h3>
+
+<p>You may be used to having one router and having to configure all the routes for your entire application upfront. But, with our new router, you've got additional flexibility. In fact, you can have a router for each component that you navigate to. We call this Child Routers and it allows you to encapsulate entire feature areas of your application. If you've got a large project with multiple teams or you're a "one man shop" that likes to keep your codebase nicely partitioned, you will love this feature. Now you can build each part of your application as a miniature app, with its own router. Then, you just plug it into the main application and map a relative path to the component and it all works. If you want to see something fun, check out the recursive child router demo <a href="https://www.youtube.com/watch?v=h1P_Vh4gSQY&amp;list=UUEGUP3TJJfMsEM_1y8iviSQ">from my talk</a>.</p>
+
+<h3 id="screenactivation">Screen Activation</h3>
+
+<p>Sometimes, during navigation, you have the need to take control of the process. Perhaps you are navigating away from a data entry screen with unsaved data and you need to check with the user to see if that's ok. Perhaps you are implementing a wizard and before displaying step three you need to make sure the data is present from the first two steps and redirect if appropriate. In order to handle these types of scenarios we've implemented an explicit navigation lifecycle which your controllers can opt into to take control of the navigation process. Here's a list of the lifecycle hooks:</p>
+
+<ul>
+<li>canActivate - Allow/Prevent navigating <strong>to</strong> the new controller.</li>
+<li>activate - Respond to successful navigation to the new controller.</li>
+<li>canDeactivate - Allow/Prevent navigation <strong>away from</strong> the old controller.</li>
+<li>deactivate - Respond to successful navigation away from the old controller.</li>
+</ul>
+
+<p>The can* callbacks let you control navigation by returning boolean values. You can also return a Promise for that value, which lets you perform asynchronous operations as part of the process. Furthermore you can return a special NavigationCommand (i.e. Redirect) which lets you take low level control of the process.</p>
+
+<p>As one would hope, this all works seamlessly with Child Routers.</p>
+
+<h3 id="design">Design</h3>
+
+<p>We've worked hard to make the design as pluggable as possible. All the logic that processes navigation requests is built with a pipeline architecture. That means you can add your own steps into the pipeline and even remove some of our default steps. For example, if you don't like the screen activation behavior, you can remove that. It's modeled as four steps in the pipeline, one for each lifecycle phase. Another important feature of the pipeline is that each step is asynchronous. So, if you need to make a server request to authenticate a user or load data for a controller, you can actually do that in the pipeline and remove that code from your controllers.</p>
+
+
+
+<p>It's hard for me to be non-biased about the router since I did the implementation. I think it's a good first pass at a new router. There's definitely some missing features, but I think the high level design is very strong.</p>
+
+<p>As a bonus, we're also going to be back-porting it to Angular 1.3.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Thanks for taking time to read this. At the time of the publication of this article (November 6, 2014) this is the most extensive, up-to-date knowledge source on Angular 2.0. So, now you are up to speed.</p>
+
+<p>I've tried to lay out the major features and design considerations. I've also included a liberal dose of my own opinions. The design is still evolving and we're early in development. So, I'm hopeful that several changes will be made before the bits are final. There are also several "unknowns", such as two-way databinding, that the team isn't quite sure how to handle going forward just yet. We're trying to consider all the options. Perhaps we'll come up with something new and amazing!? Please be patient and remember that as members of the web community, you are invited to weigh-in on these issues. I implore you to be kind and courteous when doing so, but please share with us your ideas, thoughts and opinions.</p>
+
+<p>Thanks!</p>
+        </section>
+        </div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>

@@ -1,0 +1,233 @@
+<!doctype html><div style="max-width: 700px;font-family: 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, freesans, sans-serif;padding: 50px;line-height: 1.25;background: #f9f9f9;"><meta charset="UTF8"/><title>ECMAScript 6: New OOP Features Besides Classes</title><h1>ECMAScript 6: New OOP Features Besides Classes</h1><p><a href="http://www.2ality.com/2014/12/es6-oop.html?">Original Article</a> &middot; <a href="#articleList">Articles in this issue</a> </p><div><div class="post-body entry-content">
+<p>Classes <a class="ptr">[2]</a> are <em>the</em> major new OOP feature in ECMAScript 6 <a class="ptr">[1]</a>. However, it also includes new features for object literals and new utility methods in <code>Object</code>. This blog post describes them.</p>
+<a name="more"></a>
+
+<h4 id="method_definitions">Method definitions</h4><p>In ECMAScript 5, methods are properties whose values are functions:</p>
+<pre class="javascript">
+    var obj = {
+        myMethod: function () {
+            &#xB7;&#xB7;&#xB7;
+        }
+    };
+</pre>
+<p>In ECMAScript 6, methods are still function-valued properties, but there is now a more compact way of defining them:</p>
+<pre class="javascript">
+    let obj = {
+        myMethod() {
+            &#xB7;&#xB7;&#xB7;
+        }
+    };
+</pre>
+<p>Getters and setters continue to work as they did in ECMAScript 5 (note how syntactically similar they are to method definitions):</p>
+<pre class="javascript">
+    let obj = {
+        get foo() {
+            console.log('GET foo');
+            return 123;
+        },
+        set bar(value) {
+            console.log('SET bar to '+value);
+            // return value is ignored
+        }
+    };
+</pre>
+<p>Let&#x2019;s use <code>obj</code>:</p>
+<pre class="repl">
+    &gt; obj.foo
+    GET foo
+    123
+    &gt; obj.bar = true
+    SET bar to true
+    true
+</pre>
+<p>There is also a way to concisely define properties whose values are generator functions <a class="ptr">[3]</a>:</p>
+<pre class="repl">
+    let obj = {
+        * myGeneratorMethod() {
+            &#xB7;&#xB7;&#xB7;
+        }
+    };
+</pre>
+<p>This code is equivalent to:</p>
+<pre class="repl">
+    let obj = {
+        myGeneratorMethod: function* () {
+            &#xB7;&#xB7;&#xB7;
+        }
+    };
+</pre>
+<h4 id="property_value_shorthands">Property value shorthands</h4><p>Property value shorthands let you abbreviate the definition of a property in an object literal: If the name of the variable that specifies the property value is also the property key then you can omit the key. This looks as follows.</p>
+<pre class="javascript">
+    let x = 4;
+    let y = 1;
+    let obj = { x, y };
+</pre>
+<p>The last line is equivalent to:</p>
+<pre class="javascript">
+    let obj = { x: x, y: y };
+</pre>
+<p>Property value shorthands work well together with destructuring <a class="ptr">[4]</a>:</p>
+<pre class="javascript">
+    let obj = { x: 4, y: 1 };
+    let {x,y} = obj;
+    console.log(x); // 4
+    console.log(y); // 1
+</pre>
+<p>One use case for property value shorthands are multiple return values <a class="ptr">[4]</a>.</p>
+<h4 id="computed_property_keys">Computed property keys</h4><p>Remember that there are two ways of specifying a key when you set a property.</p>
+<ol>
+<li>Via a fixed name: <code>obj.foo = true;</code></li>
+<li>Via an expression: <code>obj['b'+'ar'] = 123;</code></li>
+</ol>
+<p>In object literals, you only have option #1 in ECMAScript 5. ECMAScript 6 additionally provides option #2:</p>
+<pre class="javascript">
+    let propKey = 'foo';
+    let obj = {
+        [propKey]: true,
+        ['b'+'ar']: 123
+    };
+</pre>
+<p>This new syntax can also be combined with a method definition:</p>
+<pre class="javascript">
+    let obj = {
+        ['h'+'ello']() {
+            return 'hi';
+        }
+    };
+    console.log(obj.hello()); // hi
+</pre>
+<p>The main use case for computed property keys are symbols: you can define a public symbol and use it as a special property key that is always unique. One prominent example is the symbol stored in <code>Symbol.iterator</code>. If on object has a method with that key, it becomes iterable <a class="ptr">[3]</a>. The method must return an iterator, which is used by constructs such as the <code>for-of</code> loop to iterate over the object. The following code demonstrates how that works.</p>
+<pre class="javascript">
+    let obj = {
+        * [Symbol.iterator]() { // (A)
+            yield 'hello';
+            yield 'world';
+        }
+    };
+    for (let x of obj) {
+        console.log(x);
+    }
+    // Output:
+    // hello
+    // world
+</pre>
+<p>Line A starts a generator method definition with a computed key (the symbol stored in <code>Symbol.iterator</code>).</p>
+<h3 id="new_methods_of_object">New methods of Object</h3><h4 id="object.assign%28target_source_1_source_2_%C2%B7%C2%B7%C2%B7%29">Object.assign(target, source_1, source_2, &#xB7;&#xB7;&#xB7;)</h4><p>This method merges the sources into the target: It modifies <code>target</code>, first copies all enumerable own properties of <code>source_1</code> into it, then all own properties of <code>source_2</code>, etc. At the end, it returns the target.</p>
+<pre class="javascript">
+    let obj = { foo: 123 };
+    Object.assign(obj, { bar: true });
+    console.log(JSON.stringify(obj));
+        // {"foo":123,"bar":true}
+</pre>
+<p>Let&#x2019;s look more close at how <code>Object.assign()</code> works:</p>
+<ul>
+<li><p>Both kinds of property keys: <code>Object.assign()</code> supports both strings and symbols as property keys.</p>
+</li>
+<li><p>Only enumerable own properties: <code>Object.assign()</code> ignores inherited properties and properties that are not enumerable.</p>
+</li>
+<li><p>Copying via assignment: Properties in the target object are created via assignment (internal operation [[Put]]). That means that if <code>target</code> has (own or inherited) setters, those will be invoked during copying. An alternative would have been to <em>define</em> new properties, an operation which always creates new own properties and never invokes setters. There originally was a proposal for a variant of <code>Object.assign()</code> that uses definition instead of assignment. That proposal has been rejected for ECMAScript 6, but may be reconsidered for later editions.</p>
+</li>
+</ul>
+<h5 id="use_cases_for_object.assign%28%29">Use cases for Object.assign()</h5><p>Let&#x2019;s look at a few use cases. You can use <code>Object.assign()</code> to add properties to <code>this</code> in a constructor:</p>
+<pre class="javascript">
+    class Point {
+        constructor(x, y) {
+            Object.assign(this, {x, y});
+        }
+    }
+</pre>
+<p><code>Object.assign()</code> is also useful for filling in defaults for missing properties. In the following example, we have an object <code>DEFAULTS</code> with default values for properties and an object <code>options</code> with data.</p>
+<pre class="javascript">
+    const DEFAULTS = {
+        logLevel: 0,
+        outputFormat: 'html'
+    };
+    function processContent(options) {
+        let options = Object.assign({}, DEFAULTS, options); // (A)
+        &#xB7;&#xB7;&#xB7;
+    }
+</pre>
+<p>In line A, we created a fresh object, copied the defaults into it and then copied <code>options</code> into it, overriding the defaults. <code>Object.assign()</code> returns the result of these operations, which we assign to <code>options</code>.</p>
+<p>Another use case is adding methods to objects:</p>
+<pre class="javascript">
+    Object.assign(SomeClass.prototype, {
+        someMethod(arg1, arg2) {
+            &#xB7;&#xB7;&#xB7;
+        },
+        anotherMethod() {
+            &#xB7;&#xB7;&#xB7;
+        }
+    });
+</pre>
+<p>You could also assign functions, but then you don&#x2019;t have the nice method definition syntax and need to mention <code>SomeClass.prototype</code> each time:</p>
+<pre class="javascript">
+    SomeClass.prototype.someMethod = function (arg1, arg2) {
+        &#xB7;&#xB7;&#xB7;
+    };
+    SomeClass.prototype.anotherMethod = function () {
+        &#xB7;&#xB7;&#xB7;
+    };
+</pre>
+<p>One last use case for <code>Object.assign()</code> is a quick way of cloning objects:</p>
+<pre class="javascript">
+    function clone(orig) {
+        return Object.assign({}, orig);
+    }
+</pre>
+<p>This way of cloning is also somewhat dirty, because it doesn&#x2019;t preserve the property attributes of <code>orig</code>. If that is what you need, you have to use <a href="http://speakingjs.com/es5/ch17.html#property_attributes">property descriptors</a>.</p>
+<p>If you want the clone to have the same prototype as the original, you can use <code>Object.getPrototypeOf()</code> and <code>Object.create()</code>:</p>
+<pre class="javascript">
+    function clone(orig) {
+        let origProto = Object.getPrototypeOf(orig);
+        return Object.assign(Object.create(origProto), orig);
+    }
+</pre>
+<h4 id="object.getownpropertysymbols%28obj%29">Object.getOwnPropertySymbols(obj)</h4><p>In ECMAScript 6, the key of a property can be either a string or a symbol. There are now five tool methods that retrieve the property keys of an object <code>obj</code>:</p>
+<ul>
+<li><p><code>Object.keys(obj)</code> &#x2192; <code>Array&lt;string&gt;</code><br>retrieves all string-valued keys of all enumerable own properties.</p>
+</li>
+<li><p><code>Object.getOwnPropertyNames(obj)</code> &#x2192; <code>Array&lt;string&gt;</code><br>retrieves all string-valued keys of all own properties.</p>
+</li>
+<li><p><code>Object.getOwnPropertySymbols(obj)</code> &#x2192; <code>Array&lt;symbol&gt;</code><br>retrieves all symbol-valued keys of all own properties.</p>
+</li>
+<li><p><code>Reflect.ownKeys(obj)</code> &#x2192; <code>Array&lt;string|symbol&gt;</code><br>retrieves all keys of all own properties.</p>
+</li>
+<li><p><code>Reflect.enumerate(obj)</code> &#x2192; <code>Iterator</code><br>retrieves all string-values keys of all enumerable properties.</p>
+</li>
+</ul>
+<h4 id="object.is%28value1_value2%29">Object.is(value1, value2)</h4><p>The strict equals operator (<code>===</code>) treats two values differently than one might expect.</p>
+<p>First, <code>NaN</code> is not equal to itself.</p>
+<pre class="repl">
+    &gt; NaN === NaN
+    false
+</pre>
+<p>That is unfortunate, because it often prevents us from detecting <code>NaN</code>:</p>
+<pre class="repl">
+    &gt; [0,NaN,2].indexOf(NaN)
+    -1
+</pre>
+<p>Second, JavaScript has <a href="http://speakingjs.com/es5/ch11.html#two_zeros">two zeros</a>, but strict equals treats them as if they were the same value:</p>
+<pre class="repl">
+    &gt; -0 === +0
+    true
+</pre>
+<p>Doing this is normally a good thing.</p>
+<p><code>Object.is()</code> provides a way of comparing values that is a bit more precise than <code>===</code>. It works as follows:</p>
+<pre class="repl">
+    &gt; Object.is(NaN, NaN)
+    true
+    &gt; Object.is(-0, +0)
+    false
+</pre>
+<p>Everything else is compared as with <code>===</code>.</p>
+<p>If we combine <code>Object.is()</code> with the new ECMAScript 6 array method <code>findIndex()</code> <a class="ptr">[5]</a>, we can find <code>NaN</code> in arrays:</p>
+<pre class="repl">
+    &gt; [0,NaN,2].findIndex(x =&gt; Object.is(x, NaN))
+    1
+</pre>
+<h4 id="object.setprototypeof%28obj_proto%29">Object.setPrototypeOf(obj, proto)</h4><p>This method sets the prototype of <code>obj</code> to <code>proto</code>. The non-standard way of doing so in ECMAScript 5, that is supported by many engines, is via assinging to the special property <code>__proto__</code>. The recommended way of setting the prototype remains the same as in ECMAScript 5: during the creation of an object, via <code>Object.create()</code>. That will always be faster than first creating an object and then setting its prototype. Obviously, it doesn&#x2019;t work if you want to change the prototype of an existing object.</p>
+<h3 id="references">References</h3>
+
+</div>
+
+</div><hr/><section id="articleList" style="font-size: 14px;"><b>Articles in This Issue</b><ul><li><a href="./ECMAScript 6: New OOP Features Besides Classes.html">ECMAScript 6: New OOP Features Besides Classes</a></li><li><a href="./Generation JavaScript.html">Generation JavaScript</a></li><li><a href="./New Course on JS.Next: ES6.html">New Course on JS.Next: ES6</a></li><li><a href="./<img src="http:--s3.amazonaws.com-nlga-uploads-item-image-31237-125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters">.html"><img src="http://s3.amazonaws.com/nlga/uploads/item/image/31237/125.png" style="border: 0px solid #bbbbbb" width="104" height="104" alt="Frontend Masters"></a></li><li><a href="./Symbols in ECMAScript 6.html">Symbols in ECMAScript 6</a></li><li><a href="./'JavaScript for Kids' Book Released in Print.html">'JavaScript for Kids' Book Released in Print</a></li><li><a href="./JSConf US 2015 Announced.html">JSConf US 2015 Announced</a></li><li><a href="./JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once.html">JavaScript developers - spend 60 seconds applying to 50 NYC jobs at once</a></li><li><a href="./underdog.io..html">underdog.io.</a></li><li><a href="./An Opinionated Rundown of JS Frameworks.html">An Opinionated Rundown of JS Frameworks</a></li><li><a href="./5 Array Methods That You Should Be Using Now.html">5 Array Methods That You Should Be Using Now</a></li><li><a href="./45 Useful JavaScript Tips, Tricks and Best Practices.html">45 Useful JavaScript Tips, Tricks and Best Practices</a></li><li><a href="./Learning Much JavaScript From One Line of Code.html">Learning Much JavaScript From One Line of Code</a></li><li><a href="./All About Angular 2.0.html">All About Angular 2.0</a></li><li><a href="./18 Surprises From Reading jQuery's Source Code.html">18 Surprises From Reading jQuery's Source Code</a></li><li><a href="./jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition).html">jQuery 1.11.2 and 2.1.3 Released (Safari Fail-Safe Edition)</a></li><li><a href="./npm's Year in Numbers: 2014.html">npm's Year in Numbers: 2014</a></li><li><a href="./Some Obscure JavaScript Pitfalls.html">Some Obscure JavaScript Pitfalls</a></li><li><a href="./Exploring Facebook Flow: Facebook's Type Checker for JavaScript.html">Exploring Facebook Flow: Facebook's Type Checker for JavaScript</a></li><li><a href="./Knowing Which Apps You’re Breaking using Static Analysis.html">Knowing Which Apps You’re Breaking using Static Analysis</a></li><li><a href="./6 Easy Ways to Prevent Your Heroku Node App From Sleeping.html">6 Easy Ways to Prevent Your Heroku Node App From Sleeping</a></li><li><a href="./Creating Objects without Prototypes.html">Creating Objects without Prototypes</a></li><li><a href="./Converting A Project From AMD to CommonJS with Recast.html">Converting A Project From AMD to CommonJS with Recast</a></li><li><a href="./intellij-es67: ES6-7 Syntax Improvements Plugin for Inteliij IDEA.html">intellij-es67: ES6/7 Syntax Improvements Plugin for Inteliij IDEA</a></li><li><a href="./PleaseWait.js: A Loading-Splash Screen for your SPA.html">PleaseWait.js: A Loading/Splash Screen for your SPA</a></li><li><a href="./React Templates: Lightweight Templates for React.html">React Templates: Lightweight Templates for React</a></li><li><a href="./angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers.html">angular-websocket: AngularJS 1.x WebSocket Service for Connecting Client Apps to Servers</a></li><li><a href="./jsrt: A Simple JavaScript Ray Tracing Engine.html">jsrt: A Simple JavaScript Ray Tracing Engine</a></li><li><a href="./Rome: A Customizable Date (and Time) Picker Control.html">Rome: A Customizable Date (and Time) Picker Control</a></li><li><a href="./Bitcore: A Powerful JavaScript Core for Bitcoin Projects.html">Bitcore: A Powerful JavaScript Core for Bitcoin Projects</a></li></ul></section></div>
